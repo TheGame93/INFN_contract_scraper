@@ -1,0 +1,104 @@
+# Step Planning — Master Tracker
+
+> **Location:** `docs/step/planning_step.md`
+> **See also:** [Step Policy](policy_step.md) · [Desiderata](../plan_desiderata.md) · [Implementation Plan](../plan_implementation.md)
+
+---
+
+## Currently Active
+
+> **Next to start:** `1.1.1` — Create `pyproject.toml`
+> **File:** `docs/step/implement_step1.md`
+
+---
+
+## Step Index
+
+### Step 1 — Project Scaffolding `implement_step1.md`
+[ ] 1.1 `pyproject.toml` and package entry point
+[ ] 1.2 Package skeleton (`__init__.py` files for all modules)
+[ ] 1.3 Data directory structure (`data/pdf_cache/`, `data/exports/`)
+[ ] 1.4 Test scaffolding (`conftest.py`, empty test subdirectories)
+[ ] 1.5 Smoke check: install + import without errors
+
+### Step 2 — Domain Layer `implement_step2.md`
+[ ] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)
+[ ] 2.2 `CallRaw` dataclass (all fields from `calls_raw` schema, all nullable)
+[ ] 2.3 `PositionRow` dataclass (all fields from `position_rows` schema, all nullable)
+[ ] 2.4 Domain smoke tests (instantiate with all-None fields)
+
+### Step 3 — Config Layer `implement_step3.md`
+[ ] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
+[ ] 3.2 Path initialization helper (create `data/` subdirs if missing)
+
+### Step 4 — Fetch Layer `implement_step4.md`
+[ ] 4.1 HTTP client (`get_session()` with retry, rate-limit, user-agent)
+[ ] 4.2 Listing URL builder (`build_urls(tipo) -> list[str]`)
+[ ] 4.3 Listing HTML parser (`parse_rows(html) -> list[dict]`)
+[ ] 4.4 Listing fixtures + tests
+[ ] 4.5 Detail page parser (`parse_detail(html, detail_id) -> CallRaw`, all fields nullable)
+[ ] 4.6 Detail page fixtures (full + old/missing-fields) + tests
+[ ] 4.7 Fetch orchestrator (`fetch_all_calls(session, tipo) -> list[CallRaw]`)
+
+### Step 5 — Extract Layer `implement_step5.md`
+[ ] 5.1 PDF downloader (`download(url, dest) -> Path | None`, cache-aware)
+[ ] 5.2 `mutool` wrapper (`extract_text(pdf_path) -> tuple[str, TextQuality]`)
+[ ] 5.3 `mutool` tests (mock subprocess: ok, failure, empty output, garbled)
+[ ] 5.4 EUR normalization (`normalize_eur(s) -> float | None`)
+[ ] 5.5 Date normalization (`parse_date(s) -> date | None`)
+[ ] 5.6 Subtype normalization (`normalize_subtype(s, anno) -> str | None`, era-aware)
+[ ] 5.7 Normalization tests (all variants: currency, dates, subtypes + era-gating)
+[ ] 5.8 PDF text fixtures (9 fixture files)
+[ ] 5.9 Segmenter (`segment(text) -> list[str]`) + tests
+[ ] 5.10 Field extractor: `metadata.py` (pdf_call_title, section_structure_department)
+[ ] 5.11 Field extractor: `contract_type.py` (type, subtype canonical + raw + evidence)
+[ ] 5.12 Field extractor: `duration.py` (duration_months, raw, evidence; era variants)
+[ ] 5.13 Field extractor: `income.py` (7 EUR fields + evidence; era label variants)
+[ ] 5.14 Field extractor: `confidence.py` (`score_confidence(row, text_quality)`)
+[ ] 5.15 Field extractor tests
+[ ] 5.16 Row builder (`build_rows(text, detail_id, text_quality, anno) -> list[PositionRow]`)
+
+### Step 6 — Store Layer `implement_step6.md`
+[ ] 6.1 DB schema (`init_db(conn)` — 4 tables, idempotent)
+[ ] 6.2 Schema tests (create twice, no error; all columns present)
+[ ] 6.3 `upsert_call(conn, call: CallRaw)` — upsert with `first_seen_at` immutability
+[ ] 6.4 `upsert_position_rows(conn, rows: list[PositionRow])` — replace rows for detail_id
+[ ] 6.5 Upsert tests (deduplication, `first_seen_at` never changes, `last_synced_at` updates)
+[ ] 6.6 Curated filter SQL (`rebuild_curated(conn)` — employment-like filter for both tables)
+[ ] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files)
+[ ] 6.8 Export tests (CSVs written, non-empty, correct columns)
+
+### Step 7 — Pipeline Layer `implement_step7.md`
+[ ] 7.1 `pipeline/curate.py` — thin wrapper calling `store/export/queries.py`
+[ ] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
+[ ] 7.3 Sync loop: per-tipo iteration + per-call PDF handling + `pdf_fetch_status` assignment
+[ ] 7.4 Progress logging (log each tipo, each detail_id, pdf_fetch_status outcome)
+
+### Step 8 — CLI Layer `implement_step8.md`
+[ ] 8.1 `__main__.py` entry point
+[ ] 8.2 `cli/main.py` — `build_parser()` + `run()` dispatch
+[ ] 8.3 `cli/cmd_sync.py` — `execute(args)` → `pipeline.sync.run_sync(...)`
+[ ] 8.4 `cli/cmd_export.py` — `execute(args)` → `store.export.csv_writer.export_all(...)`
+[ ] 8.5 Exit codes: 0 on success, 1 on fatal error; print error to stderr
+
+### Step 9 — End-to-End Verification `implement_step9.md`
+[ ] 9.1 Write `tests/e2e/test_sync.py`
+[ ] 9.2 Run full verification checklist from `docs/plan_implementation.md`
+[ ] 9.3 Update `docs/info_functions.md` with all implemented functions
+[ ] 9.4 Mark all steps `[x]` in this file
+
+---
+
+## Completion Summary
+
+| Step | Goal | Status |
+|---|---|---|
+| 1 | Project scaffolding | [ ] |
+| 2 | Domain layer | [ ] |
+| 3 | Config layer | [ ] |
+| 4 | Fetch layer | [ ] |
+| 5 | Extract layer | [ ] |
+| 6 | Store layer | [ ] |
+| 7 | Pipeline layer | [ ] |
+| 8 | CLI layer | [ ] |
+| 9 | End-to-end verification | [ ] |
