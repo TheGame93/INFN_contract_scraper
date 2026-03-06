@@ -43,9 +43,10 @@ src/infn_jobs/
 │   │   ├── __init__.py
 │   │   ├── url_builder.py           # build_urls(tipo) -> list[str] (active + expired)
 │   │   └── parser.py                # parse_rows(html) -> list[dict]
-│   └── detail/
-│       ├── __init__.py
-│       └── parser.py                # parse_detail(html, detail_id) -> CallRaw  (all fields nullable)
+│   ├── detail/
+│   │   ├── __init__.py
+│   │   └── parser.py                # parse_detail(html, detail_id) -> CallRaw  (all fields nullable)
+│   └── orchestrator.py              # fetch_all_calls(session, tipo) -> list[CallRaw]
 │
 ├── extract/
 │   ├── __init__.py
@@ -177,6 +178,7 @@ calls_raw (
   numero            TEXT,
   anno              TEXT,
   titolo            TEXT,
+  pdf_call_title    TEXT,             -- extracted from PDF body (nullable); fallback for call_title in CSV
   numero_posti_html INTEGER,          -- from HTML detail page
   data_bando        TEXT,
   data_scadenza     TEXT,
@@ -228,6 +230,8 @@ position_rows (
 ```
 
 `calls_curated` and `position_rows_curated` share the same schemas — populated by the employment-like filter in `pipeline/curate.py`.
+
+The `call_title` column in CSV exports is a derived field: `COALESCE(pdf_call_title, titolo)`. It is not stored as a separate DB column.
 
 ---
 

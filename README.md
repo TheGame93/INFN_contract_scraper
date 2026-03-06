@@ -1,11 +1,5 @@
-# INFN contracts scraper
-https://jobs.dsi.infn.it/
+# INFN Jobs Scraper
 
-I want to build a scraper of INFN jobs oppurtnities, both open, ongoing or closed.
-I'm interested inf
-- borse
-- incarichi di ricerca
-- incarichi postdoc
-- contratti di ricerca
+Work-in-progress scraper for `https://jobs.dsi.infn.it/`.
 
-I want to do it for analytics purpose: my goal is to get real data for the positions about: number of positions for call, place, deadline, type of position, money, lenght
+Goal: build an analytics-ready dataset of INFN opportunities (borse, assegni di ricerca, incarichi di ricerca, incarichi post-doc, contratti di ricerca), extracting key fields from listings and PDF calls (title, structure, type/subtype, duration, deadlines, positions, and economic data when available).

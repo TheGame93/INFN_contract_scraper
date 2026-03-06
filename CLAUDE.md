@@ -25,6 +25,10 @@ All design documents live in `docs/`:
 | `docs/plan_desiderata.md` | What to build: fields, rules, test plan, assumptions |
 | `docs/plan_implementation.md` | How to build it: file tree, layers, DB schema, extensibility |
 | `docs/info_functions.md` | Index of every function and class in the codebase |
+| `docs/step/planning_step.md` | Active step tracker — **read this at every new session** |
+| `docs/step/policy_step.md` | Rules for the step system (adding steps, marking done) |
+
+**Session start:** read `docs/step/planning_step.md` → check `## Currently Active` → open the relevant `docs/step/implement_stepN.md` → continue from the first `[ ]` sub-substep.
 
 **Always read the relevant doc before starting work on a subsystem.**
 
