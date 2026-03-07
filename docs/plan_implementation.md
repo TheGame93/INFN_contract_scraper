@@ -46,9 +46,10 @@ src/infn_jobs/
 │   ├── detail/
 │   │   ├── __init__.py
 │   │   └── parser.py                # parse_detail(html, detail_id) -> CallRaw  (all fields nullable)
-│   └── orchestrator.py              # fetch_all_calls(session, tipo, listing_status) -> list[CallRaw]
-│                                    #   calls parse_rows() → for each row: fetch detail + parse_detail()
-│                                    #   sets listing_status on each CallRaw from the URL variant used
+│   └── orchestrator.py              # fetch_all_calls(session, tipo) -> list[CallRaw]
+│                                    #   builds active + expired URLs, calls parse_rows() for each,
+│                                    #   fetches each detail + parse_detail(), sets listing_status
+│                                    #   on each CallRaw from the URL variant (active/expired) used
 │
 ├── extract/
 │   ├── __init__.py

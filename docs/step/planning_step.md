@@ -72,7 +72,7 @@
 [ ] 6.8 Export tests (CSVs written, non-empty, correct columns)
 
 ### Step 7 — Pipeline Layer `implement_step7.md`
-[ ] 7.1 `pipeline/curate.py` — thin wrapper calling `store/export/queries.py`
+[ ] 7.1 `pipeline/curate.py` — thin wrapper calling `store/export/curate.py`
 [ ] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
 [ ] 7.3 Sync loop: per-tipo iteration + per-call PDF handling + `pdf_fetch_status` assignment
 [ ] 7.4 Progress logging (log each tipo, each detail_id, pdf_fetch_status outcome)

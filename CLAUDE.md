@@ -27,6 +27,7 @@ All design documents live in `docs/`:
 | `docs/info_functions.md` | Index of every function and class in the codebase |
 | `docs/step/planning_step.md` | Active step tracker — **read this at every new session** |
 | `docs/step/policy_step.md` | Rules for the step system (adding steps, marking done) |
+| `docs/known_edge_cases.md` | Specific detail_ids with parser failures or unexpected behavior |
 
 **Session start:** read `docs/step/planning_step.md` → check `## Currently Active` → open the relevant `docs/step/implement_stepN.md` → continue from the first `[ ]` sub-substep.
 
