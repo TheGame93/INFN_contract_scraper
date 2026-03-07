@@ -60,7 +60,8 @@ src/infn_jobs/
 │   └── parse/
 │       ├── __init__.py
 │       ├── segmenter.py             # segment(text) -> list[str]  (split multi-entry PDFs)
-│       ├── row_builder.py           # assemble PositionRow from field results + evidence
+│       ├── row_builder.py           # build_rows(text, detail_id, text_quality, anno) -> tuple[list[PositionRow], str | None]
+│       │                            #   second element is pdf_call_title (call-level); pipeline sets it on CallRaw before upsert
 │       ├── fields/
 │       │   ├── __init__.py
 │       │   ├── contract_type.py     # extract contract_type + contract_subtype (era-aware)
@@ -134,7 +135,8 @@ tests/
 │
 ├── store/
 │   ├── test_schema.py                      # tables created, idempotent init
-│   └── test_upsert.py                      # upsert deduplication, first_seen_at immutability
+│   ├── test_upsert.py                      # upsert deduplication, first_seen_at immutability
+│   └── test_curate.py                      # rebuild_curated: employment rows kept, prize-only excluded
 │
 └── e2e/
     └── test_sync.py                        # full pipeline, idempotency, row count > call count
@@ -151,7 +153,7 @@ tests/
 | `fetch/` | HTTP + HTML → domain objects | DB, PDF parsing |
 | `extract/` | PDF bytes → domain objects | HTTP, DB |
 | `store/` | Domain objects → SQLite + CSV | HTTP, PDF |
-| `pipeline/` | Orchestration order | Transport details |
+| `pipeline/` | Orchestration order | Transport details | _(no unit tests — covered by e2e Step 9)_ |
 | `cli/` | User args → pipeline calls | All internals |
 
 ---
@@ -220,6 +222,7 @@ position_rows (
   net_income_monthly_eur        REAL,
   -- evidence snippets (one per extracted field):
   contract_type_evidence        TEXT,
+  contract_subtype_evidence     TEXT,
   duration_evidence             TEXT,
   section_evidence              TEXT,
   institute_cost_evidence       TEXT,

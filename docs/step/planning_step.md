@@ -33,6 +33,7 @@
 ### Step 3 — Config Layer `implement_step3.md`
 [ ] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
 [ ] 3.2 Path initialization helper (create `data/` subdirs if missing)
+[ ] 3.3 Verify TIPOS URL params against live site; update TIPOS dict in `settings.py` — **required before Step 4**
 
 ### Step 4 — Fetch Layer `implement_step4.md`
 [ ] 4.1 HTTP client (`get_session()` with retry, rate-limit, user-agent)
@@ -54,12 +55,12 @@
 [ ] 5.8 PDF text fixtures (9 fixture files)
 [ ] 5.9 Segmenter (`segment(text) -> list[str]`) + tests
 [ ] 5.10 Field extractor: `metadata.py` (pdf_call_title, section_structure_department)
-[ ] 5.11 Field extractor: `contract_type.py` (type, subtype canonical + raw + evidence)
+[ ] 5.11 Field extractor: `contract_type.py` (contract_type + contract_type_evidence; contract_subtype canonical + contract_subtype_raw + contract_subtype_evidence)
 [ ] 5.12 Field extractor: `duration.py` (duration_months, raw, evidence; era variants)
 [ ] 5.13 Field extractor: `income.py` (7 EUR fields + evidence; era label variants)
 [ ] 5.14 Field extractor: `confidence.py` (`score_confidence(row, text_quality)`)
 [ ] 5.15 Field extractor tests
-[ ] 5.16 Row builder (`build_rows(text, detail_id, text_quality, anno) -> list[PositionRow]`)
+[ ] 5.16 Row builder (`build_rows(text, detail_id, text_quality, anno) -> tuple[list[PositionRow], str | None]` — second element is `pdf_call_title`; pipeline uses it to update `CallRaw` before upsert)
 
 ### Step 6 — Store Layer `implement_step6.md`
 [ ] 6.1 DB schema (`init_db(conn)` — 4 tables, idempotent)
@@ -70,11 +71,13 @@
 [ ] 6.6 Curated filter SQL (`rebuild_curated(conn)` — employment-like filter for both tables)
 [ ] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files)
 [ ] 6.8 Export tests (CSVs written, non-empty, correct columns)
+[ ] 6.9 Curated filter tests (`tests/store/test_curate.py` — employment-like rows kept, prize-only calls excluded, both `calls_curated` and `position_rows_curated` populated correctly)
 
 ### Step 7 — Pipeline Layer `implement_step7.md`
+> Note: pipeline layer has no dedicated unit tests — covered by e2e in Step 9.
 [ ] 7.1 `pipeline/curate.py` — thin wrapper calling `store/export/curate.py`
 [ ] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
-[ ] 7.3 Sync loop: per-tipo iteration + per-call PDF handling + `pdf_fetch_status` assignment
+[ ] 7.3 Sync loop: per-tipo iteration + per-call PDF handling + `pdf_fetch_status` assignment; unpack `build_rows` tuple to get `pdf_call_title`, set on `CallRaw` before `upsert_call`
 [ ] 7.4 Progress logging (log each tipo, each detail_id, pdf_fetch_status outcome)
 
 ### Step 8 — CLI Layer `implement_step8.md`
