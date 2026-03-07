@@ -63,6 +63,7 @@ src/infn_jobs/
 
 ## Key Conventions
 
+- **Docstrings are mandatory.** Every public function, method, and class must have a one-line docstring summarising what it does. Private helpers (`_name`) may omit them if the logic is self-evident.
 - **One concern per file.** No file mixes HTTP with parsing, or schema with queries.
 - **All fields are nullable — always.** HTML fields missing on old pages → `NULL`, never a crash. PDF fields not found → `NULL` + `NULL` evidence, never a crash.
 - **Upsert by `detail_id`.** Running `sync` twice must produce identical row counts.
@@ -105,14 +106,22 @@ Use DEBUG for internal parsing steps. Use WARNING for recoverable anomalies (une
 
 ---
 
-## Mandatory: Update `docs/info_functions.md`
+## `docs/info_functions.md` — Auto-generated function index
 
-After every coding session that adds, modifies, or removes a function or class:
-1. Open `docs/info_functions.md`.
-2. Add/update/remove the corresponding entry.
-3. Keep entries sorted by file path.
+`docs/info_functions.md` is a compact, flat index of every public function and class in the
+codebase. Its primary purpose is to give a Claude session an instant mental map of the full API
+surface without reading 30 individual source files.
 
-The index format is:
+**It is auto-generated — do not edit it by hand.**
+
+Run this whenever functions are added, renamed, or removed:
+
+```bash
+python3 scripts/gen_info_functions.py
+```
+
+The script walks `src/infn_jobs/`, reads each module's docstrings, and writes the index in this
+format (sorted by file path):
 
 ```markdown
 ### `function_name`
@@ -123,8 +132,11 @@ The index format is:
 | **Parent** | `ClassName` / `module` |
 | **Inputs** | `param1: type`, `param2: type` |
 | **Output** | `type` — what it returns |
-| **Description** | One-line summary. |
+| **Description** | One-line summary (from docstring). |
 ```
+
+**At session start:** if `docs/info_functions.md` exists and is current, read it for a quick
+overview before diving into source files.
 
 ---
 
@@ -153,12 +165,15 @@ with no machine-specific content and are safe to publish.
 ## Environment Setup
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+pip3 install -r pythonrequirements.txt
+pip3 install -e ".[dev]"
 ```
 
 The `[dev]` extras include `pytest` and `ruff`.
+`pythonrequirements.txt` lists all runtime and dev dependencies — used by the entrypoint
+to verify the venv is complete before running any command.
 
 ### Ruff configuration
 
@@ -195,10 +210,10 @@ ruff check --fix src/
 ## CLI
 
 ```bash
-python -m infn_jobs sync                   # full idempotent pipeline
-python -m infn_jobs sync --dry-run         # parse only, no DB writes
-python -m infn_jobs sync --force-refetch   # re-download all PDFs even if cached
-python -m infn_jobs export-csv             # write 4 CSVs to data/exports/
+python3 -m infn_jobs sync                   # full idempotent pipeline
+python3 -m infn_jobs sync --dry-run         # parse only, no DB writes
+python3 -m infn_jobs sync --force-refetch   # re-download all PDFs even if cached
+python3 -m infn_jobs export-csv             # write 4 CSVs to data/exports/
 ```
 
 ---

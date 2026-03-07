@@ -18,7 +18,7 @@
 
 ### Step 1 — Project Scaffolding `implement_step1.md`
 [ ] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras (pytest, ruff) — **discuss ruff config before writing**
-[ ] 1.2 Venv setup verification: `python -m venv .venv && pip install -e ".[dev]"` succeeds
+[ ] 1.2 Venv setup verification: `python3 -m venv .venv && pip install -e ".[dev]"` succeeds
 [ ] 1.3 Package skeleton (`__init__.py` files for all modules)
 [ ] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep` files)
 [ ] 1.5 Test scaffolding (`conftest.py`, empty test subdirectories)

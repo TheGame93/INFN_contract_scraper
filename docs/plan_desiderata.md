@@ -143,10 +143,10 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 
 ### CLI
 
-- `python -m infn_jobs sync` — full idempotent backfill, active+expired for all 5 types.
-- `python -m infn_jobs sync --force-refetch` — re-download all PDFs, even if cached.
-- `python -m infn_jobs sync --dry-run` — parse only, no DB writes.
-- `python -m infn_jobs export-csv` — write 4 CSVs to `data/exports/`.
+- `python3 -m infn_jobs sync` — full idempotent backfill, active+expired for all 5 types.
+- `python3 -m infn_jobs sync --force-refetch` — re-download all PDFs, even if cached.
+- `python3 -m infn_jobs sync --dry-run` — parse only, no DB writes.
+- `python3 -m infn_jobs export-csv` — write 4 CSVs to `data/exports/`.
 
 ---
 

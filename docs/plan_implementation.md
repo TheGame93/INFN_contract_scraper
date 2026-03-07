@@ -18,7 +18,7 @@
 ```
 src/infn_jobs/
 │
-├── __main__.py                      # python -m infn_jobs → cli.main
+├── __main__.py                      # python3 -m infn_jobs → cli.main
 │
 ├── cli/
 │   ├── __init__.py
@@ -162,10 +162,10 @@ tests/
 
 | Command | File | What it does |
 |---|---|---|
-| `python -m infn_jobs sync` | `cli/cmd_sync.py` | Full idempotent pipeline: fetch → extract → store |
-| `python -m infn_jobs sync --dry-run` | same | Parse but skip DB writes |
-| `python -m infn_jobs sync --force-refetch` | same | Re-download all PDFs even if cached |
-| `python -m infn_jobs export-csv` | `cli/cmd_export.py` | Read DB → write 4 CSV files |
+| `python3 -m infn_jobs sync` | `cli/cmd_sync.py` | Full idempotent pipeline: fetch → extract → store |
+| `python3 -m infn_jobs sync --dry-run` | same | Parse but skip DB writes |
+| `python3 -m infn_jobs sync --force-refetch` | same | Re-download all PDFs even if cached |
+| `python3 -m infn_jobs export-csv` | `cli/cmd_export.py` | Read DB → write 4 CSV files |
 
 ---
 
@@ -241,6 +241,20 @@ The `call_title` column in CSV exports is a derived field: `COALESCE(pdf_call_ti
 
 ---
 
+## Scripts
+
+Development utilities (not part of the installable package). Already present in the repo:
+
+```text
+scripts/
+└── gen_info_functions.py    # walk src/infn_jobs/, extract docstrings, write docs/info_functions.md
+```
+
+Run from the project root: `python3 scripts/gen_info_functions.py`.
+Re-run at the end of every session that adds, renames, or removes public functions.
+
+---
+
 ## Adding New Sections (v2 Extensibility)
 
 Example: winner announcement correlation adds only new files:
@@ -264,12 +278,12 @@ Zero changes to existing fetch, extract, store, or domain files.
 
 ## Verification Checklist
 
-1. `python -m infn_jobs sync` completes without error; DB has rows across all 5 source types.
+1. `python3 -m infn_jobs sync` completes without error; DB has rows across all 5 source types.
 2. Second `sync` run produces identical row counts (idempotency).
 3. `first_seen_at` is unchanged on second run; `last_synced_at` is updated.
 4. At least one call has `pdf_fetch_status = skipped` (old record without PDF link).
 5. `text_quality` values are present; `ocr_degraded` / `no_text` rows have `parse_confidence = low`.
-6. `python -m infn_jobs export-csv` writes 4 non-empty CSV files.
+6. `python3 -m infn_jobs export-csv` writes 4 non-empty CSV files.
 7. `position_rows_curated.csv` has `detail_id + position_row_index` on every row.
 8. At least one `detail_id` with multiple `position_row_index` values (multi-entry PDF).
 9. `pytest tests/ -v` — all unit and e2e tests pass.

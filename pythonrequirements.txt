@@ -1,0 +1,8 @@
+# Runtime dependencies
+requests
+beautifulsoup4
+lxml
+
+# Dev dependencies
+pytest
+ruff
