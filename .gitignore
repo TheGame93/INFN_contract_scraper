@@ -35,6 +35,9 @@ htmlcov/
 *.swp
 *.swo
 
+# Claude Code — machine-local settings (contain local filesystem paths)
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db
