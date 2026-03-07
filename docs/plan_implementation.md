@@ -46,7 +46,9 @@ src/infn_jobs/
 │   ├── detail/
 │   │   ├── __init__.py
 │   │   └── parser.py                # parse_detail(html, detail_id) -> CallRaw  (all fields nullable)
-│   └── orchestrator.py              # fetch_all_calls(session, tipo) -> list[CallRaw]
+│   └── orchestrator.py              # fetch_all_calls(session, tipo, listing_status) -> list[CallRaw]
+│                                    #   calls parse_rows() → for each row: fetch detail + parse_detail()
+│                                    #   sets listing_status on each CallRaw from the URL variant used
 │
 ├── extract/
 │   ├── __init__.py
@@ -79,7 +81,7 @@ src/infn_jobs/
 │   ├── upsert.py                    # upsert_call(), upsert_position_rows()
 │   └── export/
 │       ├── __init__.py
-│       ├── queries.py               # SQL for curated filtering + rebuild_curated(conn)
+│       ├── curate.py                # SQL for curated filtering + rebuild_curated(conn)
 │       └── csv_writer.py            # export_all(conn, export_dir) — writes 4 CSVs
 │
 └── pipeline/

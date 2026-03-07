@@ -58,6 +58,22 @@ The dataset spans records from 2003 to present. This means **high variability is
 
 #### 1. `fetch`
 
+**HTTP client policy:**
+- Sleep 1.0 s between every request (active + expired listings, detail pages, PDF downloads).
+- Max 3 retries with exponential backoff on HTTP 5xx or connection error. Fail loudly on 4xx (log + set `pdf_fetch_status = download_error`).
+- User-Agent: `infn-jobs-scraper/1.0 (research-tool)`.
+- Always pass `response.content` (bytes) to BeautifulSoup — never `response.text`. Let BeautifulSoup detect encoding from the page's `<meta charset>` tag (old pages may be ISO-8859-1).
+
+**Pagination:** assume each listing URL returns all results on a single page (no pagination observed). If a listing returns zero rows, check manually for pagination params and update `url_builder.py` accordingly. Document in `docs/known_edge_cases.md`.
+
+**`tipo` URL parameter values (VERIFY before Step 4):** the exact string passed to `?tipo=` must be confirmed against the live site. Expected values based on site inspection:
+- `Borsa`
+- `Incarico di ricerca`
+- `Incarico Post-Doc`
+- `Contratto di ricerca`
+- `Assegno di ricerca`
+Update `config/settings.py` `TIPOS` dict with verified values before implementing `url_builder.py`.
+
 - Build listing URLs: `index.php?tipo=<...>` and `index.php?tipo=<...>&scad=1`.
 - Parse listing table rows (`BANDO`, text, `SCADENZA`, `dettaglio` URL).
 - Fetch each `dettagli_job.php?id=...` page and parse:
@@ -68,6 +84,10 @@ The dataset spans records from 2003 to present. This means **high variability is
 - If `pdf_url` is absent, set `pdf_fetch_status = skipped` immediately.
 
 #### 2. `extract`
+
+**PDF URL resolution:** if the href from the detail page starts with `http`, use as-is. Otherwise join with the BASE_URL origin (scheme + host only, not path). Log the resolved URL at DEBUG before downloading.
+
+**`mutool draw -F txt` output format:** plain text, one block per page, pages separated by a form-feed character (`\x0c`). Column-aligned tables are flattened to space-separated text — no structure is preserved. Scanned pages may include repeated headers/footers and garbled characters. Regex patterns for field extraction must account for mid-word line breaks, extra whitespace, and OCR noise characters.
 
 - **PDF caching:** download PDF to `data/pdf_cache/<detail_id>.pdf`. If the file already exists, skip download. Pass `--force-refetch` to re-download all PDFs.
 - Extract text via `mutool draw -F txt`.

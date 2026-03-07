@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/mnt/c/Lavoro/DDG/contratti_INFN/scraper_contratti/.gitignore:*)",
+      "Bash(/mnt/c/Lavoro/DDG/contratti_INFN/scraper_contratti/docs/known_edge_cases.md:*)"
+    ]
+  }
+}

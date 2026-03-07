@@ -17,11 +17,12 @@
 ## Step Index
 
 ### Step 1 — Project Scaffolding `implement_step1.md`
-[ ] 1.1 `pyproject.toml` and package entry point
-[ ] 1.2 Package skeleton (`__init__.py` files for all modules)
-[ ] 1.3 Data directory structure (`data/pdf_cache/`, `data/exports/`)
-[ ] 1.4 Test scaffolding (`conftest.py`, empty test subdirectories)
-[ ] 1.5 Smoke check: install + import without errors
+[ ] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras (pytest, ruff) — **discuss ruff config before writing**
+[ ] 1.2 Venv setup verification: `python -m venv .venv && pip install -e ".[dev]"` succeeds
+[ ] 1.3 Package skeleton (`__init__.py` files for all modules)
+[ ] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep` files)
+[ ] 1.5 Test scaffolding (`conftest.py`, empty test subdirectories)
+[ ] 1.6 Smoke check: import without errors + `ruff check src/` passes
 
 ### Step 2 — Domain Layer `implement_step2.md`
 [ ] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)

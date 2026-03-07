@@ -74,6 +74,32 @@ src/infn_jobs/
 - **`text_quality`** classifies the PDF source: `digital | ocr_clean | ocr_degraded | no_text`. Set in `extract/pdf/mutool.py`. Determines whether missing financial fields are a parse failure or an expected gap.
 - **Temporal variability:** pre-2010 PDFs are often scanned. Label variants for the same field differ across 20+ years of templates. The `normalize/` layer must handle all known variants. Use `anno` in analytics to contextualize NULL financial fields.
 - **`parse_confidence` is behavioral only** — it reflects parser success, not data availability. NULL EUR fields in old records do not lower confidence.
+- **Character encoding:** always pass `response.content` (bytes) to BeautifulSoup, never `response.text`. Let BeautifulSoup detect encoding from the HTML `<meta charset>` tag. Old pages may be ISO-8859-1.
+- **HTTP rate limit:** 1.0 s sleep between requests. Max 3 retries with exponential backoff on 5xx. User-Agent: `infn-jobs-scraper/1.0 (research-tool)`.
+- **PDF URL resolution:** if the href starts with `http`, use as-is. Otherwise join with BASE_URL origin (scheme + host only, not path).
+- **SQLite connection lifecycle:** created in the CLI layer, passed as a parameter to `run_sync()`. Each upsert commits immediately (SQLite autocommit per statement). No transaction wraps the full sync — partial runs are safe because every re-run is fully idempotent.
+- **`position_row_index`:** 0-based integer, assigned by order of appearance in `segment()` output. Deterministic for identical PDF text. Never reorder — v2 winner tables will use `(detail_id, position_row_index)` as FK.
+- **`fetch_all_calls` conversion:** `fetch/orchestrator.py` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. It sets `listing_status` (`active`/`expired`) from the URL variant used, then returns the assembled `CallRaw` list.
+
+---
+
+## Logging Standard
+
+Every module uses `logging.getLogger(__name__)`. No `print()` in library code.
+
+The CLI configures the root handler once:
+```python
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
+```
+
+Log every significant I/O event at INFO:
+- Starting a new tipo (`"Fetching tipo Borsa (active)"`)
+- Each detail page fetch (`"Processing detail_id=1234"`)
+- PDF download outcome (`"PDF 1234: downloaded"` / `"PDF 1234: skipped (no url)"`)
+- pdf_fetch_status result (`"PDF 1234: parse_error"`)
+- Rows built (`"detail_id=1234: 3 position_rows built"`)
+
+Use DEBUG for internal parsing steps. Use WARNING for recoverable anomalies (unexpected HTML structure, unexpected field value).
 
 ---
 
@@ -105,6 +131,46 @@ The index format is:
 - Python 3.11+
 - `mutool` (MuPDF) available on PATH — required for PDF text extraction
 - Dependencies: `requests`, `beautifulsoup4`, `lxml`
+
+## Environment Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+The `[dev]` extras include `pytest` and `ruff`.
+
+### Ruff configuration
+
+Ruff is the linter (replaces flake8 + isort). Config lives in `pyproject.toml`:
+
+```toml
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+# E  — pycodestyle errors (style and syntax)
+# F  — pyflakes (undefined names, unused imports)
+# I  — isort (import ordering, enforced across all sessions)
+# UP — pyupgrade (modernize to Python 3.11 syntax automatically)
+
+[tool.ruff.lint.isort]
+known-first-party = ["infn_jobs"]
+```
+
+Run before every commit:
+```bash
+ruff check src/
+```
+
+Fix auto-fixable issues:
+```bash
+ruff check --fix src/
+```
 
 ---
 
