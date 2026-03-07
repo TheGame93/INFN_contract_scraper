@@ -1,1 +1,11 @@
-empty for now
+- review overall planning using a top/down approach:
+    - "plan_desiderata" is my goal
+    - "plan_implementation" is the broad planning - does it satisfy my goal?
+    - CLAUDE.md is the AI instruction file - does it address all the key weak spots of "plan_implementation.md"?
+    - Are plan_implementation.md and CLAUDE.md coherent?
+- Review step planning
+    - Review planning_step.md - does it comply with the "_desiderata" "_implementation" and "CLAUDE"?
+    - Review policy_step.md - does it comply with the "_desiderata" "_implementation" and "CLAUDE"?
+- Review implement_stepN
+    - (in a new context window) Read files "CLAUDE.md", "policy_step.md" and "planning_step.md". Review the docs/step/implement_stepN.md, from 1 to 5, one by one. We have to check if the plan is coherent.
+    - (in a new context window) Read files "CLAUDE.md", "policy_step.md" and "planning_step.md". Review the docs/step/implement_stepN.md, from 6 to 9, one by one. We have to check if the plan is coherent.
