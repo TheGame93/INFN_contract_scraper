@@ -149,7 +149,7 @@ substep level — complete 5.8 before starting 5.9.
   - Return `None` for `None` input, empty string, or any string that cannot be parsed after cleaning.
   - Pure function — no I/O, no imports from other `infn_jobs` modules.
 
-[ ] done
+[x] done
 
 **Substep 5.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -174,7 +174,7 @@ substep level — complete 5.8 before starting 5.9.
   - Do not attempt fuzzy parsing — only the two explicit formats.
   - Pure function — no I/O, no imports from other `infn_jobs` modules (only `datetime`).
 
-[ ] done
+[x] done
 
 **Substep 5.5 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -203,7 +203,7 @@ substep level — complete 5.8 before starting 5.9.
   - Return `None` for `None` input or empty string.
   - Pure function — no I/O, no imports from other `infn_jobs` modules (only stdlib).
 
-[ ] done
+[x] done
 
 **Substep 5.6 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -236,7 +236,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_normalize_eur_thousands_only_no_cents`: `normalize_eur("1.200")` → `1200.0`.
   - Consider `@pytest.mark.parametrize` for the valid-input cases.
 
-[ ] done
+[x] done
 
 ### 5.7.2 Create `tests/extract/normalize/test_dates.py`
 - **File:** `tests/extract/normalize/test_dates.py`
@@ -257,7 +257,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_parse_date_wrong_format_returns_none`: `parse_date("2023-01-31")` (ISO format) → `None` — the function only handles DD-MM-YYYY and DD/MM/YYYY.
   - `test_parse_date_invalid_date_returns_none`: `parse_date("32-13-2023")` → `None`.
 
-[ ] done
+[x] done
 
 ### 5.7.3 Create `tests/extract/normalize/test_subtypes.py`
 - **File:** `tests/extract/normalize/test_subtypes.py`
@@ -281,7 +281,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_normalize_subtype_tipo_a_pre2010_returns_none`: `normalize_subtype("Tipo A", 2008)` → `None`.
   - `test_normalize_subtype_tipo_a_anno_none_returns_none`: `normalize_subtype("Tipo A", None)` → `None`.
 
-[ ] done
+[x] done
 
 **Substep 5.7 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/normalize/ -v` passes with no failures.

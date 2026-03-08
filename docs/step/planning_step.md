@@ -9,7 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** `5.4` — EUR normalization
+> **Next to start:** `5.8` — PDF text fixtures
 > **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
 
@@ -50,10 +50,10 @@
 [x] 5.1 PDF downloader (cache-aware)
 [x] 5.2 `mutool` wrapper (text + TextQuality)
 [x] 5.3 `mutool` tests (mock subprocess)
-[ ] 5.4 EUR normalization
-[ ] 5.5 Date normalization
-[ ] 5.6 Subtype normalization (era-aware)
-[ ] 5.7 Normalization tests
+[x] 5.4 EUR normalization
+[x] 5.5 Date normalization
+[x] 5.6 Subtype normalization (era-aware)
+[x] 5.7 Normalization tests
 [ ] 5.8 PDF text fixtures (9 fixture files)
 [ ] 5.9 Segmenter + tests
 [ ] 5.10 Field extractor: `metadata.py`
