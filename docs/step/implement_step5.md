@@ -97,7 +97,7 @@ substep level — complete 5.8 before starting 5.9.
   - Pages in mutool output are separated by form-feed `\x0c` — preserve these in the returned text; `segment()` in Step 5.9 uses them as split hints.
   - Log at DEBUG: `"mutool {pdf_path.name}: {text_quality.value}, {len(text)} chars"`.
 
-[ ] done
+[x] done
 
 **Substep 5.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -125,7 +125,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_extract_text_mutool_not_found_raises`: mock `subprocess.run` raises `FileNotFoundError` — assert `extract_text(path)` raises `RuntimeError`.
   - Pass a `tmp_path / "dummy.pdf"` as the path argument (does not need to exist for mocked calls).
 
-[ ] done
+[x] done
 
 **Substep 5.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/test_mutool.py -v` passes with no failures.

@@ -9,7 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** `5.2` — mutool wrapper
+> **Next to start:** `5.4` — EUR normalization
 > **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
 
@@ -48,8 +48,8 @@
 
 ### Step 5 — Extract Layer `implement_step5.md`
 [x] 5.1 PDF downloader (cache-aware)
-[ ] 5.2 `mutool` wrapper (text + TextQuality)
-[ ] 5.3 `mutool` tests (mock subprocess)
+[x] 5.2 `mutool` wrapper (text + TextQuality)
+[x] 5.3 `mutool` tests (mock subprocess)
 [ ] 5.4 EUR normalization
 [ ] 5.5 Date normalization
 [ ] 5.6 Subtype normalization (era-aware)
