@@ -9,9 +9,9 @@
 
 ## Currently Active
 
-> **Next to start:** `4.1` — HTTP client
+> **Next to start:** `5.1` — PDF downloader
+> **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
-> **File:** `docs/step/implement_step3.md`
 
 ---
 
@@ -37,14 +37,14 @@
 [x] 3.3 Verify TIPOS URL params against live site — **required before Step 4**
 
 ### Step 4 — Fetch Layer `implement_step4.md`
-[ ] 4.1 HTTP client with retry, rate-limit, 4xx/5xx handling
-[ ] 4.2 Listing URL builder
-[ ] 4.3 Listing HTML parser
-[ ] 4.4 Listing fixtures + tests
-[ ] 4.5 Detail page parser (all fields nullable)
-[ ] 4.6 Detail page fixtures (full + old/missing-fields) + tests
-[ ] 4.7 Fetch orchestrator
-[ ] 4.8 Zero-row verification: confirm all 5 tipos return non-empty listings
+[x] 4.1 HTTP client with retry, rate-limit, 4xx/5xx handling
+[x] 4.2 Listing URL builder
+[x] 4.3 Listing HTML parser
+[x] 4.4 Listing fixtures + tests
+[x] 4.5 Detail page parser (all fields nullable)
+[x] 4.6 Detail page fixtures (full + old/missing-fields) + tests
+[x] 4.7 Fetch orchestrator
+[x] 4.8 Zero-row verification: confirm all 5 tipos return non-empty listings
 
 ### Step 5 — Extract Layer `implement_step5.md`
 [ ] 5.1 PDF downloader (cache-aware)
@@ -106,7 +106,7 @@
 | 1 | Project scaffolding | [x] |
 | 2 | Domain layer | [x] |
 | 3 | Config layer | [x] |
-| 4 | Fetch layer | [ ] |
+| 4 | Fetch layer | [x] |
 | 5 | Extract layer | [ ] |
 | 6 | Store layer | [ ] |
 | 7 | Pipeline layer | [ ] |

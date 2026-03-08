@@ -36,7 +36,7 @@
   - Rate-limit sleep (1.0 s) is NOT enforced inside the session — it is the caller's responsibility (orchestrator sleeps between requests). `get_session()` only configures retry and identity.
   - No test file in `plan_implementation.md` for `client.py`; the session is exercised indirectly through listing/detail parser tests that use a mock session, and via e2e in Step 9.
 
-[ ] done
+[x] done
 
 **Substep 4.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -61,7 +61,7 @@
   - Always returns exactly 2 URLs: index 0 = active, index 1 = expired. The orchestrator relies on this ordering to set `listing_status`.
   - `tipo` is one of the 5 strings from `TIPOS` — verified correct in Step 3.3.
 
-[ ] done
+[x] done
 
 ### 4.2.2 Create `tests/fetch/test_url_builder.py`
 - **File:** `tests/fetch/test_url_builder.py`
@@ -79,7 +79,7 @@
   - `test_build_urls_expired_url_has_scad`: assert `"scad=1"` in `result[1]` and `"tipo=Borsa"` in `result[1]`.
   - `test_build_urls_tipo_is_url_encoded_correctly`: call `build_urls("Incarico di ricerca")` and assert the URL contains the tipo string (check `"tipo=Incarico"` is present). Note: `requests` handles encoding at call time, but the URL string itself may or may not be percent-encoded depending on implementation choice — parametrize if both variants are valid.
 
-[ ] done
+[x] done
 
 **Substep 4.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/fetch/test_url_builder.py -v` passes with no failures.
@@ -100,7 +100,7 @@
   - Rows should also have cells for: a BANDO identifier (e.g. `"123/2023"`), a title text (e.g. `"Borsa di studio"`), and a SCADENZA date string (e.g. `"31-01-2023"`). The exact column ordering should match what the real site returns — if unsure, write a generic version and update after Step 3.3 live verification.
   - Include a `<meta charset="utf-8">` tag so BeautifulSoup encoding detection works correctly on this fixture.
 
-[ ] done
+[x] done
 
 ### 4.3.2 Add fixture `tests/fixtures/html/listing_expired.html`
 - **File:** `tests/fixtures/html/listing_expired.html`
@@ -112,7 +112,7 @@
   - Use different `id` values: `id=5000` and `id=5001` so tests can assert distinct `detail_id` values are returned for active vs. expired fixtures.
   - Include the same `<meta charset="utf-8">` tag.
 
-[ ] done
+[x] done
 
 ### 4.3.3 Create `src/infn_jobs/fetch/listing/parser.py`
 - **File:** `src/infn_jobs/fetch/listing/parser.py`
@@ -131,7 +131,7 @@
   - If a row has no recognizable `dettagli_job.php?id=` link, skip the row (log at WARNING) — do not crash.
   - If the table is empty or absent, return `[]` — not an error.
 
-[ ] done
+[x] done
 
 **Substep 4.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/fetch/ -v` passes with no failures.
@@ -159,7 +159,7 @@
   - `test_parse_rows_detail_url_is_absolute`: assert `result[0]["detail_url"].startswith("http")` for both fixtures.
   - `test_parse_rows_empty_table_returns_empty_list`: pass a minimal HTML with no table rows and assert `parse_rows(html) == []`.
 
-[ ] done
+[x] done
 
 **Substep 4.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/fetch/test_url_builder.py tests/fetch/test_listing_parser.py -v` passes with no failures.
@@ -187,7 +187,7 @@
   - Include `<meta charset="utf-8">`.
   - Use `detail_id=1234` as the assumed page ID (the parser receives this as a parameter).
 
-[ ] done
+[x] done
 
 ### 4.5.2 Add fixture `tests/fixtures/html/detail_page_old.html`
 - **File:** `tests/fixtures/html/detail_page_old.html`
@@ -200,7 +200,7 @@
   - Include `<meta charset="iso-8859-1">` to exercise the encoding-detection path — BeautifulSoup must handle this correctly because bytes are passed in.
   - Use `detail_id=9999` as the assumed page ID.
 
-[ ] done
+[x] done
 
 ### 4.5.3 Create `src/infn_jobs/fetch/detail/parser.py`
 - **File:** `src/infn_jobs/fetch/detail/parser.py`
@@ -222,7 +222,7 @@
   - Do NOT set `listing_status`, `source_tipo`, `pdf_call_title`, `pdf_fetch_status`, `pdf_cache_path`, `first_seen_at`, `last_synced_at` — those are set by the orchestrator or store layer.
   - Log field parsing at DEBUG level. Log a WARNING if an unexpected page structure is encountered (e.g., no table found at all), but still return the partially-filled `CallRaw`.
 
-[ ] done
+[x] done
 
 **Substep 4.5 done when:** all sub-substeps above are `[x]` and
 `pytest tests/fetch/ -v` passes with no failures.
@@ -254,7 +254,7 @@
   - `test_parse_detail_returns_call_raw_instance`: assert `isinstance(result, CallRaw)`.
   - For the inline absolute-URL test, pass minimal HTML bytes directly (no fixture file needed for that case).
 
-[ ] done
+[x] done
 
 **Substep 4.6 done when:** all sub-substeps above are `[x]` and
 `pytest tests/fetch/test_detail_parser.py -v` passes with no failures.
@@ -282,7 +282,7 @@
   - Log at INFO: `"Fetching tipo {tipo} (active)"` and `"Fetching tipo {tipo} (expired)"` before each listing URL; `"Processing detail_id={detail_id}"` before each detail fetch.
   - Use `logging.getLogger(__name__)` — no `print()` per CLAUDE.md logging standard.
 
-[ ] done
+[x] done
 
 **Substep 4.7 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -300,7 +300,7 @@
   - Per CLAUDE.md: "If any tipo returns 0 rows, investigate for pagination params, update `url_builder.py`, and document in `docs/known_edge_cases.md`."
   - This check should also be performed by the orchestrator at runtime: if `parse_rows()` returns `[]` for a listing URL, log at WARNING.
 
-[ ] done
+[x] done
 
 **Substep 4.8 done when:** all sub-substeps above are `[x]`.
 

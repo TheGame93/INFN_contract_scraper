@@ -89,3 +89,63 @@
 | **Output** | — |
 | **Description** | One contract line extracted from a PDF; every field is nullable. |
 
+---
+
+### `get_session`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/fetch/client.py` |
+| **Name** | `get_session` |
+| **Parent** | `infn_jobs.fetch.client` |
+| **Inputs** | — |
+| **Output** | `requests.Session` |
+| **Description** | Return a requests.Session with retry, backoff, and User-Agent configured. |
+
+---
+
+### `parse_detail`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/fetch/detail/parser.py` |
+| **Name** | `parse_detail` |
+| **Parent** | `infn_jobs.fetch.detail.parser` |
+| **Inputs** | `html: bytes`, `detail_id: str` |
+| **Output** | `CallRaw` |
+| **Description** | Parse a detail page and return a CallRaw with all available fields. |
+
+---
+
+### `parse_rows`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/fetch/listing/parser.py` |
+| **Name** | `parse_rows` |
+| **Parent** | `infn_jobs.fetch.listing.parser` |
+| **Inputs** | `html: bytes` |
+| **Output** | `list[dict]` |
+| **Description** | Parse a listing page and return one dict per call row. |
+
+---
+
+### `build_urls`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/fetch/listing/url_builder.py` |
+| **Name** | `build_urls` |
+| **Parent** | `infn_jobs.fetch.listing.url_builder` |
+| **Inputs** | `tipo: str` |
+| **Output** | `list[str]` |
+| **Description** | Return [active_url, expired_url] for the given tipo string. |
+
+---
+
+### `fetch_all_calls`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/fetch/orchestrator.py` |
+| **Name** | `fetch_all_calls` |
+| **Parent** | `infn_jobs.fetch.orchestrator` |
+| **Inputs** | `session: requests.Session`, `tipo: str` |
+| **Output** | `list[CallRaw]` |
+| **Description** | Fetch all active and expired calls for one tipo. Returns assembled CallRaw list. |
+
