@@ -3,7 +3,7 @@
 > **Location:** `docs/step/implement_step7.md`
 > **Prerequisites:** Step 2 complete, Step 3 complete, Step 4 complete, Step 5 complete, Step 6 complete
 > **Produces:**
-> - `src/infn_jobs/pipeline/curate.py`
+> - `src/infn_jobs/pipeline/export.py`
 > - `src/infn_jobs/pipeline/sync.py`
 
 Note: the pipeline layer has **no dedicated unit tests** — per `planning_step.md`: "covered by e2e in Step 9."
@@ -11,25 +11,27 @@ All sub-substep verification is therefore manual. The `__init__.py` for `pipelin
 
 ---
 
-## 7.1 `pipeline/curate.py` — thin wrapper
+## 7.1 `pipeline/export.py` — rebuild curated + export CSVs
 
-### 7.1.1 Create `src/infn_jobs/pipeline/curate.py`
-- **File:** `src/infn_jobs/pipeline/curate.py`
+### 7.1.1 Create `src/infn_jobs/pipeline/export.py`
+- **File:** `src/infn_jobs/pipeline/export.py`
 - **Action:** Create
 - **Write:**
   ```python
-  def rebuild_curated(conn: sqlite3.Connection) -> None:
-      """Rebuild curated tables. Delegates to store.export.curate."""
+  def run_export(conn: sqlite3.Connection, export_dir: Path) -> None:
+      """Rebuild curated tables, then export all 4 CSVs to export_dir."""
   ```
-- **Test:** (manual verification — `python3 -c "from infn_jobs.pipeline.curate import rebuild_curated; print('pipeline curate OK')"` prints `pipeline curate OK` with no import error)
+- **Test:** (manual verification — `python3 -c "from infn_jobs.pipeline.export import run_export; print('pipeline export OK')"` prints `pipeline export OK` with no import error)
 - **Notes:**
-  - This is a pure delegation wrapper. Its only logic is:
+  - This wraps `rebuild_curated` and `export_all` into a single pipeline operation. Its logic:
     1. Log `logger.info("Rebuilding curated tables …")`.
-    2. Call `store_curate.rebuild_curated(conn)` (imported as `from infn_jobs.store.export import curate as store_curate`).
+    2. Call `store_curate.rebuild_curated(conn)` (imported as `from infn_jobs.store.export.curate import rebuild_curated as store_rebuild_curated`).
     3. Log `logger.info("Curated tables rebuilt.")`.
+    4. Call `csv_export_all(conn, export_dir)` (imported as `from infn_jobs.store.export.csv_writer import export_all as csv_export_all`).
+    5. Log `logger.info("CSV export complete.")`.
   - Do not copy or re-implement the SQL filter. All employment-like filter logic lives in `store/export/curate.py` (Step 6).
   - Module-level logger: `logger = logging.getLogger(__name__)`.
-  - Imports: `import logging`, `import sqlite3` from stdlib; `from infn_jobs.store.export import curate as store_curate`.
+  - Imports: `import logging`, `import sqlite3`, `from pathlib import Path`; `from infn_jobs.store.export.curate import rebuild_curated as store_rebuild_curated`; `from infn_jobs.store.export.csv_writer import export_all as csv_export_all`.
   - Per dependency rule: `pipeline` may import from `store` and `config`. It must NOT import from `cli`.
 
 [ ] done
@@ -82,18 +84,19 @@ All sub-substep verification is therefore manual. The `__init__.py` for `pipelin
              - `call.pdf_fetch_status = "skipped"`.
              - Log: `logger.info("PDF %s: skipped (no url)", call.detail_id)`.
            - Else:
-             - `pdf_path = download(call.pdf_url, dest, force=force_refetch)`.
+             - `pdf_path = download(call.pdf_url, dest, session=session, force=force_refetch)`.
              - If `pdf_path is None`:
                - `call.pdf_fetch_status = "download_error"`.
                - Log: `logger.info("PDF %s: download_error", call.detail_id)`.
              - Else (download succeeded or file was cached):
                - Log: `logger.info("PDF %s: downloaded", call.detail_id)`.
-               - Try `text, text_quality = extract_text(pdf_path)`.
+               - Try `text, text_quality_enum = extract_text(pdf_path)`.
                - On `RuntimeError`:
                  - `call.pdf_fetch_status = "parse_error"`.
                  - Log: `logger.info("PDF %s: parse_error", call.detail_id)`.
                - On success:
-                 - `rows, pdf_call_title = build_rows(text, call.detail_id, text_quality, anno)`.
+                 - **Convert `TextQuality` enum to string:** `tq_str = text_quality_enum.value` — `build_rows` expects a `str`, not a `TextQuality` enum.
+                 - `rows, pdf_call_title = build_rows(text, call.detail_id, tq_str, anno)`.
                  - `call.pdf_call_title = pdf_call_title`.
                  - `call.pdf_cache_path = str(dest)`.
                  - `call.pdf_fetch_status = "ok"`.
@@ -107,7 +110,9 @@ All sub-substep verification is therefore manual. The `__init__.py` for `pipelin
              - If `rows`: `upsert_position_rows(conn, rows)`.
   - **Critical — `build_rows` return contract:** `build_rows` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level). Per CLAUDE.md: "The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`." This must happen **before** `upsert_call`, not after.
   - **`download()` is cache-aware:** if `dest` already exists and `force_refetch=False`, `download()` returns `dest` without re-downloading. The pipeline always calls `extract_text()` on the returned path. Do NOT skip text extraction for cached PDFs — the text may not have been extracted in a previous session that crashed.
-  - **Empty rows are not failures:** `build_rows()` may return `[]` when `text_quality` is `"no_text"` or `"ocr_degraded"`. Do not crash; just skip `upsert_position_rows` for that call (the `if rows:` guard handles this).
+  - **`text_quality` type boundary:** `extract_text()` returns `TextQuality` enum; `build_rows()` expects a `str`. The pipeline must convert at the boundary: `tq_str = text_quality_enum.value`. This string is stored directly on `PositionRow.text_quality` and compared in `score_confidence()`.
+  - **Session passthrough to `download()`:** `download(url, dest, session=session, force=force_refetch)` — pass the same session used for listing/detail fetches. This ensures PDF downloads benefit from the retry configuration in `get_session()` and use the correct `User-Agent` header. Rate limiting (`time.sleep(RATE_LIMIT_SLEEP)`) is handled inside `download()` before the HTTP GET.
+  - **Empty rows are not failures:** `build_rows()` may return `[]` when `text_quality` is `"no_text"`. For `"no_text"`, `build_rows` returns `([], None)` immediately — no segmentation or extraction is attempted. For `"ocr_degraded"`, extraction IS attempted but most fields will be `None`. Do not crash; just skip `upsert_position_rows` for that call (the `if rows:` guard handles this).
   - **`anno` conversion:** `call.anno` is `str | None`. Use `.isdigit()` to guard conversion before calling `int()`. If `call.anno` is `None` or non-numeric, pass `anno=None` to `build_rows` — it is nullable.
   - **`call.detail_id` is the FK anchor.** Both `upsert_call` and `upsert_position_rows` rely on it. `fetch_all_calls` guarantees `detail_id` is set (parsed from the detail page URL `?id=`). If a call somehow has `detail_id=None`, `upsert_call` will raise a DB constraint error — this is intentional and expected to surface immediately.
   - **`dry_run=True`:** all fetch, download, and extract operations still run. Only the `upsert_call` and `upsert_position_rows` calls are skipped. This allows verifying parsing output without writing to the DB.
@@ -135,7 +140,7 @@ correct unpacking of the `build_rows` tuple to set `call.pdf_call_title` before 
   2. `call.pdf_fetch_status = "download_error"` is set when `download()` returns `None`.
   3. `call.pdf_fetch_status = "parse_error"` is set when `extract_text()` raises `RuntimeError`.
   4. `call.pdf_fetch_status = "ok"` is set on the success path only.
-  5. The `build_rows` return value is unpacked as `rows, pdf_call_title = build_rows(...)`.
+  5. The `build_rows` return value is unpacked as `rows, pdf_call_title = build_rows(text, call.detail_id, tq_str, anno)` where `tq_str = text_quality_enum.value`.
   6. `call.pdf_call_title = pdf_call_title` appears **before** `upsert_call(conn, call)`.
   7. `call.pdf_cache_path = str(dest)` is set on the success path.
   8. `upsert_position_rows` is guarded by `if rows:` — not called on empty list.
@@ -177,7 +182,7 @@ at INFO level matches the standard defined in CLAUDE.md.
     - Dry run: `logger.info("dry_run=True: skipping DB writes for detail_id=%s", call.detail_id)` — when `dry_run=True`.
   - Use `%s` / `%d` style (lazy formatting) throughout — never f-strings in `logger.*()` calls. This avoids formatting cost when the log level is suppressed.
   - DEBUG-level logging for internal parsing steps lives in the extract layer modules (`mutool.py`, `row_builder.py`, etc.) — do not duplicate it here.
-  - The `rebuild_curated()` wrapper in `pipeline/curate.py` has its own INFO log calls (7.1.1). `run_sync()` does NOT call `rebuild_curated()` — that is invoked separately by the CLI command `export-csv` (Step 8). Do not call it inside the sync loop.
+  - The `run_export()` function in `pipeline/export.py` has its own INFO log calls (7.1.1). `run_sync()` does NOT call `run_export()` or `rebuild_curated()` — that is invoked separately by the CLI command `export-csv` (Step 8). Do not call it inside the sync loop.
 
 [ ] done
 
@@ -196,7 +201,7 @@ ruff check src/infn_jobs/pipeline/
 Expected: all existing tests green (pipeline adds no new test files), ruff exits 0.
 
 Manual checks:
-- `python3 -c "from infn_jobs.pipeline.curate import rebuild_curated; from infn_jobs.pipeline.sync import run_sync; print('pipeline OK')"` prints `pipeline OK`.
+- `python3 -c "from infn_jobs.pipeline.export import run_export; from infn_jobs.pipeline.sync import run_sync; print('pipeline OK')"` prints `pipeline OK`.
 - Inspect `src/infn_jobs/pipeline/sync.py` — confirm `call.pdf_call_title = pdf_call_title` appears before `upsert_call(conn, call)` on the success path.
 - Inspect `src/infn_jobs/pipeline/sync.py` — confirm `init_data_dirs()` is the first call inside `run_sync()`.
 - Inspect `src/infn_jobs/pipeline/sync.py` — confirm `if rows:` guards `upsert_position_rows` on every code path.

@@ -32,6 +32,8 @@
 > - `tests/extract/normalize/test_currency.py`
 > - `tests/extract/normalize/test_dates.py`
 > - `tests/extract/normalize/test_subtypes.py`
+> - `tests/extract/fields/test_confidence.py`
+> - `tests/extract/test_row_builder.py`
 
 Note on fixture-first ordering: substep 5.8 creates all 9 PDF text fixtures before any field
 extractor or segmenter is written (5.9–5.16). The fixture-first rule is satisfied at the
@@ -46,15 +48,21 @@ substep level — complete 5.8 before starting 5.9.
 - **Action:** Create
 - **Write:**
   ```python
-  def download(url: str | None, dest: Path, force: bool = False) -> Path | None:
+  def download(
+      url: str | None,
+      dest: Path,
+      session: requests.Session | None = None,
+      force: bool = False,
+  ) -> Path | None:
       """Download PDF to dest. Returns dest on success, None if url is None."""
   ```
 - **Test:** (manual verification — no dedicated test file in `plan_implementation.md`; downloader is exercised via e2e in Step 9; verify manually: `python3 -c "from infn_jobs.extract.pdf.downloader import download; print('ok')"`)
 - **Notes:**
   - If `url` is `None` or empty string, return `None` immediately — do not attempt download.
   - If `dest` already exists and `force=False`, return `dest` immediately (cache hit). Log at DEBUG: `"PDF {dest.name}: cache hit, skipping download"`.
-  - Use a `requests.Session` (or plain `requests.get`) to download. Pass the session from the caller if available, or create a short-lived one. Import `USER_AGENT` from `infn_jobs.config.settings` and set the header.
-  - On HTTP error (non-200 response), log at WARNING and return `None`. The caller (pipeline Step 7) sets `pdf_fetch_status = "download_error"`.
+  - **Session parameter:** if `session` is provided, use it for the HTTP GET (inherits retry/backoff config from `get_session()`). If `None`, create a short-lived `requests.Session` with `USER_AGENT` header set. The pipeline (Step 7) passes the same session used for fetch operations.
+  - **Rate limiting:** call `time.sleep(RATE_LIMIT_SLEEP)` before the HTTP GET (not before cache hits). Import `RATE_LIMIT_SLEEP` from `infn_jobs.config.settings`. Per CLAUDE.md: "1.0 s sleep between requests" applies to PDF downloads too.
+  - On HTTP error (non-200 response): do NOT retry 4xx (per CLAUDE.md). Log at WARNING and return `None`. The caller (pipeline Step 7) sets `pdf_fetch_status = "download_error"`.
   - On success: write `response.content` (bytes) to `dest` and return `dest`. Create parent dirs with `dest.parent.mkdir(parents=True, exist_ok=True)`.
   - Per CLAUDE.md: "PDF URL resolution — if the href starts with `http`, use as-is. Otherwise join with BASE_URL origin (scheme + host only, not path)." URL resolution is done in the detail parser (Step 4); by the time `download()` is called, `url` is already absolute.
   - Log at INFO: `"PDF {dest.name}: downloaded"` on success.
@@ -553,9 +561,9 @@ substep level — complete 5.8 before starting 5.9.
 - **Write:**
   ```python
   def extract_contract_type(segment: str, anno: int | None) -> dict:
-      """Extract contract type and subtype fields from a segment.
+      """Extract contract type, type_raw, and subtype fields from a segment.
 
-      Returns dict with keys: contract_type, contract_type_evidence,
+      Returns dict with keys: contract_type, contract_type_raw, contract_type_evidence,
       contract_subtype, contract_subtype_raw, contract_subtype_evidence.
       All values are str | None.
       """
@@ -563,6 +571,7 @@ substep level — complete 5.8 before starting 5.9.
 - **Test:** `pytest tests/extract/fields/test_contract_type.py -v` (test written in sub-substep 5.15.1)
 - **Notes:**
   - `contract_type`: match known type keywords (case-insensitive): `borsa` → `"Borsa di studio"`, `contratto di ricerca` → `"Contratto di ricerca"`, `incarico di ricerca` → `"Incarico di ricerca"`, `incarico post.?doc` → `"Incarico Post-Doc"`, `assegno di ricerca` → `"Assegno di ricerca"`. Return `None` if nothing matched.
+  - `contract_type_raw`: the original contract-type text as found in the PDF body (e.g., `"CONTRATTO DI RICERCA"`, `"BORSA DI STUDIO"`). Stored as-is before normalization. `None` if no contract type matched.
   - `contract_subtype_raw`: the raw subtype text as found in the PDF (e.g., `"Tipo A"`, `"Fascia II"`, `"Fascia 2"`).
   - `contract_subtype`: call `normalize_subtype(raw, anno)` from `infn_jobs.extract.parse.normalize.subtypes`.
   - Era gating for `Tipo A/B`: passed through `normalize_subtype`, which handles the `anno < 2010 → None` rule.
@@ -649,7 +658,7 @@ substep level — complete 5.8 before starting 5.9.
   def score_confidence(row: PositionRow, text_quality: str) -> ParseConfidence:
       """Compute parse_confidence for a PositionRow based on parsed fields and text quality."""
   ```
-- **Test:** (manual verification — no dedicated test file in `plan_implementation.md`; confidence scoring is exercised indirectly through field extractor tests in 5.15 and row_builder in 5.16)
+- **Test:** `pytest tests/extract/fields/test_confidence.py -v` (test written in sub-substep 5.17.1)
 - **Notes:**
   - Import `PositionRow` from `infn_jobs.domain.position`; `ParseConfidence`, `TextQuality` from `infn_jobs.domain.enums`.
   - Rubric (per plan_desiderata):
@@ -751,7 +760,7 @@ substep level — complete 5.8 before starting 5.9.
   ) -> tuple[list[PositionRow], str | None]:
       """Segment text and build PositionRow list. Second element is pdf_call_title (call-level)."""
   ```
-- **Test:** (manual verification — no dedicated test file in `plan_implementation.md`; row builder is exercised via field extractor tests using fixtures and confirmed in e2e Step 9)
+- **Test:** `pytest tests/extract/test_row_builder.py -v` (test written in sub-substep 5.18.1)
 - **Notes:**
   - Per CLAUDE.md: "`build_rows` return type: `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`."
   - Algorithm:
@@ -762,15 +771,78 @@ substep level — complete 5.8 before starting 5.9.
        - Assemble a `PositionRow` with `detail_id=detail_id`, `position_row_index=i`, `text_quality=text_quality`, and all extracted fields.
        - Call `score_confidence(row, text_quality)` and set `row.parse_confidence`.
     4. Return `(rows, pdf_call_title)`.
-  - If `text_quality` is `"no_text"` or `"ocr_degraded"`, still attempt segmentation and extraction — the extractors will return `None` for all fields, and `score_confidence` will assign `low`. Do not short-circuit.
-  - If `text` is empty, return `([], None)`.
+  - If `text` is empty or `text_quality` is `"no_text"`, return `([], None)`. Per CLAUDE.md: "`no_text` means mutool succeeded but extracted nothing. Produce 0 `position_rows`." No rows means no `parse_confidence` to assign.
+  - If `text_quality` is `"ocr_degraded"`, still attempt segmentation and extraction — the extractors will return `None` for most fields, and `score_confidence` will assign `low`. Do not short-circuit for `ocr_degraded`.
   - Per CLAUDE.md: "`position_row_index` is 0-based, assigned by order of appearance in `segment()` output. Deterministic for identical PDF text. Never reorder."
+  - **`text_quality` type:** `build_rows` receives `text_quality` as a `str` (the `.value` of the `TextQuality` enum). The pipeline (Step 7) must convert: `text_quality = text_quality_enum.value` before calling `build_rows`. Store this string directly on `PositionRow.text_quality`.
   - Import from: `infn_jobs.extract.parse.segmenter`, `infn_jobs.extract.parse.fields.*`, `infn_jobs.domain.position`, `infn_jobs.domain.enums`.
 
 [ ] done
 
 **Substep 5.16 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
+
+---
+
+## 5.17 Confidence scoring tests
+
+### 5.17.1 Create `tests/extract/fields/test_confidence.py`
+- **File:** `tests/extract/fields/test_confidence.py`
+- **Action:** Create
+- **Write:**
+  `test_score_confidence_high_with_duration_and_income`,
+  `test_score_confidence_medium_contract_type_only`,
+  `test_score_confidence_low_ocr_degraded`,
+  `test_score_confidence_low_all_none_from_readable`,
+  `test_score_confidence_high_requires_duration_and_eur`,
+  `test_score_confidence_medium_no_eur_fields`
+- **Test:** `pytest tests/extract/fields/test_confidence.py -v`
+- **Notes:**
+  - Import `score_confidence` from `infn_jobs.extract.parse.fields.confidence`, `PositionRow` from `infn_jobs.domain.position`, `ParseConfidence` from `infn_jobs.domain.enums`.
+  - All test data is inline — create `PositionRow` instances with specific fields set.
+  - `test_score_confidence_high_with_duration_and_income`: `PositionRow(duration_months=12, gross_income_yearly_eur=28000.0)` + `text_quality="digital"` → `ParseConfidence.HIGH`.
+  - `test_score_confidence_medium_contract_type_only`: `PositionRow(contract_type="Borsa")` + `text_quality="digital"` → `ParseConfidence.MEDIUM`.
+  - `test_score_confidence_low_ocr_degraded`: `PositionRow(contract_type="Borsa", duration_months=12)` + `text_quality="ocr_degraded"` → `ParseConfidence.LOW`.
+  - `test_score_confidence_low_all_none_from_readable`: `PositionRow()` + `text_quality="digital"` → `ParseConfidence.LOW`.
+  - `test_score_confidence_high_requires_duration_and_eur`: `PositionRow(duration_months=12)` (no EUR fields) + `text_quality="digital"` → NOT `HIGH` (verify it's `MEDIUM` or `LOW` depending on `contract_type`).
+  - `test_score_confidence_medium_no_eur_fields`: `PositionRow(contract_type="Contratto di ricerca", duration_months=24)` (no EUR) + `text_quality="digital"` → `ParseConfidence.MEDIUM` (contract_type present but no EUR → medium, even though duration is present).
+
+[ ] done
+
+**Substep 5.17 done when:** all sub-substeps above are `[x]` and
+`pytest tests/extract/fields/test_confidence.py -v` passes with no failures.
+
+---
+
+## 5.18 Row builder tests
+
+### 5.18.1 Create `tests/extract/test_row_builder.py`
+- **File:** `tests/extract/test_row_builder.py`
+- **Action:** Create
+- **Write:**
+  `test_build_rows_single_contract_returns_one_row`,
+  `test_build_rows_multi_same_type_returns_multiple_rows`,
+  `test_build_rows_returns_pdf_call_title`,
+  `test_build_rows_no_text_returns_empty`,
+  `test_build_rows_empty_text_returns_empty`,
+  `test_build_rows_position_row_index_sequential`,
+  `test_build_rows_text_quality_stored_as_string`
+- **Test:** `pytest tests/extract/test_row_builder.py -v`
+- **Notes:**
+  - Import `build_rows` from `infn_jobs.extract.parse.row_builder`.
+  - Uses fixtures: `single_contract.txt`, `multi_same_type.txt`, `missing_fields.txt`.
+  - `test_build_rows_single_contract_returns_one_row`: load `single_contract.txt`, call `build_rows(text, "test-1", "digital", 2022)` → assert `len(rows) == 1`.
+  - `test_build_rows_multi_same_type_returns_multiple_rows`: load `multi_same_type.txt` → assert `len(rows) == 2`.
+  - `test_build_rows_returns_pdf_call_title`: assert second element of return tuple is `str | None` (not an exception).
+  - `test_build_rows_no_text_returns_empty`: call `build_rows("", "test-1", "no_text", 2022)` → assert `rows == []` and `pdf_call_title is None`.
+  - `test_build_rows_empty_text_returns_empty`: call `build_rows("", "test-1", "digital", 2022)` → assert `rows == []`.
+  - `test_build_rows_position_row_index_sequential`: load `multi_same_type.txt` → assert `rows[0].position_row_index == 0` and `rows[1].position_row_index == 1`.
+  - `test_build_rows_text_quality_stored_as_string`: call with `text_quality="digital"` → assert `rows[0].text_quality == "digital"` (string, not enum).
+
+[ ] done
+
+**Substep 5.18 done when:** all sub-substeps above are `[x]` and
+`pytest tests/extract/test_row_builder.py -v` passes with no failures.
 
 ---
 

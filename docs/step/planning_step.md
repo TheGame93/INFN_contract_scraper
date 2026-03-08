@@ -17,80 +17,83 @@
 ## Step Index
 
 ### Step 1 — Project Scaffolding `implement_step1.md`
-[ ] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras (pytest, ruff) — **discuss ruff config before writing**
-[ ] 1.2 Venv setup verification: `python3 -m venv .venv && pip install -e ".[dev]"` succeeds
+[ ] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras
+[ ] 1.2 Venv setup verification
 [ ] 1.3 Package skeleton (`__init__.py` files for all modules)
-[ ] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep` files)
+[ ] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep`)
 [ ] 1.5 Test scaffolding (`conftest.py`, empty test subdirectories)
-[ ] 1.6 Smoke check: import without errors + `ruff check src/` passes
+[ ] 1.6 Smoke check: import + ruff clean
 
 ### Step 2 — Domain Layer `implement_step2.md`
 [ ] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)
-[ ] 2.2 `CallRaw` dataclass (all fields from `calls_raw` schema, all nullable)
-[ ] 2.3 `PositionRow` dataclass (all fields from `position_rows` schema, all nullable)
+[ ] 2.2 `CallRaw` dataclass (all nullable fields from `calls_raw` schema)
+[ ] 2.3 `PositionRow` dataclass (all nullable fields from `position_rows` schema, incl. `contract_type_raw`)
 [ ] 2.4 Domain smoke tests (instantiate with all-None fields)
 
 ### Step 3 — Config Layer `implement_step3.md`
 [ ] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
 [ ] 3.2 Path initialization helper (create `data/` subdirs if missing)
-[ ] 3.3 Verify TIPOS URL params against live site; update TIPOS dict in `settings.py` — **required before Step 4**
+[ ] 3.3 Verify TIPOS URL params against live site — **required before Step 4**
 
 ### Step 4 — Fetch Layer `implement_step4.md`
-[ ] 4.1 HTTP client (`get_session()` with retry, rate-limit, user-agent)
-[ ] 4.2 Listing URL builder (`build_urls(tipo) -> list[str]`)
-[ ] 4.3 Listing HTML parser (`parse_rows(html) -> list[dict]`)
+[ ] 4.1 HTTP client with retry, rate-limit, 4xx/5xx handling
+[ ] 4.2 Listing URL builder
+[ ] 4.3 Listing HTML parser
 [ ] 4.4 Listing fixtures + tests
-[ ] 4.5 Detail page parser (`parse_detail(html, detail_id) -> CallRaw`, all fields nullable)
+[ ] 4.5 Detail page parser (all fields nullable)
 [ ] 4.6 Detail page fixtures (full + old/missing-fields) + tests
-[ ] 4.7 Fetch orchestrator (`fetch_all_calls(session, tipo) -> list[CallRaw]` in `fetch/orchestrator.py`)
+[ ] 4.7 Fetch orchestrator
+[ ] 4.8 Zero-row verification: confirm all 5 tipos return non-empty listings
 
 ### Step 5 — Extract Layer `implement_step5.md`
-[ ] 5.1 PDF downloader (`download(url, dest) -> Path | None`, cache-aware)
-[ ] 5.2 `mutool` wrapper (`extract_text(pdf_path) -> tuple[str, TextQuality]`)
-[ ] 5.3 `mutool` tests (mock subprocess: ok, failure, empty output, garbled)
-[ ] 5.4 EUR normalization (`normalize_eur(s) -> float | None`)
-[ ] 5.5 Date normalization (`parse_date(s) -> date | None`)
-[ ] 5.6 Subtype normalization (`normalize_subtype(s, anno) -> str | None`, era-aware)
-[ ] 5.7 Normalization tests (all variants: currency, dates, subtypes + era-gating)
+[ ] 5.1 PDF downloader (cache-aware)
+[ ] 5.2 `mutool` wrapper (text + TextQuality)
+[ ] 5.3 `mutool` tests (mock subprocess)
+[ ] 5.4 EUR normalization
+[ ] 5.5 Date normalization
+[ ] 5.6 Subtype normalization (era-aware)
+[ ] 5.7 Normalization tests
 [ ] 5.8 PDF text fixtures (9 fixture files)
-[ ] 5.9 Segmenter (`segment(text) -> list[str]`) + tests
-[ ] 5.10 Field extractor: `metadata.py` (pdf_call_title, section_structure_department)
-[ ] 5.11 Field extractor: `contract_type.py` (contract_type + contract_type_evidence; contract_subtype canonical + contract_subtype_raw + contract_subtype_evidence)
-[ ] 5.12 Field extractor: `duration.py` (duration_months, raw, evidence; era variants)
-[ ] 5.13 Field extractor: `income.py` (7 EUR fields + evidence; era label variants)
-[ ] 5.14 Field extractor: `confidence.py` (`score_confidence(row, text_quality)`)
+[ ] 5.9 Segmenter + tests
+[ ] 5.10 Field extractor: `metadata.py`
+[ ] 5.11 Field extractor: `contract_type.py` (incl. `contract_type_raw`)
+[ ] 5.12 Field extractor: `duration.py`
+[ ] 5.13 Field extractor: `income.py` (7 EUR fields + grouped evidence)
+[ ] 5.14 Field extractor: `confidence.py`
 [ ] 5.15 Field extractor tests
-[ ] 5.16 Row builder (`build_rows(text, detail_id, text_quality, anno) -> tuple[list[PositionRow], str | None]` — second element is `pdf_call_title`; pipeline uses it to update `CallRaw` before upsert)
+[ ] 5.16 Row builder
+[ ] 5.17 Confidence scoring tests
+[ ] 5.18 Row builder tests
 
 ### Step 6 — Store Layer `implement_step6.md`
-[ ] 6.1 DB schema (`init_db(conn)` — 4 tables, idempotent)
-[ ] 6.2 Schema tests (create twice, no error; all columns present)
-[ ] 6.3 `upsert_call(conn, call: CallRaw)` — upsert with `first_seen_at` immutability
-[ ] 6.4 `upsert_position_rows(conn, rows: list[PositionRow])` — replace rows for detail_id
-[ ] 6.5 Upsert tests (deduplication, `first_seen_at` never changes, `last_synced_at` updates)
-[ ] 6.6 Curated filter SQL (`rebuild_curated(conn)` — employment-like filter for both tables)
-[ ] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files)
-[ ] 6.8 Export tests (CSVs written, non-empty, correct columns)
-[ ] 6.9 Curated filter tests (`tests/store/test_curate.py` — employment-like rows kept, prize-only calls excluded, both `calls_curated` and `position_rows_curated` populated correctly)
+[ ] 6.1 DB schema (`init_db(conn)` — `calls_raw`, `calls_curated` tables + `position_rows` table + `position_rows_curated` VIEW, idempotent)
+[ ] 6.2 Schema tests (create twice, no error; all columns present; VIEW returns correct shape)
+[ ] 6.3 `upsert_call` with `first_seen_at` immutability
+[ ] 6.4 `upsert_position_rows` — replace rows for detail_id
+[ ] 6.5 Upsert tests
+[ ] 6.6 Curated filter: `rebuild_curated(conn)` — employment-like filter for `calls_curated`
+[ ] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files, uses `position_rows_curated` VIEW)
+[ ] 6.8 Export tests
+[ ] 6.9 Curated filter tests
 
 ### Step 7 — Pipeline Layer `implement_step7.md`
 > Note: pipeline layer has no dedicated unit tests — covered by e2e in Step 9.
-[ ] 7.1 `pipeline/curate.py` — thin wrapper calling `store/export/curate.py`
+[ ] 7.1 `pipeline/export.py` — `run_export(conn, export_dir)` — rebuild curated + write CSVs
 [ ] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
-[ ] 7.3 Sync loop: per-tipo iteration + per-call PDF handling + `pdf_fetch_status` assignment; unpack `build_rows` tuple to get `pdf_call_title`, set on `CallRaw` before `upsert_call`
-[ ] 7.4 Progress logging (log each tipo, each detail_id, pdf_fetch_status outcome)
+[ ] 7.3 Sync loop: PDF handling and `build_rows` → `pdf_call_title` verification
+[ ] 7.4 Progress logging
 
 ### Step 8 — CLI Layer `implement_step8.md`
 [ ] 8.1 `__main__.py` entry point
 [ ] 8.2 `cli/main.py` — `build_parser()` + `run()` dispatch
-[ ] 8.3 `cli/cmd_sync.py` — `execute(args)` → `pipeline.sync.run_sync(...)`
-[ ] 8.4 `cli/cmd_export.py` — `execute(args)` → `store.export.csv_writer.export_all(...)`
-[ ] 8.5 Exit codes: 0 on success, 1 on fatal error; print error to stderr
+[ ] 8.3 `cli/cmd_sync.py` → `pipeline.sync.run_sync(...)`
+[ ] 8.4 `cli/cmd_export.py` → `pipeline.export.run_export(...)`
+[ ] 8.5 Exit codes: 0 on success, 1 on fatal error
 
 ### Step 9 — End-to-End Verification `implement_step9.md`
 [ ] 9.1 Write `tests/e2e/test_sync.py`
 [ ] 9.2 Run full verification checklist from `docs/plan_implementation.md`
-[ ] 9.3 Update `docs/info_functions.md` with all implemented functions
+[ ] 9.3 Regenerate `docs/info_functions.md` via `python3 scripts/gen_info_functions.py`
 [ ] 9.4 Mark all steps `[x]` in this file
 
 ---

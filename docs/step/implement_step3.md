@@ -28,7 +28,7 @@ it against a temp directory.
       "Assegno di ricerca",
   ]
 
-  _PROJECT_ROOT: Path = Path(__file__).parent.parent.parent
+  _PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent
   DATA_DIR: Path = _PROJECT_ROOT / "data"
   DB_PATH: Path = DATA_DIR / "infn_jobs.db"
   EXPORT_DIR: Path = DATA_DIR / "exports"

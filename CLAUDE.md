@@ -12,7 +12,10 @@ stores them in SQLite, and exports analytics-ready CSVs.
 
 Goal: analytics on INFN positions (borse, incarichi ricerca, post-doc, contratti di ricerca, assegni di ricerca).
 Dataset spans from 2003 to present — **high field variability is the norm**.
-Future v2 will correlate open/closed calls with winner announcements.
+
+**Future phases (design constraints on v1, not implemented yet):**
+- **v2 — Winner Scraper:** scrapes "delibere" from INFN institutional websites (Giunta/Direttivo) for winner announcements. Requires account + password + 2FA. Links winners to `calls_raw.detail_id`. See `plan_desiderata.md § Future Phases`.
+- **v3 — Analytics:** read-only analysis of v1 position data and v2 winner data (trends, correlations, fill rates).
 
 ---
 
@@ -77,12 +80,17 @@ src/infn_jobs/
 - **Temporal variability:** pre-2010 PDFs are often scanned. Label variants for the same field differ across 20+ years of templates. The `normalize/` layer must handle all known variants. Use `anno` in analytics to contextualize NULL financial fields.
 - **`parse_confidence` is behavioral only** — it reflects parser success, not data availability. NULL EUR fields in old records do not lower confidence.
 - **Character encoding:** always pass `response.content` (bytes) to BeautifulSoup, never `response.text`. Let BeautifulSoup detect encoding from the HTML `<meta charset>` tag. Old pages may be ISO-8859-1.
-- **HTTP rate limit:** 1.0 s sleep between requests. Max 3 retries with exponential backoff on 5xx. User-Agent: `infn-jobs-scraper/1.0 (research-tool)`.
+- **HTTP rate limit:** 1.0 s sleep between requests. Max 3 retries with exponential backoff on 5xx. Do not retry 4xx errors — log at WARNING and set `pdf_fetch_status = download_error`. User-Agent: `infn-jobs-scraper/1.0 (research-tool)`.
 - **PDF URL resolution:** if the href starts with `http`, use as-is. Otherwise join with BASE_URL origin (scheme + host only, not path).
 - **SQLite connection lifecycle:** created in the CLI layer, passed as a parameter to `run_sync()`. Each upsert commits immediately (SQLite autocommit per statement). No transaction wraps the full sync — partial runs are safe because every re-run is fully idempotent.
 - **`position_row_index`:** 0-based integer, assigned by order of appearance in `segment()` output. Deterministic for identical PDF text. Never reorder — v2 winner tables will use `(detail_id, position_row_index)` as FK.
 - **`fetch_all_calls` conversion:** `fetch/orchestrator.py` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. It sets `listing_status` (`active`/`expired`) from the URL variant used, then returns the assembled `CallRaw` list.
 - **`build_rows` return type:** `extract/parse/row_builder.py` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`.
+- **`--dry-run` semantics:** fetches and parses normally but skips all `upsert_*` and `rebuild_curated` calls. PDFs are still downloaded and cached (network I/O is allowed). Logs show what would be upserted.
+- **`detail_url` construction:** `{BASE_URL}/dettagli_job.php?id={detail_id}`. Built in `fetch/detail/parser.py` and stored on `CallRaw`.
+- **Pagination fallback:** listings are assumed single-page (no pagination observed). If any tipo returns 0 rows, investigate for pagination params, update `url_builder.py`, and document in `docs/known_edge_cases.md`.
+- **`no_text` PDFs:** `text_quality = no_text` means mutool succeeded but extracted nothing. Set `pdf_fetch_status = ok` (not `parse_error`). Produce 0 `position_rows`. Reserve `parse_error` for actual mutool failures (non-zero exit code).
+- **Shared utilities must stay atomic.** Modules in `extract/pdf/`, `extract/parse/normalize/`, and `fetch/client.py` are designed for reuse by v2 (winner scraper). They must not import v1-specific logic (no imports from `fetch/listing/`, `fetch/detail/`, `extract/parse/fields/`, or `pipeline/sync.py`). See `plan_implementation.md § Extensibility`.
 
 ---
 

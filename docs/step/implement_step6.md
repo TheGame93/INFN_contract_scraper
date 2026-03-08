@@ -28,15 +28,70 @@ behaviour; CSV export correctness is covered in `test_export.py`.
 - **Write:**
   ```python
   def init_db(conn: sqlite3.Connection) -> None:
-      """Create all 4 tables with CREATE TABLE IF NOT EXISTS. Idempotent."""
+      """Create 3 tables and 1 view with IF NOT EXISTS. Idempotent."""
   ```
 - **Test:** `pytest tests/store/test_schema.py -v` (test written in sub-substep 6.2.2)
 - **Notes:**
-  - Create 4 tables: `calls_raw`, `position_rows`, `calls_curated`, `position_rows_curated`. Use `CREATE TABLE IF NOT EXISTS` for all — safe to call `init_db` twice.
-  - `calls_curated` and `position_rows_curated` share identical schemas with `calls_raw` and `position_rows` respectively (no extra columns). They are populated by `rebuild_curated()` in Step 6.6.
-  - `position_rows` and `position_rows_curated` must declare `PRIMARY KEY (detail_id, position_row_index)` and `FOREIGN KEY (detail_id) REFERENCES calls_raw(detail_id)` (and `calls_curated(detail_id)` for the curated variant).
+  - Create 3 tables: `calls_raw`, `position_rows`, `calls_curated`. Create 1 view: `position_rows_curated`. Use `CREATE TABLE IF NOT EXISTS` and `CREATE VIEW IF NOT EXISTS` — safe to call `init_db` twice.
+  - `calls_curated` shares the identical schema with `calls_raw` (no extra columns). It is populated by `rebuild_curated()` in Step 6.6.
+  - `position_rows_curated` is a **VIEW**, not a table. Per `plan_implementation.md`: it is a denormalized analytical view joining `position_rows` with `calls_curated`. The full SQL is:
+    ```sql
+    CREATE VIEW IF NOT EXISTS position_rows_curated AS
+    SELECT
+      -- linkage / status
+      pr.detail_id,
+      pr.position_row_index,
+      c.source_tipo,
+      c.listing_status,
+      -- call metadata (from HTML)
+      c.numero,
+      c.anno,
+      c.numero_posti_html,
+      c.data_bando,
+      c.data_scadenza,
+      c.first_seen_at,
+      c.last_synced_at,
+      c.pdf_fetch_status,
+      -- source refs
+      c.detail_url,
+      c.pdf_url,
+      c.pdf_cache_path,
+      -- derived call title
+      COALESCE(c.pdf_call_title, c.titolo) AS call_title,
+      -- analytics fields (from PDF)
+      pr.text_quality,
+      pr.contract_type,
+      pr.contract_type_raw,
+      pr.contract_subtype,
+      pr.contract_subtype_raw,
+      pr.duration_months,
+      pr.duration_raw,
+      pr.section_structure_department,
+      pr.institute_cost_total_eur,
+      pr.institute_cost_yearly_eur,
+      pr.gross_income_total_eur,
+      pr.gross_income_yearly_eur,
+      pr.net_income_total_eur,
+      pr.net_income_yearly_eur,
+      pr.net_income_monthly_eur,
+      -- evidence
+      pr.contract_type_evidence,
+      pr.contract_subtype_evidence,
+      pr.duration_evidence,
+      pr.section_evidence,
+      pr.institute_cost_evidence,
+      pr.gross_income_evidence,
+      pr.net_income_evidence,
+      -- quality
+      pr.parse_confidence
+    FROM position_rows pr
+    JOIN calls_curated c ON pr.detail_id = c.detail_id;
+    ```
+  - `position_rows` must declare `PRIMARY KEY (detail_id, position_row_index)` and `FOREIGN KEY (detail_id) REFERENCES calls_raw(detail_id)`.
   - `calls_raw.detail_id TEXT PRIMARY KEY`. `calls_raw.numero_posti_html INTEGER`. All other `calls_raw` columns are `TEXT`.
+  - `position_rows` columns include `contract_type_raw TEXT` (the original contract-type text from the PDF body, before normalization). This is distinct from `contract_type` (the canonical form). Both are `TEXT`.
   - `position_rows`: `duration_months INTEGER`; `position_row_index INTEGER`; all 7 EUR fields are `REAL`; remaining are `TEXT`. Refer to the full schema in `plan_implementation.md`.
+  - **FK enforcement note:** SQLite does NOT enforce foreign keys by default (`PRAGMA foreign_keys` is OFF). The FK declarations are schema-as-documentation — they communicate the intended relationships but are not enforced at runtime. The ordering in `rebuild_curated()` is maintained for correctness if FK enforcement is later enabled. Do NOT add `PRAGMA foreign_keys = ON` — it is intentionally unenforced for simplicity.
   - Do not import from other `infn_jobs` modules — only stdlib `sqlite3`.
   - No explicit `conn.commit()` here — schema DDL is auto-committed by SQLite on each statement.
 
@@ -75,17 +130,20 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   `test_init_db_creates_calls_raw_table`,
   `test_init_db_creates_position_rows_table`,
   `test_init_db_creates_calls_curated_table`,
-  `test_init_db_creates_position_rows_curated_table`,
+  `test_init_db_creates_position_rows_curated_view`,
   `test_init_db_idempotent`,
   `test_calls_raw_has_expected_columns`,
-  `test_position_rows_has_expected_columns`
+  `test_position_rows_has_expected_columns`,
+  `test_position_rows_has_contract_type_raw_column`
 - **Test:** `pytest tests/store/test_schema.py -v`
 - **Notes:**
   - Uses the `tmp_db` fixture from `conftest.py`.
   - Table existence check: `SELECT name FROM sqlite_master WHERE type='table' AND name=?`.
-  - Column check: `PRAGMA table_info(<table>)` returns rows with `name` field — collect all names and assert each expected column is present.
+  - **View existence check:** `position_rows_curated` is a VIEW, not a table. Use `SELECT name FROM sqlite_master WHERE type='view' AND name='position_rows_curated'` to verify it.
+  - Column check: `PRAGMA table_info(<table>)` returns rows with `name` field — collect all names and assert each expected column is present. For views, use `SELECT * FROM position_rows_curated LIMIT 0` and inspect `cursor.description` for column names.
   - `test_init_db_idempotent`: call `init_db(conn)` a second time on the same connection and assert no exception is raised and row count is unchanged.
-  - Do not test `calls_curated` column set separately if schema is identical to `calls_raw` — one parametrize over all 4 tables suffices for existence checks.
+  - `test_position_rows_has_contract_type_raw_column`: assert `contract_type_raw` is present in the `position_rows` column list (via `PRAGMA table_info(position_rows)`).
+  - Do not test `calls_curated` column set separately if schema is identical to `calls_raw` — one parametrize over the 3 tables suffices for existence checks.
 
 [ ] done
 
@@ -130,7 +188,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   def upsert_position_rows(conn: sqlite3.Connection, rows: list[PositionRow]) -> None:
       """Replace all position_rows for rows[0].detail_id. Deletes existing rows first."""
   ```
-- **Test:** `pytest tests/store/test_upsert.py::test_upsert_position_rows_replaces_existing_rows tests/store/test_upsert.py::test_upsert_position_rows_empty_list_clears_rows -v` (test written in sub-substep 6.5.1)
+- **Test:** `pytest tests/store/test_upsert.py::test_upsert_position_rows_replaces_existing_rows tests/store/test_upsert.py::test_upsert_position_rows_empty_list_is_noop -v` (test written in sub-substep 6.5.1)
 - **Notes:**
   - If `rows` is empty, do nothing and return (no detail_id to clear).
   - Strategy: `DELETE FROM position_rows WHERE detail_id = ?` (using `rows[0].detail_id`), then `INSERT` each row. This is a full replacement, not per-row upsert.
@@ -184,21 +242,19 @@ behaviour; CSV export correctness is covered in `test_export.py`.
 - **Write:**
   ```python
   def rebuild_curated(conn: sqlite3.Connection) -> None:
-      """Rebuild calls_curated and position_rows_curated from the employment-like filter."""
+      """Rebuild calls_curated from the employment-like filter. position_rows_curated is a VIEW and updates automatically."""
   ```
 - **Test:** `pytest tests/store/test_curate.py -v` (test written in sub-substep 6.9.1)
 - **Notes:**
   - Per plan_desiderata: "Keep calls/rows matching: borsa di studio, incarico di ricerca, incarico post-doc/postdoc, contratto di ricerca, assegno di ricerca. Exclude prize-only/non-employment notices."
   - Employment-like `source_tipo` values: `'Borsa'`, `'Incarico di ricerca'`, `'Incarico Post-Doc'`, `'Contratto di ricerca'`, `'Assegno di ricerca'`. These match `TIPOS` from config.
   - Algorithm:
-    1. `DELETE FROM position_rows_curated` — clear existing.
-    2. `DELETE FROM calls_curated` — clear existing.
-    3. `INSERT INTO calls_curated SELECT * FROM calls_raw WHERE source_tipo IN (...)`.
-    4. `INSERT INTO position_rows_curated SELECT pr.* FROM position_rows pr INNER JOIN calls_curated cc ON pr.detail_id = cc.detail_id`.
-    5. `conn.commit()`.
-  - Steps 1 and 2 must be performed in this order (foreign key constraint: `position_rows_curated` references `calls_curated`).
-  - Steps 3 and 4 must be in this order for the same FK reason.
+    1. `DELETE FROM calls_curated` — clear existing.
+    2. `INSERT INTO calls_curated SELECT * FROM calls_raw WHERE source_tipo IN (...)`.
+    3. `conn.commit()`.
+  - `position_rows_curated` is a VIEW (defined in `init_db`), not a table. It joins `position_rows` with `calls_curated` automatically. When `calls_curated` is rebuilt, the VIEW reflects the new data without any explicit INSERT or DELETE. Do NOT attempt to INSERT into or DELETE from `position_rows_curated`.
   - This function is idempotent — calling it twice produces the same result.
+  - **Future-proofing note:** In v1, the scraper only fetches the 5 employment-like tipos listed above. This means `calls_curated` will be identical to `calls_raw` in practice — the filter is not currently selective. The curated layer is retained as infrastructure for v2, which may add new source types (e.g., prizes, awards) that the filter would then exclude. Add a comment in the source file explaining this.
   - Do not import from other `infn_jobs` modules — only `sqlite3`.
 
 [ ] done
@@ -276,7 +332,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   `test_rebuild_curated_keeps_employment_calls`,
   `test_rebuild_curated_excludes_unknown_source_tipo`,
   `test_rebuild_curated_populates_calls_curated`,
-  `test_rebuild_curated_populates_position_rows_curated`,
+  `test_rebuild_curated_view_reflects_curated_calls`,
   `test_rebuild_curated_idempotent`
 - **Test:** `pytest tests/store/test_curate.py -v`
 - **Notes:**
@@ -285,7 +341,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - `test_rebuild_curated_keeps_employment_calls`: after `rebuild_curated`, assert `calls_curated` contains the `"Borsa"` call (detail_id matches).
   - `test_rebuild_curated_excludes_unknown_source_tipo`: assert the `"Premio"` call is NOT in `calls_curated`.
   - `test_rebuild_curated_populates_calls_curated`: assert `SELECT COUNT(*) FROM calls_curated` == 1.
-  - `test_rebuild_curated_populates_position_rows_curated`: assert `SELECT COUNT(*) FROM position_rows_curated` == 2 (the 2 rows from the employment call).
+  - `test_rebuild_curated_view_reflects_curated_calls`: assert `SELECT COUNT(*) FROM position_rows_curated` == 2 (the 2 position_rows from the employment call). This tests the VIEW — `position_rows_curated` is not populated by `rebuild_curated()` but automatically reflects the join between `position_rows` and `calls_curated`.
   - `test_rebuild_curated_idempotent`: call `rebuild_curated` twice — assert row counts are the same after both calls (no duplication).
 
 [ ] done
@@ -306,4 +362,4 @@ Expected: all store layer tests green, ruff exits 0.
 
 Manual checks:
 - `python3 -c "from infn_jobs.store.schema import init_db; from infn_jobs.store.upsert import upsert_call, upsert_position_rows; from infn_jobs.store.export.curate import rebuild_curated; from infn_jobs.store.export.csv_writer import export_all; print('store OK')"` prints `store OK`.
-- Create a temporary DB: `python3 -c "import sqlite3; from infn_jobs.store.schema import init_db; conn = sqlite3.connect(':memory:'); init_db(conn); print([r[0] for r in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()])"` — prints all 4 table names.
+- Create a temporary DB: `python3 -c "import sqlite3; from infn_jobs.store.schema import init_db; conn = sqlite3.connect(':memory:'); init_db(conn); print('tables:', [r[0] for r in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()]); print('views:', [r[0] for r in conn.execute(\"SELECT name FROM sqlite_master WHERE type='view'\").fetchall()])"` — prints 3 table names (`calls_raw`, `position_rows`, `calls_curated`) and 1 view name (`position_rows_curated`).

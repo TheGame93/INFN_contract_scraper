@@ -103,7 +103,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - `Assegno di ricerca` subtypes: `Tipo A` / `Tipo B` (post-2010); single type (pre-2010, inferred from `anno`).
 - Extract **row-level** fields for each position entry:
   - `section_structure_department` — may differ across rows in the same PDF.
-  - `source_contract_type` (if stated in PDF body).
+  - `contract_type_raw` (original contract-type text as found in the PDF body, if stated).
 - Extract call-level metadata from PDF when present:
   - `pdf_call_title` (semantic title from bando text).
 - Detect and segment multiple contract entries in one PDF:
@@ -112,6 +112,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - Allow mixed `contract_type`, `contract_subtype`, and `section_structure_department` across rows.
 - For each extracted position row, parse nullable fields:
   - `contract_type`,
+  - `contract_type_raw` (original text as found in the PDF),
   - `contract_subtype` (canonical: `Fascia 2`, `Tipo A`, `Tipo B`, etc.),
   - `contract_subtype_raw` (original text as found in the PDF),
   - `duration_months` (and raw duration text),
@@ -119,7 +120,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - `gross_income_total_eur`, `gross_income_yearly_eur`,
   - `net_income_total_eur`, `net_income_yearly_eur`, `net_income_monthly_eur`,
   - `section_structure_department`.
-- Keep raw evidence snippets for every parsed field (or `NULL` if missing).
+- Keep raw evidence snippets for every parsed field group (or `NULL` if missing). One evidence column per logical group, not per individual field.
 - Normalize EUR numbers from Italian format (`33.681,30` → `33681.30`).
 
 #### 3. `store/export`
@@ -189,6 +190,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 | `call_title` | prefer `pdf_call_title`; fallback to `titolo` from detail page |
 | `section_structure_department` | extracted per row from PDF (nullable) |
 | `contract_type` | extracted per row from PDF (nullable) |
+| `contract_type_raw` | extracted per row — original text as found in PDF |
 | `contract_subtype` | extracted per row — canonical form (e.g. `Fascia 2`, `Tipo A`, `Tipo B`) |
 | `contract_subtype_raw` | extracted per row — original text as found in PDF |
 | `duration_months` | extracted per row (nullable) |
@@ -205,7 +207,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 
 | Field | Values |
 |---|---|
-| `*_evidence` | raw text snippet used to extract each field (NULL if field not found) |
+| `*_evidence` | raw text snippet used to extract each field group (NULL if field not found). One evidence column per logical group: contract_type, contract_subtype, duration, section, institute_cost, gross_income, net_income. |
 | `text_quality` | `digital \| ocr_clean \| ocr_degraded \| no_text` |
 | `parse_confidence` | `high \| medium \| low` — behavioral only, see rubric below |
 
@@ -243,7 +245,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - PDF missing financial data (expected for old records) → 1 row, EUR fields NULL, `parse_confidence = medium`, no crash.
 - Scanned PDF with clean OCR text → `text_quality = ocr_clean`.
 - Scanned PDF with degraded OCR → `text_quality = ocr_degraded`, `parse_confidence = low`.
-- PDF with zero extractable text → `text_quality = no_text`, 0 `position_rows`, `pdf_fetch_status = parse_error`.
+- PDF with zero extractable text → `text_quality = no_text`, 0 `position_rows`, `pdf_fetch_status = ok` (download and mutool both succeeded; the PDF simply has no extractable text).
 - Multi-contract same-type PDF → N rows, same `contract_type`.
 - Multi-contract mixed-type/mixed-subtype PDF → N rows, different `contract_type`/`contract_subtype`.
 - PDF with different `section_structure_department` per row.
@@ -266,7 +268,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - At least one `detail_id` has multiple `position_row_index` values.
 - At least one call has `pdf_fetch_status = ok`.
 - At least one call has `pdf_fetch_status = skipped` (old record without PDF).
-- `text_quality` values present in output; `ocr_degraded` or `no_text` rows have `parse_confidence = low`.
+- `text_quality` values present in output; `ocr_degraded` rows have `parse_confidence = low`. `no_text` PDFs produce 0 `position_rows` (nothing to score).
 
 ---
 
@@ -288,3 +290,44 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - `section_structure_department` is row-level: different rows in the same PDF may have different values.
 - `Assegno di ricerca` subtypes (`Tipo A` / `Tipo B`) apply only to records from 2010 onward. Earlier records have `contract_subtype = NULL` for this type.
 - `detail_id` must remain stable across all future versions. Winner correlation in v2 will use it as a foreign key.
+
+---
+
+### Future Phases (Out of Scope for v1 — Design Constraints Only)
+
+The following phases are **not implemented in v1** but impose design constraints on the current codebase. All shared utilities must be atomic and reusable across phases.
+
+#### Phase 2 — Winner Scraper (`v2`)
+
+Scrape winner announcements ("delibere") from one or more INFN institutional websites. These sites publish decisions by the INFN "Giunta Esecutiva" or "Consiglio Direttivo" that name the winners of each grant/position.
+
+**Key differences from v1:**
+- **Authentication required:** target websites require account + password + 2FA. Credentials must never be committed; use environment variables or a local secrets file (gitignored).
+- **Multiple source sites:** unlike v1's single source (`jobs.dsi.infn.it`), v2 may scrape 1+ websites. The site list and auth config must be extensible.
+- **Nested navigation:** delibere may be buried in nested document trees. The scraper must navigate hierarchically (e.g., year → session → delibera).
+- **PDF-heavy:** winner announcements are usually (but not always) in PDF attachments. Reuse `extract/pdf/mutool.py` and `extract/parse/normalize/` for extraction.
+- **FK linkage to v1:** winner records link to `calls_raw.detail_id` (and optionally `(detail_id, position_row_index)`). The `detail_id` FK contract from v1 is critical.
+
+**Shared utilities from v1 (must remain atomic and import-free of v1-specific logic):**
+- `extract/pdf/mutool.py` — PDF text extraction
+- `extract/parse/normalize/currency.py` — EUR normalization
+- `extract/parse/normalize/dates.py` — date parsing
+- `fetch/client.py` — HTTP session with retry/rate-limit (v2 extends with auth)
+- `config/settings.py` — path constants (v2 adds its own paths)
+
+**New modules v2 will add (not created in v1):**
+- `fetch/auth/` — authentication handler (account + password + 2FA)
+- `fetch/delibere/` — delibere listing and detail scraping
+- `domain/winner.py` — winner dataclass
+- `store/schema.py` — extend with `winners` table (FK → `calls_raw.detail_id`)
+- `pipeline/sync_winners.py` — winner sync orchestration
+- `cli/cmd_sync_winners.py` — new CLI subcommand
+
+#### Phase 3 — Analytics
+
+Analytics on the scraped data. Not a scraper — a consumer of v1 and v2 outputs.
+
+- **Position analytics (v1 data):** trends over time (grant counts by tipo/year, financial distributions, duration patterns, geographic distribution by section, text_quality degradation over time).
+- **Winner analytics (v2 data):** correlation of open calls with winner announcements, time-to-fill metrics, fill rates by tipo/section.
+- Analytics will consume the SQLite DB directly or the exported CSVs. No changes to the scraping pipeline are needed — only new read-only query modules.
+- Implementation details are deferred until v1 is complete and data quality is validated.

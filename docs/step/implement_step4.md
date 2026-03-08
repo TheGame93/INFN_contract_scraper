@@ -278,7 +278,7 @@
   - Sleep `RATE_LIMIT_SLEEP` seconds (via `time.sleep`) **between every HTTP GET** — after each listing page fetch and after each detail page fetch. Do not sleep before the very first request.
   - Set `call.source_tipo = tipo` on every assembled `CallRaw`.
   - Pass `response.content` (bytes) to `parse_rows()` and `parse_detail()` — never `response.text`.
-  - On HTTP error fetching a detail page: log at WARNING, set `call.pdf_fetch_status = "download_error"`, and continue — do not crash the loop. (PDF fetch status for the PDF itself is set by the pipeline in Step 7, not here. For detail page failures specifically, log and skip that call.)
+  - On HTTP error fetching a detail page: log at WARNING and **skip** that call entirely — do not create a `CallRaw` for it. The `detail_id` from the listing row is known, but since `parse_detail()` was never called, no `CallRaw` is available to populate. The next sync run will retry. Do not set `pdf_fetch_status` here — that field reflects PDF-level outcomes, not HTML detail page fetch outcomes.
   - Log at INFO: `"Fetching tipo {tipo} (active)"` and `"Fetching tipo {tipo} (expired)"` before each listing URL; `"Processing detail_id={detail_id}"` before each detail fetch.
   - Use `logging.getLogger(__name__)` — no `print()` per CLAUDE.md logging standard.
 
@@ -286,6 +286,23 @@
 
 **Substep 4.7 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
+
+---
+
+## 4.8 Zero-row verification
+
+### 4.8.1 Verify all 5 tipos return non-empty listings
+- **File:** (no file — manual verification)
+- **Action:** (verification)
+- **Write:** (no code)
+- **Test:** (manual verification — for each of the 5 verified TIPOS, open `{BASE_URL}/index.php?tipo={tipo}` and confirm the page contains at least one listing row. Also check `{BASE_URL}/index.php?tipo={tipo}&scad=1` for expired listings. If any tipo returns 0 rows, investigate for pagination params and document in `docs/known_edge_cases.md`.)
+- **Notes:**
+  - Per CLAUDE.md: "If any tipo returns 0 rows, investigate for pagination params, update `url_builder.py`, and document in `docs/known_edge_cases.md`."
+  - This check should also be performed by the orchestrator at runtime: if `parse_rows()` returns `[]` for a listing URL, log at WARNING.
+
+[ ] done
+
+**Substep 4.8 done when:** all sub-substeps above are `[x]`.
 
 ---
 

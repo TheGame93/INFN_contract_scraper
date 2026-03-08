@@ -97,6 +97,7 @@ testing requirement for substep 2.4.
       position_row_index: int | None = None
       text_quality: str | None = None
       contract_type: str | None = None
+      contract_type_raw: str | None = None
       contract_subtype: str | None = None
       contract_subtype_raw: str | None = None
       duration_months: int | None = None
@@ -124,6 +125,7 @@ testing requirement for substep 2.4.
   - `position_row_index` is `int | None` (INTEGER in schema). The primary key is `(detail_id, position_row_index)` at DB level; no constraint is encoded in the dataclass.
   - EUR fields (`institute_cost_*`, `gross_income_*`, `net_income_*`) are `float | None` (REAL in schema). NULL EUR fields in old records are correct data — do not default to `0.0`.
   - `duration_months` is `int | None` (INTEGER).
+  - `contract_type_raw` stores the original contract-type text found in the PDF body (e.g., `"CONTRATTO DI RICERCA"`). `contract_type` stores the normalized canonical form (e.g., `"Contratto di ricerca"`). Both are `str | None`.
   - `contract_subtype` stores the **canonical** form (e.g. `"Fascia 2"`, `"Tipo A"`, `"Tipo B"`). `contract_subtype_raw` stores the original text found in the PDF. Both are `str | None`.
   - `parse_confidence` stores `"high"` | `"medium"` | `"low"` as plain string. `text_quality` stores `"digital"` | `"ocr_clean"` | `"ocr_degraded"` | `"no_text"` as plain string.
   - `section_structure_department` is row-level — different rows in the same PDF may have different values. This is expected, not an error.

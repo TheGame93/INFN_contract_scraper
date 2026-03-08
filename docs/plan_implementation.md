@@ -8,8 +8,8 @@
 ## Design Principles
 
 - **Each file does one thing.** No file mixes I/O with parsing, no file mixes schema with queries.
-- **Dependency direction:** `domain` ← `pipeline` ← `cli`. Infrastructure (`fetch`, `extract`, `store`) implements domain interfaces.
-- **New sections = new files, not edits.** Adding a new INFN source type means new files under `fetch/` and `extract/parse/fields/`, not changes to existing ones.
+- **Dependency direction:** `domain` has no dependencies. `fetch`, `extract`, `store` depend on `domain` and `config`. `pipeline` depends on all infrastructure layers. `cli` depends only on `pipeline`.
+- **New sections = primarily new files.** Adding a new INFN source type means new files under `fetch/` and `extract/parse/fields/`. Schema extensions (`store/schema.py`) and CLI registration (`cli/main.py`) are the only expected edit points.
 
 ---
 
@@ -24,7 +24,7 @@ src/infn_jobs/
 │   ├── __init__.py
 │   ├── main.py                      # build_parser(), dispatch to commands
 │   ├── cmd_sync.py                  # execute(args) → pipeline.sync
-│   └── cmd_export.py                # execute(args) → store.export
+│   └── cmd_export.py                # execute(args) → pipeline.export
 │
 ├── config/
 │   ├── __init__.py
@@ -50,6 +50,9 @@ src/infn_jobs/
 │                                    #   builds active + expired URLs, calls parse_rows() for each,
 │                                    #   fetches each detail + parse_detail(), sets listing_status
 │                                    #   on each CallRaw from the URL variant (active/expired) used
+│                                    #   NOTE: assumes single-page listings (no pagination observed).
+│                                    #   If any tipo returns 0 rows, check for pagination params
+│                                    #   and update url_builder.py. Document in known_edge_cases.md.
 │
 ├── extract/
 │   ├── __init__.py
@@ -89,7 +92,7 @@ src/infn_jobs/
 └── pipeline/
     ├── __init__.py
     ├── sync.py                      # run_sync(conn, dry_run, force_refetch) — main orchestrator
-    └── curate.py                    # rebuild_curated(conn) — employment-like filter logic
+    └── export.py                    # run_export(conn, export_dir) — rebuild curated tables + write 4 CSVs
 ```
 
 ---
@@ -165,7 +168,7 @@ tests/
 | `python3 -m infn_jobs sync` | `cli/cmd_sync.py` | Full idempotent pipeline: fetch → extract → store |
 | `python3 -m infn_jobs sync --dry-run` | same | Parse but skip DB writes |
 | `python3 -m infn_jobs sync --force-refetch` | same | Re-download all PDFs even if cached |
-| `python3 -m infn_jobs export-csv` | `cli/cmd_export.py` | Read DB → write 4 CSV files |
+| `python3 -m infn_jobs export-csv` | `cli/cmd_export.py` | Rebuild curated tables → write 4 CSV files (via `pipeline.export`) |
 
 ---
 
@@ -208,6 +211,7 @@ position_rows (
   text_quality                  TEXT,    -- "digital" | "ocr_clean" | "ocr_degraded" | "no_text"
   -- extracted fields (all nullable):
   contract_type                 TEXT,
+  contract_type_raw             TEXT,    -- original contract-type text as found in PDF
   contract_subtype              TEXT,    -- canonical: "Fascia 2", "Tipo A", "Tipo B"
   contract_subtype_raw          TEXT,    -- original text as found in PDF
   duration_months               INTEGER,
@@ -235,9 +239,68 @@ position_rows (
 )
 ```
 
-`calls_curated` and `position_rows_curated` share the same schemas — populated by the employment-like filter in `pipeline/curate.py`.
+### `calls_curated`
 
-The `call_title` column in CSV exports is a derived field: `COALESCE(pdf_call_title, titolo)`. It is not stored as a separate DB column.
+Same schema as `calls_raw`. Populated by `rebuild_curated(conn)` using the employment-like filter (keep borsa, incarico di ricerca, incarico post-doc, contratto di ricerca, assegno di ricerca; exclude prize-only notices).
+
+### `position_rows_curated`
+
+**Denormalized analytical VIEW** joining `position_rows` with `calls_curated`. This is the flat table described in `plan_desiderata.md` "Canonical Fields in `position_rows_curated`".
+
+```sql
+CREATE VIEW IF NOT EXISTS position_rows_curated AS
+SELECT
+  -- linkage / status
+  pr.detail_id,
+  pr.position_row_index,
+  c.source_tipo,
+  c.listing_status,
+  -- call metadata (from HTML)
+  c.numero,
+  c.anno,
+  c.numero_posti_html,
+  c.data_bando,
+  c.data_scadenza,
+  c.first_seen_at,
+  c.last_synced_at,
+  c.pdf_fetch_status,
+  -- source refs
+  c.detail_url,
+  c.pdf_url,
+  c.pdf_cache_path,
+  -- derived call title
+  COALESCE(c.pdf_call_title, c.titolo) AS call_title,
+  -- analytics fields (from PDF)
+  pr.text_quality,
+  pr.contract_type,
+  pr.contract_type_raw,
+  pr.contract_subtype,
+  pr.contract_subtype_raw,
+  pr.duration_months,
+  pr.duration_raw,
+  pr.section_structure_department,
+  pr.institute_cost_total_eur,
+  pr.institute_cost_yearly_eur,
+  pr.gross_income_total_eur,
+  pr.gross_income_yearly_eur,
+  pr.net_income_total_eur,
+  pr.net_income_yearly_eur,
+  pr.net_income_monthly_eur,
+  -- evidence
+  pr.contract_type_evidence,
+  pr.contract_subtype_evidence,
+  pr.duration_evidence,
+  pr.section_evidence,
+  pr.institute_cost_evidence,
+  pr.gross_income_evidence,
+  pr.net_income_evidence,
+  -- quality
+  pr.parse_confidence
+FROM position_rows pr
+JOIN calls_curated c ON pr.detail_id = c.detail_id;
+```
+
+The `call_title` column is a derived field (`COALESCE(pdf_call_title, titolo)`). It exists only in the VIEW and in CSV exports — not stored as a separate DB column.
 
 ---
 
@@ -255,24 +318,69 @@ Re-run at the end of every session that adds, renames, or removes public functio
 
 ---
 
-## Adding New Sections (v2 Extensibility)
+## Extensibility — Future Phases
 
-Example: winner announcement correlation adds only new files:
+### v1 Design Constraint: Shared Utilities Must Stay Atomic
+
+The following modules are designed to be reusable by future phases (v2 winner scraper, v3 analytics).
+They must not import v1-specific logic (no imports from `fetch/listing/`, `fetch/detail/`,
+`extract/parse/fields/`, or `pipeline/sync.py`):
+
+| Module | Reusable capability |
+|---|---|
+| `extract/pdf/mutool.py` | PDF text extraction via mutool |
+| `extract/parse/normalize/currency.py` | Italian EUR format → float |
+| `extract/parse/normalize/dates.py` | DD-MM-YYYY → date |
+| `extract/parse/normalize/subtypes.py` | Era-aware subtype normalization |
+| `fetch/client.py` | HTTP session with retry + rate-limit |
+| `config/settings.py` | Shared path constants |
+| `store/schema.py` | Schema extension point (add tables via `init_db`) |
+
+When implementing v1, keep these modules self-contained: no side effects, no references to
+`CallRaw`-specific fields, no hardcoded v1 URLs. v2 will import them directly.
+
+### v2 — Winner Scraper (Delibere)
+
+Scrapes winner announcements from INFN institutional websites (Giunta Esecutiva / Consiglio Direttivo
+delibere). Requires account + password + 2FA authentication. May target multiple sites.
+
+New files only — existing v1 files are not modified except `store/schema.py` and `cli/main.py`:
 
 ```
-fetch/winners/
+fetch/auth/
     __init__.py
-    url_builder.py
-    parser.py
+    handler.py               # account + password + 2FA session management
+                              # credentials from env vars or local secrets file (gitignored)
 
-store/schema.py          ← only file touched: add winners table
-                           (FOREIGN KEY detail_id → calls_raw)
+fetch/delibere/
+    __init__.py
+    url_builder.py            # build delibere listing URLs (may be multi-site)
+    parser.py                 # parse delibere pages → winner records
+    navigator.py              # nested navigation (year → session → delibera)
 
-cli/cmd_sync_winners.py
-pipeline/sync_winners.py
+domain/winner.py              # @dataclass WinnerRecord (FK → calls_raw.detail_id)
+
+store/schema.py               ← edit: add winners table
+                                (FOREIGN KEY detail_id → calls_raw.detail_id)
+
+pipeline/sync_winners.py      # winner sync orchestration (reuses mutool, normalize/)
+cli/cmd_sync_winners.py       # new CLI subcommand
+cli/main.py                   ← edit: register sync-winners subcommand
 ```
 
-Zero changes to existing fetch, extract, store, or domain files.
+### v3 — Analytics
+
+Read-only query modules consuming v1 + v2 data. No changes to scraping pipelines.
+
+```
+analytics/
+    __init__.py
+    positions.py              # v1 position trends (counts, financials, geography, text_quality)
+    winners.py                # v2 winner correlation (time-to-fill, fill rates, cross-ref with v1)
+```
+
+Analytics consumes the SQLite DB or exported CSVs. Implementation deferred until v1 data quality
+is validated.
 
 ---
 
@@ -282,7 +390,7 @@ Zero changes to existing fetch, extract, store, or domain files.
 2. Second `sync` run produces identical row counts (idempotency).
 3. `first_seen_at` is unchanged on second run; `last_synced_at` is updated.
 4. At least one call has `pdf_fetch_status = skipped` (old record without PDF link).
-5. `text_quality` values are present; `ocr_degraded` / `no_text` rows have `parse_confidence = low`.
+5. `text_quality` values are present; `ocr_degraded` rows have `parse_confidence = low`. `no_text` PDFs produce 0 `position_rows`.
 6. `python3 -m infn_jobs export-csv` writes 4 non-empty CSV files.
 7. `position_rows_curated.csv` has `detail_id + position_row_index` on every row.
 8. At least one `detail_id` with multiple `position_row_index` values (multi-entry PDF).
