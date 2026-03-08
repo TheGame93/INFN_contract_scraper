@@ -9,20 +9,20 @@
 
 ## Currently Active
 
-> **Next to start:** `1.1.1` — Create `pyproject.toml`
-> **File:** `docs/step/implement_step1.md`
+> **Next to start:** `2.1` — Enums
+> **File:** `docs/step/implement_step2.md`
 
 ---
 
 ## Step Index
 
 ### Step 1 — Project Scaffolding `implement_step1.md`
-[ ] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras
-[ ] 1.2 Venv setup verification
-[ ] 1.3 Package skeleton (`__init__.py` files for all modules)
-[ ] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep`)
-[ ] 1.5 Test scaffolding (`conftest.py`, empty test subdirectories)
-[ ] 1.6 Smoke check: import + ruff clean
+[x] 1.1 `pyproject.toml` with deps + ruff config + `[dev]` extras
+[x] 1.2 Venv setup verification
+[x] 1.3 Package skeleton (`__init__.py` files for all modules)
+[x] 1.4 Data directory structure (`data/pdf_cache/`, `data/exports/`, `.gitkeep`)
+[x] 1.5 Test scaffolding (`conftest.py`, empty test subdirectories)
+[x] 1.6 Smoke check: import + ruff clean
 
 ### Step 2 — Domain Layer `implement_step2.md`
 [ ] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)
@@ -102,7 +102,7 @@
 
 | Step | Goal | Status |
 |---|---|---|
-| 1 | Project scaffolding | [ ] |
+| 1 | Project scaffolding | [x] |
 | 2 | Domain layer | [ ] |
 | 3 | Config layer | [ ] |
 | 4 | Fetch layer | [ ] |
