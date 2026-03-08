@@ -67,7 +67,7 @@ substep level — complete 5.8 before starting 5.9.
   - Per CLAUDE.md: "PDF URL resolution — if the href starts with `http`, use as-is. Otherwise join with BASE_URL origin (scheme + host only, not path)." URL resolution is done in the detail parser (Step 4); by the time `download()` is called, `url` is already absolute.
   - Log at INFO: `"PDF {dest.name}: downloaded"` on success.
 
-[ ] done
+[x] done
 
 **Substep 5.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.

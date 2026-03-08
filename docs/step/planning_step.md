@@ -9,7 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** `5.1` — PDF downloader
+> **Next to start:** `5.2` — mutool wrapper
 > **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
 
@@ -47,7 +47,7 @@
 [x] 4.8 Zero-row verification: confirm all 5 tipos return non-empty listings
 
 ### Step 5 — Extract Layer `implement_step5.md`
-[ ] 5.1 PDF downloader (cache-aware)
+[x] 5.1 PDF downloader (cache-aware)
 [ ] 5.2 `mutool` wrapper (text + TextQuality)
 [ ] 5.3 `mutool` tests (mock subprocess)
 [ ] 5.4 EUR normalization
