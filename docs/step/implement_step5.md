@@ -316,7 +316,7 @@ substep level — complete 5.8 before starting 5.9.
   - No form-feed `\x0c` separators (single page).
   - Must NOT contain garbled characters — `text_quality` should be classified as `digital`.
 
-[ ] done
+[x] done
 
 ### 5.8.2 Add fixture `tests/fixtures/pdf_text/missing_fields.txt`
 - **File:** `tests/fixtures/pdf_text/missing_fields.txt`
@@ -333,7 +333,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - All 7 EUR fields should parse as `None` from this fixture — that is correct data, not a parse failure.
 
-[ ] done
+[x] done
 
 ### 5.8.3 Add fixture `tests/fixtures/pdf_text/multi_same_type.txt`
 - **File:** `tests/fixtures/pdf_text/multi_same_type.txt`
@@ -356,7 +356,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - After segmentation, both rows should have `contract_type` populated and the same canonical type.
 
-[ ] done
+[x] done
 
 ### 5.8.4 Add fixture `tests/fixtures/pdf_text/multi_mixed_type.txt`
 - **File:** `tests/fixtures/pdf_text/multi_mixed_type.txt`
@@ -376,7 +376,7 @@ substep level — complete 5.8 before starting 5.9.
     Durata: 18 mesi
     ```
 
-[ ] done
+[x] done
 
 ### 5.8.5 Add fixture `tests/fixtures/pdf_text/multi_mixed_department.txt`
 - **File:** `tests/fixtures/pdf_text/multi_mixed_department.txt`
@@ -396,7 +396,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - After row building, `position_row_index=0` has `section_structure_department="Sezione di Bologna"` and `position_row_index=1` has `section_structure_department="Sezione di Napoli"`.
 
-[ ] done
+[x] done
 
 ### 5.8.6 Add fixture `tests/fixtures/pdf_text/ocr_clean.txt`
 - **File:** `tests/fixtures/pdf_text/ocr_clean.txt`
@@ -414,7 +414,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - `text_quality` classification should produce `OCR_CLEAN` (readable but with OCR signals).
 
-[ ] done
+[x] done
 
 ### 5.8.7 Add fixture `tests/fixtures/pdf_text/ocr_degraded.txt`
 - **File:** `tests/fixtures/pdf_text/ocr_degraded.txt`
@@ -431,7 +431,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - `parse_confidence` should be `low` for rows derived from this text.
 
-[ ] done
+[x] done
 
 ### 5.8.8 Add fixture `tests/fixtures/pdf_text/assegno_tipo_ab.txt`
 - **File:** `tests/fixtures/pdf_text/assegno_tipo_ab.txt`
@@ -454,7 +454,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - After row building with `anno=2015`, row 0: `contract_subtype="Tipo A"`, row 1: `contract_subtype="Tipo B"`.
 
-[ ] done
+[x] done
 
 ### 5.8.9 Add fixture `tests/fixtures/pdf_text/assegno_old.txt`
 - **File:** `tests/fixtures/pdf_text/assegno_old.txt`
@@ -472,7 +472,7 @@ substep level — complete 5.8 before starting 5.9.
     ```
   - `contract_subtype_raw` is also `None` since the subtype is not mentioned at all.
 
-[ ] done
+[x] done
 
 **Substep 5.8 done when:** all sub-substeps above are `[x]` and all 9 fixture files exist under
 `tests/fixtures/pdf_text/`.
@@ -500,7 +500,7 @@ substep level — complete 5.8 before starting 5.9.
   - Position is determined by order of appearance — `position_row_index` = 0-based index in the returned list. Per CLAUDE.md: "Deterministic for identical PDF text. Never reorder."
   - Pure text processing — no I/O, no imports from other `infn_jobs` modules.
 
-[ ] done
+[x] done
 
 ### 5.9.2 Create `tests/extract/test_segmenter.py`
 - **File:** `tests/extract/test_segmenter.py`
@@ -519,7 +519,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_segment_empty_text_returns_single_empty`: `segment("")` → `[""]` (list of one empty string, not `[]`).
   - `test_segment_preserves_content_of_first_segment`: the first segment of `single_contract.txt` must contain the string `"CONTRATTO DI RICERCA"`.
 
-[ ] done
+[x] done
 
 **Substep 5.9 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/test_segmenter.py -v` passes with no failures.

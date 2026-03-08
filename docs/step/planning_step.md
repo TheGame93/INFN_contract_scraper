@@ -9,7 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** `5.8` — PDF text fixtures
+> **Next to start:** `5.10` — Field extractor: metadata.py
 > **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
 
@@ -54,8 +54,8 @@
 [x] 5.5 Date normalization
 [x] 5.6 Subtype normalization (era-aware)
 [x] 5.7 Normalization tests
-[ ] 5.8 PDF text fixtures (9 fixture files)
-[ ] 5.9 Segmenter + tests
+[x] 5.8 PDF text fixtures (9 fixture files)
+[x] 5.9 Segmenter + tests
 [ ] 5.10 Field extractor: `metadata.py`
 [ ] 5.11 Field extractor: `contract_type.py` (incl. `contract_type_raw`)
 [ ] 5.12 Field extractor: `duration.py`
