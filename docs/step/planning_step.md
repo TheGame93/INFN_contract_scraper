@@ -9,9 +9,9 @@
 
 ## Currently Active
 
-> **Next to start:** `3.1` — settings.py
+> **Next to start:** `4.1` — HTTP client
+> **File:** `docs/step/implement_step4.md`
 > **File:** `docs/step/implement_step3.md`
-> **File:** `docs/step/implement_step2.md`
 
 ---
 
@@ -32,9 +32,9 @@
 [x] 2.4 Domain smoke tests (instantiate with all-None fields)
 
 ### Step 3 — Config Layer `implement_step3.md`
-[ ] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
-[ ] 3.2 Path initialization helper (create `data/` subdirs if missing)
-[ ] 3.3 Verify TIPOS URL params against live site — **required before Step 4**
+[x] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
+[x] 3.2 Path initialization helper (create `data/` subdirs if missing)
+[x] 3.3 Verify TIPOS URL params against live site — **required before Step 4**
 
 ### Step 4 — Fetch Layer `implement_step4.md`
 [ ] 4.1 HTTP client with retry, rate-limit, 4xx/5xx handling
@@ -105,7 +105,7 @@
 |---|---|---|
 | 1 | Project scaffolding | [x] |
 | 2 | Domain layer | [x] |
-| 3 | Config layer | [ ] |
+| 3 | Config layer | [x] |
 | 4 | Fetch layer | [ ] |
 | 5 | Extract layer | [ ] |
 | 6 | Store layer | [ ] |

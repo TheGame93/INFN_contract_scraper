@@ -46,7 +46,7 @@ it against a temp directory.
   - Config layer has **no imports from other `infn_jobs` modules** — only stdlib (`pathlib`).
   - Do not import `domain` or any other layer here.
 
-[ ] done
+[x] done
 
 **Substep 3.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -72,7 +72,7 @@ it against a temp directory.
   - Called once at CLI startup in Step 8 (`cli/main.py`) before any pipeline runs.
   - Does not create `data/infn_jobs.db` — that is created by `store/schema.py` `init_db()` in Step 6.
 
-[ ] done
+[x] done
 
 **Substep 3.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -93,7 +93,7 @@ it against a temp directory.
   - **This substep is a hard prerequisite for Step 4.** `build_urls()` and `fetch_all_calls()` consume `TIPOS` directly. If any tipo string is wrong, all calls for that tipo will silently return zero rows.
   - If `settings.py` already has the correct values, mark this done without editing the file.
 
-[ ] done
+[x] done
 
 **Substep 3.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.

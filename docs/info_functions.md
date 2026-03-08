@@ -7,6 +7,18 @@
 
 ---
 
+### `init_data_dirs`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/config/settings.py` |
+| **Name** | `init_data_dirs` |
+| **Parent** | `infn_jobs.config.settings` |
+| **Inputs** | — |
+| **Output** | `None` |
+| **Description** | Create data subdirectories if they do not exist. Idempotent. |
+
+---
+
 ### `CallRaw`
 | Field | Value |
 |---|---|
