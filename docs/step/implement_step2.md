@@ -35,7 +35,7 @@ testing requirement for substep 2.4.
   - `TextQuality` values: `DIGITAL = "digital"`, `OCR_CLEAN = "ocr_clean"`, `OCR_DEGRADED = "ocr_degraded"`, `NO_TEXT = "no_text"`.
   - Domain layer has **no imports from other `infn_jobs` modules** — only stdlib (`enum`).
 
-[ ] done
+[x] done
 
 **Substep 2.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/test_domain.py -v` passes with no failures.
@@ -77,7 +77,7 @@ testing requirement for substep 2.4.
   - `listing_status` stores `"active"` or `"expired"` as plain strings. Enum `ListingStatus` may be used in application logic but the dataclass field is `str | None` to avoid coercion on read-back from SQLite.
   - Import only from stdlib: `from __future__ import annotations`, `from dataclasses import dataclass`.
 
-[ ] done
+[x] done
 
 **Substep 2.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/test_domain.py -v` passes with no failures.
@@ -131,7 +131,7 @@ testing requirement for substep 2.4.
   - `section_structure_department` is row-level — different rows in the same PDF may have different values. This is expected, not an error.
   - Import only from stdlib: `from __future__ import annotations`, `from dataclasses import dataclass`.
 
-[ ] done
+[x] done
 
 **Substep 2.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/test_domain.py -v` passes with no failures.
@@ -162,7 +162,7 @@ testing requirement for substep 2.4.
   - `test_position_row_with_index`: `r = PositionRow(detail_id="42", position_row_index=0)` — assert values round-trip correctly.
   - `test_position_row_eur_fields_default_none`: assert each of the 7 EUR fields (`institute_cost_total_eur`, etc.) is `None` on a default `PositionRow()` — guards against accidental `0.0` defaults.
 
-[ ] done
+[x] done
 
 **Substep 2.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/test_domain.py -v` passes with no failures.

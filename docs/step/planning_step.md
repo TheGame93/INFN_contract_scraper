@@ -9,7 +9,8 @@
 
 ## Currently Active
 
-> **Next to start:** `2.1` — Enums
+> **Next to start:** `3.1` — settings.py
+> **File:** `docs/step/implement_step3.md`
 > **File:** `docs/step/implement_step2.md`
 
 ---
@@ -25,10 +26,10 @@
 [x] 1.6 Smoke check: import + ruff clean
 
 ### Step 2 — Domain Layer `implement_step2.md`
-[ ] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)
-[ ] 2.2 `CallRaw` dataclass (all nullable fields from `calls_raw` schema)
-[ ] 2.3 `PositionRow` dataclass (all nullable fields from `position_rows` schema, incl. `contract_type_raw`)
-[ ] 2.4 Domain smoke tests (instantiate with all-None fields)
+[x] 2.1 Enums (`ListingStatus`, `ContractType`, `ParseConfidence`, `TextQuality`)
+[x] 2.2 `CallRaw` dataclass (all nullable fields from `calls_raw` schema)
+[x] 2.3 `PositionRow` dataclass (all nullable fields from `position_rows` schema, incl. `contract_type_raw`)
+[x] 2.4 Domain smoke tests (instantiate with all-None fields)
 
 ### Step 3 — Config Layer `implement_step3.md`
 [ ] 3.1 `settings.py` (BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR)
@@ -103,7 +104,7 @@
 | Step | Goal | Status |
 |---|---|---|
 | 1 | Project scaffolding | [x] |
-| 2 | Domain layer | [ ] |
+| 2 | Domain layer | [x] |
 | 3 | Config layer | [ ] |
 | 4 | Fetch layer | [ ] |
 | 5 | Extract layer | [ ] |
