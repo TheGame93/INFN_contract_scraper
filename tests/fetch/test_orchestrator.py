@@ -6,7 +6,7 @@ from unittest.mock import Mock, call, patch
 
 import requests
 
-from infn_jobs.config.settings import RATE_LIMIT_SLEEP
+from infn_jobs.config.settings import RATE_LIMIT_JITTER_MAX, RATE_LIMIT_JITTER_MIN
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.fetch.orchestrator import fetch_all_calls
 
@@ -29,7 +29,7 @@ def _call(detail_id: str) -> CallRaw:
     return call_raw
 
 
-def test_fetch_all_calls_happy_path_sets_status_source_and_rate_limit():
+def test_fetch_all_calls_happy_path_sets_status_source_and_jittered_rate_limit():
     session = Mock()
     session.get.side_effect = [
         _response(b"listing-active"),
@@ -54,6 +54,10 @@ def test_fetch_all_calls_happy_path_sets_status_source_and_rate_limit():
             "infn_jobs.fetch.orchestrator.parse_detail",
             side_effect=[_call("1"), _call("2")],
         ),
+        patch(
+            "infn_jobs.fetch.orchestrator.random.uniform",
+            side_effect=[2.11, 2.22, 2.33, 2.44],
+        ) as jitter_mock,
         patch("infn_jobs.fetch.orchestrator.time.sleep") as sleep_mock,
     ):
         calls = fetch_all_calls(session, "Borsa")
@@ -62,7 +66,9 @@ def test_fetch_all_calls_happy_path_sets_status_source_and_rate_limit():
     assert [c.listing_status for c in calls] == ["active", "expired"]
     assert [c.source_tipo for c in calls] == ["Borsa", "Borsa"]
     assert sleep_mock.call_count == 4
-    sleep_mock.assert_has_calls([call(RATE_LIMIT_SLEEP)] * 4)
+    sleep_mock.assert_has_calls([call(2.11), call(2.22), call(2.33), call(2.44)])
+    assert jitter_mock.call_count == 4
+    jitter_mock.assert_has_calls([call(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX)] * 4)
 
 
 def test_fetch_all_calls_http_error_on_detail_skips_call():
@@ -87,6 +93,7 @@ def test_fetch_all_calls_http_error_on_detail_skips_call():
             ],
         ),
         patch("infn_jobs.fetch.orchestrator.parse_detail", return_value=_call("2")),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
         patch("infn_jobs.fetch.orchestrator.time.sleep"),
     ):
         calls = fetch_all_calls(session, "Borsa")
@@ -118,6 +125,7 @@ def test_fetch_all_calls_connection_error_on_detail_skips_call():
             ],
         ),
         patch("infn_jobs.fetch.orchestrator.parse_detail", return_value=_call("2")),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
         patch("infn_jobs.fetch.orchestrator.time.sleep"),
     ):
         calls = fetch_all_calls(session, "Borsa")
@@ -137,6 +145,7 @@ def test_fetch_all_calls_zero_rows_logs_warning(caplog):
             return_value=["active-url", "expired-url"],
         ),
         patch("infn_jobs.fetch.orchestrator.parse_rows", side_effect=[[], []]),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", side_effect=[2.15, 2.65]) as jitter_mock,
         patch("infn_jobs.fetch.orchestrator.time.sleep") as sleep_mock,
         caplog.at_level("WARNING", logger="infn_jobs.fetch.orchestrator"),
     ):
@@ -145,3 +154,5 @@ def test_fetch_all_calls_zero_rows_logs_warning(caplog):
     assert calls == []
     assert caplog.text.count("0 rows at") == 2
     assert sleep_mock.call_count == 2
+    sleep_mock.assert_has_calls([call(2.15), call(2.65)])
+    jitter_mock.assert_has_calls([call(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX)] * 2)

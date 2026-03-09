@@ -16,7 +16,9 @@ DB_PATH: Path = DATA_DIR / "infn_jobs.db"
 EXPORT_DIR: Path = DATA_DIR / "exports"
 PDF_CACHE_DIR: Path = DATA_DIR / "pdf_cache"
 
-RATE_LIMIT_SLEEP: float = 1.0
+RATE_LIMIT_JITTER_MIN: float = 2.0
+RATE_LIMIT_JITTER_MAX: float = 3.0
+RATE_LIMIT_SLEEP: float = 2.5
 MAX_RETRIES: int = 3
 USER_AGENT: str = "infn-jobs-scraper/1.0 (research-tool)"
 

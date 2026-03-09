@@ -3,10 +3,11 @@
 import sqlite3
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.domain.enums import TextQuality
+from infn_jobs.domain.position import PositionRow
 from infn_jobs.pipeline.export import run_export
 from infn_jobs.pipeline.sync import run_sync
 from infn_jobs.store.schema import init_db
@@ -98,6 +99,86 @@ def test_sync_runs_without_error(tmp_path: Path) -> None:
     ):
         run_sync(conn, dry_run=False, force_refetch=False)
     conn.close()
+
+
+def test_sync_request_processing_is_serial(tmp_path: Path) -> None:
+    """run_sync must process request-bearing operations strictly in serial order."""
+    conn = Mock()
+    session = Mock()
+    mock_pdf = tmp_path / "serial.pdf"
+    mock_pdf.touch()
+    events: list[str] = []
+
+    calls = [
+        CallRaw(
+            detail_id="serial-1",
+            source_tipo="Borsa",
+            listing_status="active",
+            pdf_url="https://jobs.dsi.infn.it/serial-1.pdf",
+            anno="2022",
+        ),
+        CallRaw(
+            detail_id="serial-2",
+            source_tipo="Borsa",
+            listing_status="active",
+            pdf_url="https://jobs.dsi.infn.it/serial-2.pdf",
+            anno="2022",
+        ),
+    ]
+
+    def _fetch_all_calls(_session, tipo):
+        events.append(f"fetch_all_calls:{tipo}")
+        return calls
+
+    def _download(_url, dest, session=None, force=False):
+        events.append(f"download:{dest.stem}")
+        return mock_pdf
+
+    def _extract_text(_pdf_path):
+        events.append("extract_text")
+        return MULTI_TEXT, TextQuality.DIGITAL
+
+    def _build_rows(_text, detail_id, _text_quality, _anno):
+        events.append(f"build_rows:{detail_id}")
+        return [PositionRow(detail_id=detail_id, position_row_index=0)], None
+
+    def _upsert_call(_conn, call):
+        events.append(f"upsert_call:{call.detail_id}")
+
+    def _upsert_position_rows(_conn, rows):
+        events.append(f"upsert_position_rows:{rows[0].detail_id}")
+
+    def _rebuild_curated(_conn):
+        events.append("rebuild_curated")
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", side_effect=_fetch_all_calls),
+        patch("infn_jobs.pipeline.sync.download", side_effect=_download),
+        patch("infn_jobs.pipeline.sync.extract_text", side_effect=_extract_text),
+        patch("infn_jobs.pipeline.sync.build_rows", side_effect=_build_rows),
+        patch("infn_jobs.pipeline.sync.upsert_call", side_effect=_upsert_call),
+        patch("infn_jobs.pipeline.sync.upsert_position_rows", side_effect=_upsert_position_rows),
+        patch("infn_jobs.pipeline.sync.rebuild_curated", side_effect=_rebuild_curated),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+    ):
+        run_sync(conn, dry_run=False, force_refetch=False)
+
+    assert events == [
+        "fetch_all_calls:Borsa",
+        "download:serial-1",
+        "extract_text",
+        "build_rows:serial-1",
+        "upsert_call:serial-1",
+        "upsert_position_rows:serial-1",
+        "download:serial-2",
+        "extract_text",
+        "build_rows:serial-2",
+        "upsert_call:serial-2",
+        "upsert_position_rows:serial-2",
+        "rebuild_curated",
+    ]
 
 
 def test_sync_db_has_calls_across_tipos(tmp_path: Path) -> None:
