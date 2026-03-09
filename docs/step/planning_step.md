@@ -9,8 +9,8 @@
 
 ## Currently Active
 
-> **Next to start:** Step 7 — Pipeline Layer
-> **File:** `docs/step/implement_step7.md`
+> **Next to start:** Step 8 — CLI Layer
+> **File:** `docs/step/implement_step8.md`
 
 ---
 
@@ -78,10 +78,10 @@
 
 ### Step 7 — Pipeline Layer `implement_step7.md`
 > Note: pipeline layer has no dedicated unit tests — covered by e2e in Step 9.
-[ ] 7.1 `pipeline/export.py` — `run_export(conn, export_dir)` — rebuild curated + write CSVs
-[ ] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
-[ ] 7.3 Sync loop: PDF handling and `build_rows` → `pdf_call_title` verification
-[ ] 7.4 Progress logging
+[x] 7.1 `pipeline/export.py` — `run_export(conn, export_dir)` — rebuild curated + write CSVs
+[x] 7.2 `pipeline/sync.py` — `run_sync(conn, dry_run, force_refetch)` main loop
+[x] 7.3 Sync loop: PDF handling and `build_rows` → `pdf_call_title` verification
+[x] 7.4 Progress logging
 
 ### Step 8 — CLI Layer `implement_step8.md`
 [ ] 8.1 `__main__.py` entry point
@@ -108,6 +108,6 @@
 | 4 | Fetch layer | [x] |
 | 5 | Extract layer | [x] |
 | 6 | Store layer | [x] |
-| 7 | Pipeline layer | [ ] |
+| 7 | Pipeline layer | [x] |
 | 8 | CLI layer | [ ] |
 | 9 | End-to-end verification | [ ] |

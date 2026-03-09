@@ -34,7 +34,7 @@ All sub-substep verification is therefore manual. The `__init__.py` for `pipelin
   - Imports: `import logging`, `import sqlite3`, `from pathlib import Path`; `from infn_jobs.store.export.curate import rebuild_curated as store_rebuild_curated`; `from infn_jobs.store.export.csv_writer import export_all as csv_export_all`.
   - Per dependency rule: `pipeline` may import from `store` and `config`. It must NOT import from `cli`.
 
-[ ] done
+[x] done
 
 **Substep 7.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -118,7 +118,7 @@ All sub-substep verification is therefore manual. The `__init__.py` for `pipelin
   - **`dry_run=True`:** all fetch, download, and extract operations still run. Only the `upsert_call` and `upsert_position_rows` calls are skipped. This allows verifying parsing output without writing to the DB.
   - **Rate limiting:** enforced inside `fetch_all_calls` and `download` (both call `time.sleep(RATE_LIMIT_SLEEP)` between requests). `run_sync` does not add additional sleeps.
 
-[ ] done
+[x] done
 
 **Substep 7.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -150,7 +150,7 @@ correct unpacking of the `build_rows` tuple to set `call.pdf_call_title` before 
   - The `dest` path (`PDF_CACHE_DIR / f"{call.detail_id}.pdf"`) is used for both `download(…, dest)` and `call.pdf_cache_path = str(dest)`. Both must reference the same `dest` object to stay consistent.
   - `pdf_fetch_status` is set unconditionally for every branch — it must never remain `None` after `run_sync` processes a call. If a new branch is added later (e.g., format not supported), it must set `pdf_fetch_status` before upsert.
 
-[ ] done
+[x] done
 
 **Substep 7.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -184,7 +184,7 @@ at INFO level matches the standard defined in CLAUDE.md.
   - DEBUG-level logging for internal parsing steps lives in the extract layer modules (`mutool.py`, `row_builder.py`, etc.) — do not duplicate it here.
   - The `run_export()` function in `pipeline/export.py` has its own INFO log calls (7.1.1). `run_sync()` does NOT call `run_export()` or `rebuild_curated()` — that is invoked separately by the CLI command `export-csv` (Step 8). Do not call it inside the sync loop.
 
-[ ] done
+[x] done
 
 **Substep 7.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
