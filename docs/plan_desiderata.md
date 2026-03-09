@@ -59,8 +59,10 @@ The dataset spans records from 2003 to present. This means **high variability is
 #### 1. `fetch`
 
 **HTTP client policy:**
-- Sleep 1.0 s between every request (active + expired listings, detail pages, PDF downloads).
-- Max 3 retries with exponential backoff on HTTP 5xx or connection error. Fail loudly on 4xx (log + set `pdf_fetch_status = download_error`).
+- Keep one request at a time (single-threaded; no parallel PDF downloads).
+- Use a 2.5 s target delay with random jitter (2.0-3.0 s) between every request (active + expired listings, detail pages, PDF downloads).
+- Max 3 retries with exponential backoff on HTTP 5xx or connection error. Do not retry generic 4xx.
+- If `429`, `503`, or timeout signals are observed, log guidance and temporarily increase delay to 5-10 s for the next run.
 - User-Agent: `infn-jobs-scraper/1.0 (research-tool)`.
 - Always pass `response.content` (bytes) to BeautifulSoup — never `response.text`. Let BeautifulSoup detect encoding from the page's `<meta charset>` tag (old pages may be ISO-8859-1).
 

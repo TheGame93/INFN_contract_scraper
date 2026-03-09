@@ -97,6 +97,15 @@ src/infn_jobs/
 
 ---
 
+## Runtime Request Policy
+
+- Request flow is intentionally single-threaded in v1: no parallel listing/detail/PDF fetches.
+- Request pacing uses a 2.5 s target with random jitter (2.0-3.0 s), applied in fetch orchestrator and PDF downloader.
+- Retry policy remains in `fetch/client.py`: max 3 retries with exponential backoff for 5xx/connection errors; no generic 4xx retries.
+- When pressure signals (`429`, `503`, timeouts) are detected, fetch/downloader log actionable guidance to temporarily increase delay to 5-10 s for the next run.
+
+---
+
 ## Test File Tree (~20 files)
 
 ```
