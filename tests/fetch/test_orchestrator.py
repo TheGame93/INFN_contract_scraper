@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import Mock, call, patch
 
+import pytest
 import requests
 
 from infn_jobs.config.settings import RATE_LIMIT_JITTER_MAX, RATE_LIMIT_JITTER_MIN
@@ -27,6 +28,15 @@ def _call(detail_id: str) -> CallRaw:
     call_raw = CallRaw()
     call_raw.detail_id = detail_id
     return call_raw
+
+
+def _http_error(status_code: int) -> requests.HTTPError:
+    """Build an HTTPError carrying a response with the provided status code."""
+    err = requests.HTTPError(f"http {status_code}")
+    response = Mock()
+    response.status_code = status_code
+    err.response = response
+    return err
 
 
 def test_fetch_all_calls_happy_path_sets_status_source_and_jittered_rate_limit():
@@ -156,3 +166,66 @@ def test_fetch_all_calls_zero_rows_logs_warning(caplog):
     assert sleep_mock.call_count == 2
     sleep_mock.assert_has_calls([call(2.15), call(2.65)])
     jitter_mock.assert_has_calls([call(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX)] * 2)
+
+
+@pytest.mark.parametrize("status_code", [429, 503])
+def test_fetch_all_calls_listing_pressure_signal_logs_guidance_and_continues(caplog, status_code):
+    session = Mock()
+    session.get.side_effect = [
+        _response(b"", error=_http_error(status_code)),
+        _response(b"listing-expired"),
+        _response(b"detail-2"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            return_value=[
+                {"detail_id": "2", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=2"}
+            ],
+        ),
+        patch("infn_jobs.fetch.orchestrator.parse_detail", return_value=_call("2")),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.fetch.orchestrator"),
+    ):
+        calls = fetch_all_calls(session, "Borsa")
+
+    assert [c.detail_id for c in calls] == ["2"]
+    assert f"status={status_code}" in caplog.text
+    assert "5-10s" in caplog.text
+
+
+def test_fetch_all_calls_detail_timeout_logs_guidance(caplog):
+    session = Mock()
+    session.get.side_effect = [
+        _response(b"listing-active"),
+        requests.Timeout("slow response"),
+        _response(b"listing-expired"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            side_effect=[
+                [{"detail_id": "1", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=1"}],
+                [],
+            ],
+        ),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.fetch.orchestrator"),
+    ):
+        calls = fetch_all_calls(session, "Borsa")
+
+    assert calls == []
+    assert "pressure signal (timeout)" in caplog.text
+    assert "5-10s" in caplog.text

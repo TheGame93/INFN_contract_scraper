@@ -16,10 +16,37 @@ from infn_jobs.fetch.listing.parser import parse_rows
 from infn_jobs.fetch.listing.url_builder import build_urls
 
 logger = logging.getLogger(__name__)
+_PRESSURE_STATUS_CODES = {429, 503}
+_PRESSURE_GUIDANCE = (
+    "Temporary recommendation: increase request delay to 5-10s for the next run."
+)
 
 
 def _sleep_with_jitter() -> None:
     time.sleep(random.uniform(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX))
+
+
+def _status_code_from_error(exc: requests.RequestException) -> int | None:
+    """Return HTTP status code from a requests exception when available."""
+    if isinstance(exc, requests.HTTPError) and exc.response is not None:
+        return exc.response.status_code
+    return None
+
+
+def _is_pressure_signal(exc: requests.RequestException) -> bool:
+    """Return True when exception indicates server pressure or network timeout."""
+    status_code = _status_code_from_error(exc)
+    return isinstance(exc, requests.Timeout) or status_code in _PRESSURE_STATUS_CODES
+
+
+def _log_fetch_warning(context: str, exc: requests.RequestException) -> None:
+    """Log request exceptions with extra guidance for pressure-related failures."""
+    status_code = _status_code_from_error(exc)
+    if _is_pressure_signal(exc):
+        signal = "timeout" if isinstance(exc, requests.Timeout) else f"status={status_code}"
+        logger.warning("%s: pressure signal (%s): %s. %s", context, signal, exc, _PRESSURE_GUIDANCE)
+        return
+    logger.warning("%s: %s", context, exc)
 
 
 def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
@@ -30,8 +57,13 @@ def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
 
     for url, status in zip(urls, statuses):
         logger.info("Fetching tipo %s (%s)", tipo, status)
-        response = session.get(url)
-        response.raise_for_status()
+        try:
+            response = session.get(url)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            _log_fetch_warning(f"tipo={tipo} status={status}: error fetching listing page", exc)
+            _sleep_with_jitter()
+            continue
         rows = parse_rows(response.content)
         if not rows:
             logger.warning("tipo=%s status=%s: 0 rows at %s", tipo, status, url)
@@ -44,7 +76,7 @@ def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
                 detail_resp = session.get(row["detail_url"])
                 detail_resp.raise_for_status()
             except requests.RequestException as exc:
-                logger.warning("detail_id=%s: error fetching detail page: %s", detail_id, exc)
+                _log_fetch_warning(f"detail_id={detail_id}: error fetching detail page", exc)
                 continue
 
             call = parse_detail(detail_resp.content, detail_id)

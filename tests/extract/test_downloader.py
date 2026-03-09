@@ -9,6 +9,15 @@ from infn_jobs.config.settings import RATE_LIMIT_JITTER_MAX, RATE_LIMIT_JITTER_M
 from infn_jobs.extract.pdf.downloader import download
 
 
+def _http_error(status_code: int) -> requests.HTTPError:
+    """Build an HTTPError carrying a response with the provided status code."""
+    err = requests.HTTPError(f"http {status_code}")
+    response = Mock()
+    response.status_code = status_code
+    err.response = response
+    return err
+
+
 def test_download_returns_none_when_url_is_none(tmp_path: Path):
     dest = tmp_path / "file.pdf"
     assert download(None, dest) is None
@@ -66,3 +75,58 @@ def test_download_cache_hit_skips_sleep_and_jitter(tmp_path: Path):
     session.get.assert_not_called()
     jitter_mock.assert_not_called()
     sleep_mock.assert_not_called()
+
+
+def test_download_status_429_logs_pressure_guidance(tmp_path: Path, caplog):
+    dest = tmp_path / "file.pdf"
+    session = Mock()
+    response = Mock()
+    response.raise_for_status.side_effect = _http_error(429)
+    session.get.return_value = response
+
+    with (
+        patch("infn_jobs.extract.pdf.downloader.random.uniform", return_value=2.5),
+        patch("infn_jobs.extract.pdf.downloader.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.extract.pdf.downloader"),
+    ):
+        result = download("https://jobs.dsi.infn.it/bando.pdf", dest, session=session)
+
+    assert result is None
+    assert "status=429" in caplog.text
+    assert "5-10s" in caplog.text
+
+
+def test_download_status_503_logs_pressure_guidance(tmp_path: Path, caplog):
+    dest = tmp_path / "file.pdf"
+    session = Mock()
+    response = Mock()
+    response.raise_for_status.side_effect = _http_error(503)
+    session.get.return_value = response
+
+    with (
+        patch("infn_jobs.extract.pdf.downloader.random.uniform", return_value=2.5),
+        patch("infn_jobs.extract.pdf.downloader.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.extract.pdf.downloader"),
+    ):
+        result = download("https://jobs.dsi.infn.it/bando.pdf", dest, session=session)
+
+    assert result is None
+    assert "status=503" in caplog.text
+    assert "5-10s" in caplog.text
+
+
+def test_download_timeout_logs_pressure_guidance(tmp_path: Path, caplog):
+    dest = tmp_path / "file.pdf"
+    session = Mock()
+    session.get.side_effect = requests.Timeout("slow response")
+
+    with (
+        patch("infn_jobs.extract.pdf.downloader.random.uniform", return_value=2.5),
+        patch("infn_jobs.extract.pdf.downloader.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.extract.pdf.downloader"),
+    ):
+        result = download("https://jobs.dsi.infn.it/bando.pdf", dest, session=session)
+
+    assert result is None
+    assert "pressure signal (timeout)" in caplog.text
+    assert "5-10s" in caplog.text

@@ -100,6 +100,21 @@ def test_cmd_sync_execute_closes_db_on_error():
     conn.close.assert_called_once()
 
 
+def test_cmd_sync_execute_closes_db_on_keyboard_interrupt():
+    conn = Mock()
+    args = argparse.Namespace(dry_run=False, force_refetch=False)
+
+    with (
+        patch("infn_jobs.cli.cmd_sync.sqlite3.connect", return_value=conn),
+        patch("infn_jobs.cli.cmd_sync.init_db"),
+        patch("infn_jobs.cli.cmd_sync.run_sync", side_effect=KeyboardInterrupt),
+    ):
+        with pytest.raises(KeyboardInterrupt):
+            cmd_sync.execute(args)
+
+    conn.close.assert_called_once()
+
+
 def test_cmd_export_execute_db_lifecycle_success():
     conn = Mock()
     args = argparse.Namespace()

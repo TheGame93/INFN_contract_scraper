@@ -5,6 +5,8 @@ import time
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.domain.enums import TextQuality
 from infn_jobs.domain.position import PositionRow
@@ -365,3 +367,36 @@ def test_ocr_degraded_produces_low_confidence_rows(tmp_path: Path) -> None:
     }
     assert confidences == {"low"}, f"all rows must have confidence=low, got {confidences}"
     conn.close()
+
+
+def test_sync_logs_throttle_reminder_on_success(caplog):
+    """run_sync must log throttle reminder on normal completion."""
+    conn = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, dry_run=True, force_refetch=False)
+
+    assert "Throttle reminder" in caplog.text
+    assert "5-10s" in caplog.text
+
+
+def test_sync_logs_throttle_reminder_on_keyboard_interrupt(caplog):
+    """run_sync must log throttle reminder when interrupted."""
+    conn = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", side_effect=KeyboardInterrupt),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        with pytest.raises(KeyboardInterrupt):
+            run_sync(conn, dry_run=True, force_refetch=False)
+
+    assert "Throttle reminder" in caplog.text
+    assert "5-10s" in caplog.text
