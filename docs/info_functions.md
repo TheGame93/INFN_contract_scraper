@@ -91,6 +91,162 @@
 
 ---
 
+### `score_confidence`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/confidence.py` |
+| **Name** | `score_confidence` |
+| **Parent** | `infn_jobs.extract.parse.fields.confidence` |
+| **Inputs** | `row: PositionRow`, `text_quality: str` |
+| **Output** | `ParseConfidence` |
+| **Description** | Compute parse_confidence for a PositionRow based on parsed fields and text quality. |
+
+---
+
+### `extract_contract_type`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/contract_type.py` |
+| **Name** | `extract_contract_type` |
+| **Parent** | `infn_jobs.extract.parse.fields.contract_type` |
+| **Inputs** | `segment: str`, `anno: int | None` |
+| **Output** | `dict` |
+| **Description** | Extract contract type, type_raw, and subtype fields from a segment. |
+
+---
+
+### `extract_duration`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/duration.py` |
+| **Name** | `extract_duration` |
+| **Parent** | `infn_jobs.extract.parse.fields.duration` |
+| **Inputs** | `segment: str` |
+| **Output** | `tuple[int | None, str | None, str | None]` |
+| **Description** | Extract duration from a segment. Returns (duration_months, duration_raw, evidence). |
+
+---
+
+### `extract_income`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/income.py` |
+| **Name** | `extract_income` |
+| **Parent** | `infn_jobs.extract.parse.fields.income` |
+| **Inputs** | `segment: str` |
+| **Output** | `dict` |
+| **Description** | Extract all 7 EUR income/cost fields and 3 evidence fields from a segment. |
+
+---
+
+### `extract_pdf_call_title`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/metadata.py` |
+| **Name** | `extract_pdf_call_title` |
+| **Parent** | `infn_jobs.extract.parse.fields.metadata` |
+| **Inputs** | `text: str` |
+| **Output** | `str | None` |
+| **Description** | Extract call-level title from full PDF text (before segmentation). |
+
+---
+
+### `extract_section_department`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/fields/metadata.py` |
+| **Name** | `extract_section_department` |
+| **Parent** | `infn_jobs.extract.parse.fields.metadata` |
+| **Inputs** | `segment: str` |
+| **Output** | `tuple[str | None, str | None]` |
+| **Description** | Extract section/structure/department from one segment. Returns (value, evidence). |
+
+---
+
+### `normalize_eur`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/normalize/currency.py` |
+| **Name** | `normalize_eur` |
+| **Parent** | `infn_jobs.extract.parse.normalize.currency` |
+| **Inputs** | `s: str | None` |
+| **Output** | `float | None` |
+| **Description** | Normalize Italian-format EUR string to float. Returns None if unparseable. |
+
+---
+
+### `parse_date`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/normalize/dates.py` |
+| **Name** | `parse_date` |
+| **Parent** | `infn_jobs.extract.parse.normalize.dates` |
+| **Inputs** | `s: str | None` |
+| **Output** | `date | None` |
+| **Description** | Parse a date string in DD-MM-YYYY or DD/MM/YYYY format. Returns None if invalid. |
+
+---
+
+### `normalize_subtype`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/normalize/subtypes.py` |
+| **Name** | `normalize_subtype` |
+| **Parent** | `infn_jobs.extract.parse.normalize.subtypes` |
+| **Inputs** | `s: str | None`, `anno: int | None` |
+| **Output** | `str | None` |
+| **Description** | Normalize contract subtype string to canonical form. Era-aware for Assegno subtypes. |
+
+---
+
+### `build_rows`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/row_builder.py` |
+| **Name** | `build_rows` |
+| **Parent** | `infn_jobs.extract.parse.row_builder` |
+| **Inputs** | `text: str`, `detail_id: str`, `text_quality: str`, `anno: int | None` |
+| **Output** | `tuple[list[PositionRow], str | None]` |
+| **Description** | Segment text and build PositionRow list. Second element is pdf_call_title (call-level). |
+
+---
+
+### `segment`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/parse/segmenter.py` |
+| **Name** | `segment` |
+| **Parent** | `infn_jobs.extract.parse.segmenter` |
+| **Inputs** | `text: str` |
+| **Output** | `list[str]` |
+| **Description** | Split mutool text output into per-entry segments. Returns list with at least one element. |
+
+---
+
+### `download`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/pdf/downloader.py` |
+| **Name** | `download` |
+| **Parent** | `infn_jobs.extract.pdf.downloader` |
+| **Inputs** | `url: str | None`, `dest: Path`, `session: requests.Session | None`, `force: bool` |
+| **Output** | `Path | None` |
+| **Description** | Download PDF to dest. Returns dest on success, None if url is None. |
+
+---
+
+### `extract_text`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/extract/pdf/mutool.py` |
+| **Name** | `extract_text` |
+| **Parent** | `infn_jobs.extract.pdf.mutool` |
+| **Inputs** | `pdf_path: Path` |
+| **Output** | `tuple[str, TextQuality]` |
+| **Description** | Run mutool draw -F txt on pdf_path. Returns (text, text_quality). |
+
+---
+
 ### `get_session`
 | Field | Value |
 |---|---|

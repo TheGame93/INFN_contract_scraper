@@ -546,7 +546,7 @@ substep level — complete 5.8 before starting 5.9.
   - Section label variants (from plan_desiderata): `Sezione di X` / `Sede di X` / just `X` (standalone department name). Handle all known variants.
   - Pure text processing — no I/O, no imports from other `infn_jobs` modules.
 
-[ ] done
+[x] done
 
 **Substep 5.10 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -578,7 +578,7 @@ substep level — complete 5.8 before starting 5.9.
   - `*_evidence`: the raw text snippet (full matched line) that yielded each extracted value. `None` if the field was not found.
   - Pure regex/string processing on `segment`. No I/O.
 
-[ ] done
+[x] done
 
 **Substep 5.11 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -606,7 +606,7 @@ substep level — complete 5.8 before starting 5.9.
   - Return `(None, None, None)` if not found.
   - Pure regex/string processing on `segment`. No I/O.
 
-[ ] done
+[x] done
 
 **Substep 5.12 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -641,7 +641,7 @@ substep level — complete 5.8 before starting 5.9.
   - Evidence: the raw matched line for each group (one evidence field per group: institute_cost, gross_income, net_income).
   - Pure regex/string processing on `segment`. No I/O.
 
-[ ] done
+[x] done
 
 **Substep 5.13 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -668,7 +668,7 @@ substep level — complete 5.8 before starting 5.9.
   - `text_quality` is passed as a `str` (the stored value, e.g., `"ocr_degraded"`) — compare against `TextQuality` enum values using `.value`.
   - Per CLAUDE.md: "`parse_confidence` is behavioral only — it reflects parser success, not data availability. NULL EUR fields in old records do not lower confidence." → A record with `contract_type` parsed but no EUR fields (because financial data was not publicly disclosed) correctly gets `MEDIUM`, not `LOW`.
 
-[ ] done
+[x] done
 
 **Substep 5.14 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -696,7 +696,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_extract_contract_type_fascia_ii_normalized_to_fascia_2`: use an inline segment string `"INCARICO DI RICERCA\nFascia II\nDurata: 12 mesi"` with `anno=2015` — assert `result["contract_subtype"] == "Fascia 2"` and `result["contract_subtype_raw"] == "Fascia II"`.
   - `test_extract_contract_type_assegno_pre2010_subtype_is_none`: load `assegno_old.txt`, call with `anno=2007` — assert `result["contract_subtype"] is None`.
 
-[ ] done
+[x] done
 
 ### 5.15.2 Create `tests/extract/fields/test_duration.py`
 - **File:** `tests/extract/fields/test_duration.py`
@@ -718,7 +718,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_extract_duration_parenthetical_number`: inline `"Durata: 24 (venti quattro) mesi"` → `(24, "24 (venti quattro) mesi", <evidence>)`.
   - `test_extract_duration_missing_returns_triple_none`: inline `"BORSA DI STUDIO\nSezione di Bari"` → `(None, None, None)`.
 
-[ ] done
+[x] done
 
 ### 5.15.3 Create `tests/extract/fields/test_income.py`
 - **File:** `tests/extract/fields/test_income.py`
@@ -738,7 +738,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_extract_income_importo_lordo_label` and `test_extract_income_reddito_lordo_label`: use inline segment strings with those era-variant labels — assert they map to `gross_income_*` fields.
   - `test_extract_income_eur_fields_are_float_or_none`: call with any fixture and assert all 7 EUR keys in the result are either `float` or `None`.
 
-[ ] done
+[x] done
 
 **Substep 5.15 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/fields/ -v` passes with no failures.
@@ -777,7 +777,7 @@ substep level — complete 5.8 before starting 5.9.
   - **`text_quality` type:** `build_rows` receives `text_quality` as a `str` (the `.value` of the `TextQuality` enum). The pipeline (Step 7) must convert: `text_quality = text_quality_enum.value` before calling `build_rows`. Store this string directly on `PositionRow.text_quality`.
   - Import from: `infn_jobs.extract.parse.segmenter`, `infn_jobs.extract.parse.fields.*`, `infn_jobs.domain.position`, `infn_jobs.domain.enums`.
 
-[ ] done
+[x] done
 
 **Substep 5.16 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -807,7 +807,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_score_confidence_high_requires_duration_and_eur`: `PositionRow(duration_months=12)` (no EUR fields) + `text_quality="digital"` → NOT `HIGH` (verify it's `MEDIUM` or `LOW` depending on `contract_type`).
   - `test_score_confidence_medium_no_eur_fields`: `PositionRow(contract_type="Contratto di ricerca", duration_months=24)` (no EUR) + `text_quality="digital"` → `ParseConfidence.MEDIUM` (contract_type present but no EUR → medium, even though duration is present).
 
-[ ] done
+[x] done
 
 **Substep 5.17 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/fields/test_confidence.py -v` passes with no failures.
@@ -839,7 +839,7 @@ substep level — complete 5.8 before starting 5.9.
   - `test_build_rows_position_row_index_sequential`: load `multi_same_type.txt` → assert `rows[0].position_row_index == 0` and `rows[1].position_row_index == 1`.
   - `test_build_rows_text_quality_stored_as_string`: call with `text_quality="digital"` → assert `rows[0].text_quality == "digital"` (string, not enum).
 
-[ ] done
+[x] done
 
 **Substep 5.18 done when:** all sub-substeps above are `[x]` and
 `pytest tests/extract/test_row_builder.py -v` passes with no failures.

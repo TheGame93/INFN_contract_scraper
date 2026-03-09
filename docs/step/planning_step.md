@@ -9,7 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** `5.10` — Field extractor: metadata.py
+> **Next to start:** Step 6 — Store Layer
 > **File:** `docs/step/implement_step5.md`
 > **File:** `docs/step/implement_step4.md`
 
@@ -56,15 +56,15 @@
 [x] 5.7 Normalization tests
 [x] 5.8 PDF text fixtures (9 fixture files)
 [x] 5.9 Segmenter + tests
-[ ] 5.10 Field extractor: `metadata.py`
-[ ] 5.11 Field extractor: `contract_type.py` (incl. `contract_type_raw`)
-[ ] 5.12 Field extractor: `duration.py`
-[ ] 5.13 Field extractor: `income.py` (7 EUR fields + grouped evidence)
-[ ] 5.14 Field extractor: `confidence.py`
-[ ] 5.15 Field extractor tests
-[ ] 5.16 Row builder
-[ ] 5.17 Confidence scoring tests
-[ ] 5.18 Row builder tests
+[x] 5.10 Field extractor: `metadata.py`
+[x] 5.11 Field extractor: `contract_type.py` (incl. `contract_type_raw`)
+[x] 5.12 Field extractor: `duration.py`
+[x] 5.13 Field extractor: `income.py` (7 EUR fields + grouped evidence)
+[x] 5.14 Field extractor: `confidence.py`
+[x] 5.15 Field extractor tests
+[x] 5.16 Row builder
+[x] 5.17 Confidence scoring tests
+[x] 5.18 Row builder tests
 
 ### Step 6 — Store Layer `implement_step6.md`
 [ ] 6.1 DB schema (`init_db(conn)` — `calls_raw`, `calls_curated` tables + `position_rows` table + `position_rows_curated` VIEW, idempotent)
@@ -107,7 +107,7 @@
 | 2 | Domain layer | [x] |
 | 3 | Config layer | [x] |
 | 4 | Fetch layer | [x] |
-| 5 | Extract layer | [ ] |
+| 5 | Extract layer | [x] |
 | 6 | Store layer | [ ] |
 | 7 | Pipeline layer | [ ] |
 | 8 | CLI layer | [ ] |
