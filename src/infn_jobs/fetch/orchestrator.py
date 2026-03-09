@@ -56,8 +56,15 @@ def _log_fetch_warning(context: str, exc: requests.RequestException) -> None:
     logger.warning("%s: %s", context, exc)
 
 
-def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
-    """Fetch all active and expired calls for one tipo. Returns assembled CallRaw list."""
+def fetch_all_calls(
+    session: requests.Session,
+    tipo: str,
+    limit_per_tipo: int | None = None,
+) -> list[CallRaw]:
+    """Fetch calls for one tipo, optionally capped after combined active+expired ordering."""
+    if limit_per_tipo is not None and limit_per_tipo <= 0:
+        return []
+
     urls = build_urls(tipo)
     statuses = [ListingStatus.ACTIVE.value, ListingStatus.EXPIRED.value]
     calls: list[CallRaw] = []
@@ -76,6 +83,9 @@ def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
             logger.warning("tipo=%s status=%s: 0 rows at %s", tipo, status, url)
 
         for row in rows:
+            if limit_per_tipo is not None and len(calls) >= limit_per_tipo:
+                return calls
+
             detail_id = row["detail_id"]
             logger.info("Processing detail_id=%s", detail_id)
             _sleep_with_jitter()
@@ -90,6 +100,8 @@ def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
             call.source_tipo = tipo
             call.listing_status = status
             calls.append(call)
+            if limit_per_tipo is not None and len(calls) >= limit_per_tipo:
+                return calls
 
         _sleep_with_jitter()
 

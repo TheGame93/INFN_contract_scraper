@@ -81,6 +81,127 @@ def test_fetch_all_calls_happy_path_sets_status_source_and_jittered_rate_limit()
     jitter_mock.assert_has_calls([call(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX)] * 4)
 
 
+def test_fetch_all_calls_limit_inside_active_list():
+    session = Mock()
+    session.get.side_effect = [
+        _response(b"listing-active"),
+        _response(b"detail-1"),
+        _response(b"detail-2"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            side_effect=[
+                [
+                    {"detail_id": "1", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=1"},
+                    {"detail_id": "2", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=2"},
+                    {"detail_id": "3", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=3"},
+                ],
+                [{"detail_id": "4", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=4"}],
+            ],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_detail",
+            side_effect=[_call("1"), _call("2")],
+        ),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep") as sleep_mock,
+    ):
+        calls = fetch_all_calls(session, "Borsa", limit_per_tipo=2)
+
+    assert [c.detail_id for c in calls] == ["1", "2"]
+    assert [c.listing_status for c in calls] == ["active", "active"]
+    assert session.get.call_args_list == [
+        call("active-url"),
+        call("https://jobs.dsi.infn.it/dettagli_job.php?id=1"),
+        call("https://jobs.dsi.infn.it/dettagli_job.php?id=2"),
+    ]
+    assert sleep_mock.call_count == 2
+
+
+def test_fetch_all_calls_limit_crosses_active_expired_boundary():
+    session = Mock()
+    session.get.side_effect = [
+        _response(b"listing-active"),
+        _response(b"detail-1"),
+        _response(b"listing-expired"),
+        _response(b"detail-2"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            side_effect=[
+                [{"detail_id": "1", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=1"}],
+                [
+                    {"detail_id": "2", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=2"},
+                    {"detail_id": "3", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=3"},
+                ],
+            ],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_detail",
+            side_effect=[_call("1"), _call("2")],
+        ),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep") as sleep_mock,
+    ):
+        calls = fetch_all_calls(session, "Borsa", limit_per_tipo=2)
+
+    assert [c.detail_id for c in calls] == ["1", "2"]
+    assert [c.listing_status for c in calls] == ["active", "expired"]
+    assert session.get.call_args_list == [
+        call("active-url"),
+        call("https://jobs.dsi.infn.it/dettagli_job.php?id=1"),
+        call("expired-url"),
+        call("https://jobs.dsi.infn.it/dettagli_job.php?id=2"),
+    ]
+    assert sleep_mock.call_count == 3
+
+
+def test_fetch_all_calls_limit_greater_than_available_returns_all():
+    session = Mock()
+    session.get.side_effect = [
+        _response(b"listing-active"),
+        _response(b"detail-1"),
+        _response(b"listing-expired"),
+        _response(b"detail-2"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            side_effect=[
+                [{"detail_id": "1", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=1"}],
+                [{"detail_id": "2", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=2"}],
+            ],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_detail",
+            side_effect=[_call("1"), _call("2")],
+        ),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep"),
+    ):
+        calls = fetch_all_calls(session, "Borsa", limit_per_tipo=10)
+
+    assert [c.detail_id for c in calls] == ["1", "2"]
+    assert [c.listing_status for c in calls] == ["active", "expired"]
+
+
 def test_fetch_all_calls_http_error_on_detail_skips_call():
     session = Mock()
     session.get.side_effect = [

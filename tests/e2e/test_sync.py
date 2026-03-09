@@ -183,6 +183,72 @@ def test_sync_request_processing_is_serial(tmp_path: Path) -> None:
     ]
 
 
+def test_sync_remote_source_passes_limit_to_fetch_orchestrator() -> None:
+    """run_sync must pass limit_per_tipo to fetch_all_calls for source=remote."""
+    conn = Mock()
+    session = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
+    ):
+        run_sync(
+            conn,
+            source="remote",
+            limit_per_tipo=3,
+            download_only=False,
+            dry_run=True,
+            force_refetch=False,
+        )
+
+    fetch_mock.assert_called_once_with(session, "Borsa", 3)
+
+
+def test_sync_auto_source_passes_limit_to_fetch_orchestrator() -> None:
+    """run_sync must pass limit_per_tipo to fetch_all_calls for source=auto."""
+    conn = Mock()
+    session = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
+    ):
+        run_sync(
+            conn,
+            source="auto",
+            limit_per_tipo=2,
+            download_only=False,
+            dry_run=True,
+            force_refetch=False,
+        )
+
+    fetch_mock.assert_called_once_with(session, "Borsa", 2)
+
+
+def test_sync_local_source_does_not_pass_limit_to_fetch_orchestrator() -> None:
+    """run_sync must ignore limit_per_tipo for source=local."""
+    conn = Mock()
+    session = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
+    ):
+        run_sync(
+            conn,
+            source="local",
+            limit_per_tipo=4,
+            download_only=False,
+            dry_run=True,
+            force_refetch=False,
+        )
+
+    fetch_mock.assert_called_once_with(session, "Borsa")
+
+
 def test_sync_db_has_calls_across_tipos(tmp_path: Path) -> None:
     """After sync, calls_raw must have 5 rows covering all 5 TIPOS."""
     conn = _make_conn(tmp_path)

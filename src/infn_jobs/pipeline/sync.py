@@ -31,11 +31,15 @@ def run_sync(
     """Full idempotent sync pipeline: fetch all calls → extract PDFs → store."""
     init_data_dirs()
     session = get_session()
+    fetch_limit = limit_per_tipo if source in {"remote", "auto"} else None
 
     try:
         for tipo in TIPOS:
             logger.info("Fetching tipo %s (active + expired)", tipo)
-            calls = fetch_all_calls(session, tipo)
+            if fetch_limit is None:
+                calls = fetch_all_calls(session, tipo)
+            else:
+                calls = fetch_all_calls(session, tipo, fetch_limit)
 
             for call in calls:
                 logger.info("Processing detail_id=%s", call.detail_id)
