@@ -6,8 +6,13 @@ import re
 
 from infn_jobs.extract.parse.normalize.currency import normalize_eur
 
-# Amount pattern: captures Italian or standard number with optional € prefix
-_AMOUNT_RE = re.compile(r"[€]?\s*[\d][\d.,\s]*")
+# Preferred amount patterns:
+# 1) amounts explicitly anchored by currency marker (€, euro)
+# 2) formatted amounts with decimal separator
+# 3) fallback bare number
+_CURRENCY_ANCHORED_RE = re.compile(r"(?:€|euro)\s*([\d][\d.,\s]*)", re.IGNORECASE)
+_FORMATTED_AMOUNT_RE = re.compile(r"\d[\d.]*,\d{1,2}|\d+\.\d{2}")
+_BARE_AMOUNT_RE = re.compile(r"[\d][\d.,\s]*")
 
 # Group: institute cost
 _INSTITUTE_RE = re.compile(
@@ -33,10 +38,19 @@ _YEARLY_RE = re.compile(r"\b(?:annuo|annuale)\b", re.IGNORECASE)
 _MONTHLY_RE = re.compile(r"\bmensile\b", re.IGNORECASE)
 
 
-def _extract_amount(line: str) -> float | None:
-    m = _AMOUNT_RE.search(line)
-    if m:
-        return normalize_eur(m.group(0))
+def _extract_amount(line: str, start_pos: int = 0) -> float | None:
+    """Extract an amount from a line, preferring currency-anchored matches."""
+    for pattern, group in (
+        (_CURRENCY_ANCHORED_RE, 1),
+        (_FORMATTED_AMOUNT_RE, 0),
+        (_BARE_AMOUNT_RE, 0),
+    ):
+        m = pattern.search(line, pos=start_pos)
+        if not m:
+            continue
+        amount = normalize_eur(m.group(group))
+        if amount is not None:
+            return amount
     return None
 
 
@@ -67,8 +81,9 @@ def extract_income(segment: str) -> dict:
         if not stripped:
             continue
 
-        if _INSTITUTE_RE.search(stripped):
-            amount = _extract_amount(stripped)
+        institute_match = _INSTITUTE_RE.search(stripped)
+        if institute_match:
+            amount = _extract_amount(stripped, institute_match.end())
             if amount is not None:
                 if _TOTAL_RE.search(stripped):
                     result["institute_cost_total_eur"] = amount
@@ -79,8 +94,9 @@ def extract_income(segment: str) -> dict:
                     result["institute_cost_total_eur"] = amount
                 result["institute_cost_evidence"] = stripped
 
-        elif _GROSS_RE.search(stripped):
-            amount = _extract_amount(stripped)
+        gross_match = _GROSS_RE.search(stripped)
+        if gross_match:
+            amount = _extract_amount(stripped, gross_match.end())
             if amount is not None:
                 if _TOTAL_RE.search(stripped):
                     result["gross_income_total_eur"] = amount
@@ -90,8 +106,9 @@ def extract_income(segment: str) -> dict:
                     result["gross_income_yearly_eur"] = amount
                 result["gross_income_evidence"] = stripped
 
-        elif _NET_RE.search(stripped):
-            amount = _extract_amount(stripped)
+        net_match = _NET_RE.search(stripped)
+        if net_match:
+            amount = _extract_amount(stripped, net_match.end())
             if amount is not None:
                 if _MONTHLY_RE.search(stripped):
                     result["net_income_monthly_eur"] = amount

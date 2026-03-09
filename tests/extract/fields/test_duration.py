@@ -58,3 +58,30 @@ def test_extract_duration_evidence_captured():
     _, _, ev = extract_duration(_read("single_contract.txt"))
     assert ev is not None
     assert "Durata" in ev or "durata" in ev.lower()
+
+
+def test_extract_duration_prefers_labeled_duration_over_unrelated_triennale():
+    segment = (
+        "I candidati che hanno conseguito la laurea triennale devono indicare il voto.\n"
+        "Durata: 12 mesi\n"
+    )
+    months, raw, ev = extract_duration(segment)
+    assert months == 12
+    assert raw is not None and "12" in raw
+    assert ev == "Durata: 12 mesi"
+
+
+def test_extract_duration_does_not_use_laurea_triennale_line_as_duration():
+    segment = "I candidati che hanno conseguito la laurea triennale devono indicare il voto.\n"
+    months, raw, ev = extract_duration(segment)
+    assert months is None
+    assert raw is None
+    assert ev is None
+
+
+def test_extract_duration_label_with_un_mese():
+    segment = "La durata di ciascuna borsa è di un mese.\n"
+    months, raw, ev = extract_duration(segment)
+    assert months == 1
+    assert raw == "un mese"
+    assert ev is not None
