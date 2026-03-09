@@ -9,8 +9,8 @@
 
 ## Currently Active
 
-> **Next to start:** Step 8 — CLI Layer
-> **File:** `docs/step/implement_step8.md`
+> **Next to start:** Step 9 — End-to-End Verification
+> **File:** `docs/step/implement_step9.md`
 
 ---
 
@@ -84,11 +84,11 @@
 [x] 7.4 Progress logging
 
 ### Step 8 — CLI Layer `implement_step8.md`
-[ ] 8.1 `__main__.py` entry point
-[ ] 8.2 `cli/main.py` — `build_parser()` + `run()` dispatch
-[ ] 8.3 `cli/cmd_sync.py` → `pipeline.sync.run_sync(...)`
-[ ] 8.4 `cli/cmd_export.py` → `pipeline.export.run_export(...)`
-[ ] 8.5 Exit codes: 0 on success, 1 on fatal error
+[x] 8.1 `__main__.py` entry point
+[x] 8.2 `cli/main.py` — `build_parser()` + `run()` dispatch
+[x] 8.3 `cli/cmd_sync.py` → `pipeline.sync.run_sync(...)`
+[x] 8.4 `cli/cmd_export.py` → `pipeline.export.run_export(...)`
+[x] 8.5 Exit codes: 0 on success, 1 on fatal error
 
 ### Step 9 — End-to-End Verification `implement_step9.md`
 [ ] 9.1 Write `tests/e2e/test_sync.py`
@@ -109,5 +109,5 @@
 | 5 | Extract layer | [x] |
 | 6 | Store layer | [x] |
 | 7 | Pipeline layer | [x] |
-| 8 | CLI layer | [ ] |
+| 8 | CLI layer | [x] |
 | 9 | End-to-end verification | [ ] |

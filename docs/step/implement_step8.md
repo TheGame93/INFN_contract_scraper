@@ -32,7 +32,7 @@ The `cli/__init__.py` was created in Step 1 scaffolding; it is not listed in Pro
   - The standard `if __name__ == "__main__":` guard is **not** needed in `__main__.py` — Python only executes this file when the package is invoked with `-m`, so it is always `__main__`. Adding the guard is harmless but unnecessary.
   - Per CLAUDE.md dependency rule: `cli` is the only layer that calls `pipeline`. `__main__.py` only calls `cli.main`.
 
-[ ] done
+[x] done
 
 **Substep 8.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -86,7 +86,7 @@ The `cli/__init__.py` was created in Step 1 scaffolding; it is not listed in Pro
   - Module-level logger: `logger = logging.getLogger(__name__)`. The `basicConfig` call in `run()` activates this handler.
   - The `func` attribute set by `set_defaults` is always present when dispatch is reached (argparse enforces `required=True` on subparsers). No `hasattr(args, "func")` guard is needed.
 
-[ ] done
+[x] done
 
 **Substep 8.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -126,7 +126,7 @@ The `cli/__init__.py` was created in Step 1 scaffolding; it is not listed in Pro
   - Do NOT call `logging.basicConfig` here — it was already called by `run()` in `cli/main.py`. Calling it again after handlers are set has no effect, but is misleading.
   - Do NOT call `sys.exit()` here — let exceptions propagate naturally to the dispatcher.
 
-[ ] done
+[x] done
 
 **Substep 8.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -165,7 +165,7 @@ The `cli/__init__.py` was created in Step 1 scaffolding; it is not listed in Pro
   - `args` is passed as a parameter for consistency with the `execute(args)` contract, even though `export-csv` currently has no flags. Future flags (e.g., `--output-dir`) can be added without changing the dispatch mechanism.
   - Do NOT call `sys.exit()` here — propagate exceptions to `run()`.
 
-[ ] done
+[x] done
 
 **Substep 8.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -197,7 +197,7 @@ verification gate confirming the correct exit codes are produced under success a
   - Confirm that `print(f"Error: {exc}", file=sys.stderr)` appears in the `except` block in `run()` — the error message must go to stderr, not stdout, so it does not pollute piped output.
   - Logging (`logger.error(...)`) is also called on the same exception — both the structured log and the human-readable stderr message are emitted. This is intentional: the log line goes to the logger handler; the print goes directly to stderr regardless of log level.
 
-[ ] done
+[x] done
 
 **Substep 8.5 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
