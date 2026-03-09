@@ -95,7 +95,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - Do not import from other `infn_jobs` modules — only stdlib `sqlite3`.
   - No explicit `conn.commit()` here — schema DDL is auto-committed by SQLite on each statement.
 
-[ ] done
+[x] done
 
 **Substep 6.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -121,7 +121,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - This edit must be made AFTER sub-substep 6.1.1 completes, since it imports `init_db`.
   - The placeholder `conftest.py` from Step 1 contains only a comment — replace that comment with the imports and fixture definition.
 
-[ ] done
+[x] done
 
 ### 6.2.2 Create `tests/store/test_schema.py`
 - **File:** `tests/store/test_schema.py`
@@ -145,7 +145,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - `test_position_rows_has_contract_type_raw_column`: assert `contract_type_raw` is present in the `position_rows` column list (via `PRAGMA table_info(position_rows)`).
   - Do not test `calls_curated` column set separately if schema is identical to `calls_raw` — one parametrize over the 3 tables suffices for existence checks.
 
-[ ] done
+[x] done
 
 **Substep 6.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/store/test_schema.py -v` passes with no failures.
@@ -171,7 +171,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - Call `conn.commit()` after the execute. Per CLAUDE.md: "Each upsert commits immediately."
   - Import `CallRaw` from `infn_jobs.domain.call`; import `sqlite3`, `datetime` from stdlib only.
 
-[ ] done
+[x] done
 
 **Substep 6.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -196,7 +196,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - Call `conn.commit()` once after all deletes and inserts (atomic replacement for one call's rows). Per CLAUDE.md: "Each upsert commits immediately" — treat the full replacement for one `detail_id` as one commit unit.
   - Import `PositionRow` from `infn_jobs.domain.position`.
 
-[ ] done
+[x] done
 
 **Substep 6.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -227,7 +227,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - `test_upsert_position_rows_replaces_existing_rows`: insert 2 rows, then call `upsert_position_rows` again with 3 rows — assert exactly 3 rows remain (old rows deleted, new inserted).
   - `test_upsert_position_rows_empty_list_is_noop`: call `upsert_position_rows(conn, [])` — assert no exception and `position_rows` is unchanged.
 
-[ ] done
+[x] done
 
 **Substep 6.5 done when:** all sub-substeps above are `[x]` and
 `pytest tests/store/test_upsert.py -v` passes with no failures.
@@ -257,7 +257,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - **Future-proofing note:** In v1, the scraper only fetches the 5 employment-like tipos listed above. This means `calls_curated` will be identical to `calls_raw` in practice — the filter is not currently selective. The curated layer is retained as infrastructure for v2, which may add new source types (e.g., prizes, awards) that the filter would then exclude. Add a comment in the source file explaining this.
   - Do not import from other `infn_jobs` modules — only `sqlite3`.
 
-[ ] done
+[x] done
 
 **Substep 6.6 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -288,7 +288,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - Log at INFO: `"Exported {n} rows to {filename}"` for each CSV.
   - Do not import from other `infn_jobs` modules except `pathlib.Path` — only stdlib.
 
-[ ] done
+[x] done
 
 **Substep 6.7 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -316,7 +316,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - `test_export_calls_raw_csv_columns_complete`: assert `"detail_id"`, `"source_tipo"`, `"pdf_fetch_status"` are all in the header row.
   - `test_export_position_rows_csv_has_detail_id_and_index`: read `position_rows_raw.csv` header, assert both `"detail_id"` and `"position_row_index"` are present.
 
-[ ] done
+[x] done
 
 **Substep 6.8 done when:** all sub-substeps above are `[x]` and
 `pytest tests/store/test_export.py -v` passes with no failures.
@@ -344,7 +344,7 @@ behaviour; CSV export correctness is covered in `test_export.py`.
   - `test_rebuild_curated_view_reflects_curated_calls`: assert `SELECT COUNT(*) FROM position_rows_curated` == 2 (the 2 position_rows from the employment call). This tests the VIEW — `position_rows_curated` is not populated by `rebuild_curated()` but automatically reflects the join between `position_rows` and `calls_curated`.
   - `test_rebuild_curated_idempotent`: call `rebuild_curated` twice — assert row counts are the same after both calls (no duplication).
 
-[ ] done
+[x] done
 
 **Substep 6.9 done when:** all sub-substeps above are `[x]` and
 `pytest tests/store/test_curate.py -v` passes with no failures.

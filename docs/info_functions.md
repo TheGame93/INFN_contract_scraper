@@ -305,3 +305,63 @@
 | **Output** | `list[CallRaw]` |
 | **Description** | Fetch all active and expired calls for one tipo. Returns assembled CallRaw list. |
 
+---
+
+### `export_all`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/export/csv_writer.py` |
+| **Name** | `export_all` |
+| **Parent** | `infn_jobs.store.export.csv_writer` |
+| **Inputs** | `conn: sqlite3.Connection`, `export_dir: Path` |
+| **Output** | `None` |
+| **Description** | Write 4 CSV files to export_dir from all 4 DB tables. |
+
+---
+
+### `rebuild_curated`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/export/curate.py` |
+| **Name** | `rebuild_curated` |
+| **Parent** | `infn_jobs.store.export.curate` |
+| **Inputs** | `conn: sqlite3.Connection` |
+| **Output** | `None` |
+| **Description** | Rebuild calls_curated from the employment-like filter. |
+
+---
+
+### `init_db`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/schema.py` |
+| **Name** | `init_db` |
+| **Parent** | `infn_jobs.store.schema` |
+| **Inputs** | `conn: sqlite3.Connection` |
+| **Output** | `None` |
+| **Description** | Create 3 tables and 1 view with IF NOT EXISTS. Idempotent. |
+
+---
+
+### `upsert_call`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/upsert.py` |
+| **Name** | `upsert_call` |
+| **Parent** | `infn_jobs.store.upsert` |
+| **Inputs** | `conn: sqlite3.Connection`, `call: CallRaw` |
+| **Output** | `None` |
+| **Description** | Upsert a CallRaw into calls_raw. Preserves first_seen_at on update. |
+
+---
+
+### `upsert_position_rows`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/upsert.py` |
+| **Name** | `upsert_position_rows` |
+| **Parent** | `infn_jobs.store.upsert` |
+| **Inputs** | `conn: sqlite3.Connection`, `rows: list[PositionRow]` |
+| **Output** | `None` |
+| **Description** | Replace all position_rows for rows[0].detail_id. Deletes existing rows first. |
+

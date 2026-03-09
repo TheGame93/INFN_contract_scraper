@@ -9,9 +9,8 @@
 
 ## Currently Active
 
-> **Next to start:** Step 6 — Store Layer
-> **File:** `docs/step/implement_step5.md`
-> **File:** `docs/step/implement_step4.md`
+> **Next to start:** Step 7 — Pipeline Layer
+> **File:** `docs/step/implement_step7.md`
 
 ---
 
@@ -67,15 +66,15 @@
 [x] 5.18 Row builder tests
 
 ### Step 6 — Store Layer `implement_step6.md`
-[ ] 6.1 DB schema (`init_db(conn)` — `calls_raw`, `calls_curated` tables + `position_rows` table + `position_rows_curated` VIEW, idempotent)
-[ ] 6.2 Schema tests (create twice, no error; all columns present; VIEW returns correct shape)
-[ ] 6.3 `upsert_call` with `first_seen_at` immutability
-[ ] 6.4 `upsert_position_rows` — replace rows for detail_id
-[ ] 6.5 Upsert tests
-[ ] 6.6 Curated filter: `rebuild_curated(conn)` — employment-like filter for `calls_curated`
-[ ] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files, uses `position_rows_curated` VIEW)
-[ ] 6.8 Export tests
-[ ] 6.9 Curated filter tests
+[x] 6.1 DB schema (`init_db(conn)` — `calls_raw`, `calls_curated` tables + `position_rows` table + `position_rows_curated` VIEW, idempotent)
+[x] 6.2 Schema tests (create twice, no error; all columns present; VIEW returns correct shape)
+[x] 6.3 `upsert_call` with `first_seen_at` immutability
+[x] 6.4 `upsert_position_rows` — replace rows for detail_id
+[x] 6.5 Upsert tests
+[x] 6.6 Curated filter: `rebuild_curated(conn)` — employment-like filter for `calls_curated`
+[x] 6.7 CSV writer (`export_all(conn, export_dir)` — 4 CSV files, uses `position_rows_curated` VIEW)
+[x] 6.8 Export tests
+[x] 6.9 Curated filter tests
 
 ### Step 7 — Pipeline Layer `implement_step7.md`
 > Note: pipeline layer has no dedicated unit tests — covered by e2e in Step 9.
@@ -108,7 +107,7 @@
 | 3 | Config layer | [x] |
 | 4 | Fetch layer | [x] |
 | 5 | Extract layer | [x] |
-| 6 | Store layer | [ ] |
+| 6 | Store layer | [x] |
 | 7 | Pipeline layer | [ ] |
 | 8 | CLI layer | [ ] |
 | 9 | End-to-end verification | [ ] |
