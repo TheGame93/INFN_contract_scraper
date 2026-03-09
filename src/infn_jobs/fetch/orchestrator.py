@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 
 import requests
@@ -20,6 +21,7 @@ _PRESSURE_STATUS_CODES = {429, 503}
 _PRESSURE_GUIDANCE = (
     "Temporary recommendation: increase request delay to 5-10s for the next run."
 )
+_PRESSURE_STATUS_PATTERN = re.compile(r"\b(429|503)\b")
 
 
 def _sleep_with_jitter() -> None:
@@ -30,6 +32,11 @@ def _status_code_from_error(exc: requests.RequestException) -> int | None:
     """Return HTTP status code from a requests exception when available."""
     if isinstance(exc, requests.HTTPError) and exc.response is not None:
         return exc.response.status_code
+    # RetryError strings often contain the final status, e.g. "too many 503 error responses".
+    if isinstance(exc, requests.exceptions.RetryError):
+        match = _PRESSURE_STATUS_PATTERN.search(str(exc))
+        if match is not None:
+            return int(match.group(1))
     return None
 
 

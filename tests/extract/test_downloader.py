@@ -130,3 +130,20 @@ def test_download_timeout_logs_pressure_guidance(tmp_path: Path, caplog):
     assert result is None
     assert "pressure signal (timeout)" in caplog.text
     assert "5-10s" in caplog.text
+
+
+def test_download_retry_error_503_logs_pressure_guidance(tmp_path: Path, caplog):
+    dest = tmp_path / "file.pdf"
+    session = Mock()
+    session.get.side_effect = requests.exceptions.RetryError("too many 503 error responses")
+
+    with (
+        patch("infn_jobs.extract.pdf.downloader.random.uniform", return_value=2.5),
+        patch("infn_jobs.extract.pdf.downloader.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.extract.pdf.downloader"),
+    ):
+        result = download("https://jobs.dsi.infn.it/bando.pdf", dest, session=session)
+
+    assert result is None
+    assert "status=503" in caplog.text
+    assert "5-10s" in caplog.text

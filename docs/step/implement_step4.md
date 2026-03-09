@@ -30,10 +30,10 @@
   ```
 - **Test:** (manual verification — `python3 -c "from infn_jobs.fetch.client import get_session; s = get_session(); print(s.headers['User-Agent'])"` prints `infn-jobs-scraper/1.0 (research-tool)`)
 - **Notes:**
-  - Import `RATE_LIMIT_SLEEP`, `MAX_RETRIES`, `USER_AGENT` from `infn_jobs.config.settings`; never hardcode them here.
+  - Import `MAX_RETRIES` and `USER_AGENT` from `infn_jobs.config.settings`; never hardcode them here.
   - Mount a `HTTPAdapter` with `Retry(total=MAX_RETRIES, backoff_factor=1.0, status_forcelist=[500, 502, 503, 504], allowed_methods=["GET"])` on both `http://` and `https://` prefixes.
   - Set `session.headers.update({"User-Agent": USER_AGENT})`.
-  - Rate-limit sleep (1.0 s) is NOT enforced inside the session — it is the caller's responsibility (orchestrator sleeps between requests). `get_session()` only configures retry and identity.
+  - Rate-limit sleeps are NOT enforced inside the session — they are caller responsibilities (orchestrator/downloader pacing). `get_session()` only configures retry and identity.
   - No test file in `plan_implementation.md` for `client.py`; the session is exercised indirectly through listing/detail parser tests that use a mock session, and via e2e in Step 9.
 
 [x] done
@@ -273,9 +273,9 @@
   ```
 - **Test:** (manual verification — covered by e2e in Step 9; no unit test file in `plan_implementation.md` for the orchestrator)
 - **Notes:**
-  - Import `build_urls` from `infn_jobs.fetch.listing.url_builder`; `parse_rows` from `infn_jobs.fetch.listing.parser`; `parse_detail` from `infn_jobs.fetch.detail.parser`; `RATE_LIMIT_SLEEP` from `infn_jobs.config.settings`; `CallRaw` from `infn_jobs.domain.call`.
+  - Import `build_urls` from `infn_jobs.fetch.listing.url_builder`; `parse_rows` from `infn_jobs.fetch.listing.parser`; `parse_detail` from `infn_jobs.fetch.detail.parser`; `RATE_LIMIT_JITTER_MIN` and `RATE_LIMIT_JITTER_MAX` from `infn_jobs.config.settings`; `CallRaw` from `infn_jobs.domain.call`.
   - Per CLAUDE.md: `fetch_all_calls` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. Sets `listing_status` from the URL variant used (`"active"` for index 0, `"expired"` for index 1 from `build_urls()`). Returns the assembled `CallRaw` list.
-  - Sleep `RATE_LIMIT_SLEEP` seconds (via `time.sleep`) **between every HTTP GET** — after each listing page fetch and after each detail page fetch. Do not sleep before the very first request.
+  - Sleep between HTTP GET calls using random jitter `random.uniform(RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX)` (2.0-3.0 s around the 2.5 s target), single-threaded.
   - Set `call.source_tipo = tipo` on every assembled `CallRaw`.
   - Pass `response.content` (bytes) to `parse_rows()` and `parse_detail()` — never `response.text`.
   - On HTTP error fetching a detail page: log at WARNING and **skip** that call entirely — do not create a `CallRaw` for it. The `detail_id` from the listing row is known, but since `parse_detail()` was never called, no `CallRaw` is available to populate. The next sync run will retry. Do not set `pdf_fetch_status` here — that field reflects PDF-level outcomes, not HTML detail page fetch outcomes.

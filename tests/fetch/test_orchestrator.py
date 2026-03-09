@@ -200,6 +200,37 @@ def test_fetch_all_calls_listing_pressure_signal_logs_guidance_and_continues(cap
     assert "5-10s" in caplog.text
 
 
+def test_fetch_all_calls_listing_retry_error_503_logs_guidance_and_continues(caplog):
+    session = Mock()
+    session.get.side_effect = [
+        requests.exceptions.RetryError("too many 503 error responses"),
+        _response(b"listing-expired"),
+        _response(b"detail-2"),
+    ]
+
+    with (
+        patch(
+            "infn_jobs.fetch.orchestrator.build_urls",
+            return_value=["active-url", "expired-url"],
+        ),
+        patch(
+            "infn_jobs.fetch.orchestrator.parse_rows",
+            return_value=[
+                {"detail_id": "2", "detail_url": "https://jobs.dsi.infn.it/dettagli_job.php?id=2"}
+            ],
+        ),
+        patch("infn_jobs.fetch.orchestrator.parse_detail", return_value=_call("2")),
+        patch("infn_jobs.fetch.orchestrator.random.uniform", return_value=2.5),
+        patch("infn_jobs.fetch.orchestrator.time.sleep"),
+        caplog.at_level("WARNING", logger="infn_jobs.fetch.orchestrator"),
+    ):
+        calls = fetch_all_calls(session, "Borsa")
+
+    assert [c.detail_id for c in calls] == ["2"]
+    assert "status=503" in caplog.text
+    assert "5-10s" in caplog.text
+
+
 def test_fetch_all_calls_detail_timeout_logs_guidance(caplog):
     session = Mock()
     session.get.side_effect = [
