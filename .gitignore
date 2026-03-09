@@ -14,6 +14,8 @@ env/
 
 # Planning
 docs/audit*
+docs/plan_codex*
+docs/plan_claude*
 docs/old_docs/
 
 # Data — runtime artifacts (never commit)

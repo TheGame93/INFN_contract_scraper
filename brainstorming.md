@@ -13,10 +13,23 @@
 
 If something important change in the code, review the command /review-full-code
 
-First set of findings: docs/audit_1.md
-
 ## Question
 
+
+## Feature
+
+- We need more options for the code:
+    - allow for a partial fetch option: only the first 20 items of each contract type. Is it useful for debug
+    - allow for the download of all the PDF: store them locally so if the user wants to analyze them in a different way it doesn't need to fetch them again (since is a slow process).
+    - The user will since choose if creating the db from fetch or from local source
+    - Of course the local save should be incremental: an already downloaded pdf will not be downloaded again.
+
+- Let's talk about the database columns. Which are them now? Is the program flexible about the creation of new fields? Is there a dedicated interface for managing fields?
+
+## Codex
+
+Plan with `docs/codex_planning.md`, creating `plan_codex_N.md`.
+Implement it with `docs/codex_instructions.md`
 
 ## Future
 

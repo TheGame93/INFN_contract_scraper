@@ -34,15 +34,17 @@ it against a temp directory.
   EXPORT_DIR: Path = DATA_DIR / "exports"
   PDF_CACHE_DIR: Path = DATA_DIR / "pdf_cache"
 
-  RATE_LIMIT_SLEEP: float = 1.0
+  RATE_LIMIT_JITTER_MIN: float = 2.0
+  RATE_LIMIT_JITTER_MAX: float = 3.0
+  RATE_LIMIT_SLEEP: float = 2.5
   MAX_RETRIES: int = 3
   USER_AGENT: str = "infn-jobs-scraper/1.0 (research-tool)"
   ```
-- **Test:** (manual verification — `python3 -c "from infn_jobs.config.settings import BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR, RATE_LIMIT_SLEEP, MAX_RETRIES, USER_AGENT; assert len(TIPOS) == 5; print(DB_PATH)"` prints the absolute path to `data/infn_jobs.db` with no error)
+- **Test:** (manual verification — `python3 -c "from infn_jobs.config.settings import BASE_URL, TIPOS, DB_PATH, EXPORT_DIR, PDF_CACHE_DIR, RATE_LIMIT_SLEEP, RATE_LIMIT_JITTER_MIN, RATE_LIMIT_JITTER_MAX, MAX_RETRIES, USER_AGENT; assert len(TIPOS) == 5; assert RATE_LIMIT_JITTER_MIN <= RATE_LIMIT_SLEEP <= RATE_LIMIT_JITTER_MAX; print(DB_PATH)"` prints the absolute path to `data/infn_jobs.db` with no error)
 - **Notes:**
   - `_PROJECT_ROOT` resolves as: `src/infn_jobs/config/settings.py` → parent = `config/` → parent = `infn_jobs/` → parent = `src/` → **this is wrong by one level**. Correct chain: `Path(__file__).parent` = `config/`, `.parent` = `infn_jobs/`, `.parent` = `src/`, `.parent` = project root. So use `Path(__file__).parent.parent.parent.parent` — verify the resolved path prints the expected project root.
   - `TIPOS` values are placeholder strings based on the plan. **Substep 3.3 will verify and correct these** against the live site before Step 4 begins. Do not use them in fetch logic until 3.3.1 is `[x]`.
-  - `RATE_LIMIT_SLEEP`, `MAX_RETRIES`, `USER_AGENT` are defined here so `fetch/client.py` (Step 4) can import them without hardcoding values. Per CLAUDE.md: sleep 1.0 s between requests, max 3 retries, User-Agent `infn-jobs-scraper/1.0 (research-tool)`.
+  - `RATE_LIMIT_SLEEP`, `RATE_LIMIT_JITTER_MIN`, `RATE_LIMIT_JITTER_MAX`, `MAX_RETRIES`, and `USER_AGENT` are defined here so fetch/extract modules can import them without hardcoding values. Per CLAUDE.md: single-threaded requests, 2.5 s target delay with jitter (2.0-3.0 s), max 3 retries, User-Agent `infn-jobs-scraper/1.0 (research-tool)`.
   - Config layer has **no imports from other `infn_jobs` modules** — only stdlib (`pathlib`).
   - Do not import `domain` or any other layer here.
 

@@ -61,7 +61,7 @@ substep level — complete 5.8 before starting 5.9.
   - If `url` is `None` or empty string, return `None` immediately — do not attempt download.
   - If `dest` already exists and `force=False`, return `dest` immediately (cache hit). Log at DEBUG: `"PDF {dest.name}: cache hit, skipping download"`.
   - **Session parameter:** if `session` is provided, use it for the HTTP GET (inherits retry/backoff config from `get_session()`). If `None`, create a short-lived `requests.Session` with `USER_AGENT` header set. The pipeline (Step 7) passes the same session used for fetch operations.
-  - **Rate limiting:** call `time.sleep(RATE_LIMIT_SLEEP)` before the HTTP GET (not before cache hits). Import `RATE_LIMIT_SLEEP` from `infn_jobs.config.settings`. Per CLAUDE.md: "1.0 s sleep between requests" applies to PDF downloads too.
+  - **Rate limiting:** apply single-threaded pacing before the HTTP GET (not before cache hits) using the settings-based jitter policy (`RATE_LIMIT_JITTER_MIN`-`RATE_LIMIT_JITTER_MAX`, with `RATE_LIMIT_SLEEP=2.5` target). Per CLAUDE.md this applies to PDF downloads too.
   - On HTTP error (non-200 response): do NOT retry 4xx (per CLAUDE.md). Log at WARNING and return `None`. The caller (pipeline Step 7) sets `pdf_fetch_status = "download_error"`.
   - On success: write `response.content` (bytes) to `dest` and return `dest`. Create parent dirs with `dest.parent.mkdir(parents=True, exist_ok=True)`.
   - Per CLAUDE.md: "PDF URL resolution — if the href starts with `http`, use as-is. Otherwise join with BASE_URL origin (scheme + host only, not path)." URL resolution is done in the detail parser (Step 4); by the time `download()` is called, `url` is already absolute.
