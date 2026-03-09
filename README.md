@@ -13,10 +13,11 @@ pip3 install -r pythonrequirements.txt
 ```
 
 ```bash
-python3 -m infn_jobs sync
-python3 -m infn_jobs sync --dry-run
-python3 -m infn_jobs sync --force-refetch
-python3 -m infn_jobs export-csv
+python3 -m infn_jobs --help               # show all commands and flags
+python3 -m infn_jobs sync                 # full sync: fetch + parse + write to DB
+python3 -m infn_jobs sync --dry-run       # fetch + parse only, no DB writes
+python3 -m infn_jobs sync --force-refetch # full sync and re-download PDFs even if cached
+python3 -m infn_jobs export-csv           # rebuild curated data and write the 4 CSV files
 ```
 
 ## Output
@@ -31,4 +32,4 @@ python3 -m infn_jobs export-csv
 
 ## Disclaimer
 
-This README has been written totally with AI.
+This code has been written totally with AI.
