@@ -373,7 +373,7 @@
 | **File** | `src/infn_jobs/pipeline/sync.py` |
 | **Name** | `run_sync` |
 | **Parent** | `infn_jobs.pipeline.sync` |
-| **Inputs** | `conn: sqlite3.Connection`, `dry_run: bool`, `force_refetch: bool` |
+| **Inputs** | `conn: sqlite3.Connection`, `source: str`, `limit_per_tipo: int | None`, `download_only: bool`, `dry_run: bool`, `force_refetch: bool` |
 | **Output** | `None` |
 | **Description** | Full idempotent sync pipeline: fetch all calls → extract PDFs → store. |
 

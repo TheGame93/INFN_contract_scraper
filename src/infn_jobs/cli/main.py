@@ -20,6 +20,24 @@ def build_parser() -> argparse.ArgumentParser:
 
     sync_parser = subparsers.add_parser("sync", help="Fetch and store all INFN job listings.")
     sync_parser.add_argument(
+        "--source",
+        choices=("local", "remote", "auto"),
+        default="local",
+        help="Source mode for sync discovery and cache materialization.",
+    )
+    sync_parser.add_argument(
+        "--limit-per-tipo",
+        type=int,
+        default=None,
+        help="Limit fetched calls per tipo (applies to remote discovery flows).",
+    )
+    sync_parser.add_argument(
+        "--download-only",
+        action="store_true",
+        default=False,
+        help="Discover and materialize PDF cache only; skip parse and DB writes.",
+    )
+    sync_parser.add_argument(
         "--dry-run",
         action="store_true",
         default=False,

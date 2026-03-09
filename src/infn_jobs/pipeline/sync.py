@@ -22,6 +22,9 @@ _THROTTLE_REMINDER = (
 
 def run_sync(
     conn: sqlite3.Connection,
+    source: str = "local",
+    limit_per_tipo: int | None = None,
+    download_only: bool = False,
     dry_run: bool = False,
     force_refetch: bool = False,
 ) -> None:

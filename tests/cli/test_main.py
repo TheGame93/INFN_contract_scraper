@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from unittest.mock import Mock, patch
 
 import pytest
@@ -16,15 +17,38 @@ def test_build_parser_sync_subcommand():
     parser = build_parser()
     args = parser.parse_args(["sync"])
     assert args.command == "sync"
+    assert args.source == "local"
+    assert args.limit_per_tipo is None
+    assert args.download_only is False
     assert args.dry_run is False
     assert args.force_refetch is False
 
 
 def test_build_parser_sync_flags():
     parser = build_parser()
-    args = parser.parse_args(["sync", "--dry-run", "--force-refetch"])
+    args = parser.parse_args(
+        [
+            "sync",
+            "--source",
+            "remote",
+            "--limit-per-tipo",
+            "3",
+            "--download-only",
+            "--dry-run",
+            "--force-refetch",
+        ]
+    )
+    assert args.source == "remote"
+    assert args.limit_per_tipo == 3
+    assert args.download_only is True
     assert args.dry_run is True
     assert args.force_refetch is True
+
+
+def test_build_parser_sync_auto_source():
+    parser = build_parser()
+    args = parser.parse_args(["sync", "--source", "auto"])
+    assert args.source == "auto"
 
 
 def test_build_parser_export_csv_subcommand():
@@ -68,9 +92,40 @@ def test_run_fatal_error_exits_with_code_1(capsys):
     assert "Error: boom" in captured.err
 
 
+@pytest.mark.parametrize(
+    ("argv", "message"),
+    [
+        (["sync", "--limit-per-tipo", "0"], "--limit-per-tipo must be a positive integer."),
+        (
+            ["sync", "--force-refetch"],
+            "--force-refetch cannot be used with --source local.",
+        ),
+        (
+            ["sync", "--download-only"],
+            "--download-only cannot be used with --source local.",
+        ),
+    ],
+)
+def test_cmd_sync_execute_rejects_invalid_flag_combinations(argv: list[str], message: str):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    with patch("infn_jobs.cli.cmd_sync.sqlite3.connect") as connect_mock:
+        with pytest.raises(ValueError, match=re.escape(message)):
+            cmd_sync.execute(args)
+
+    connect_mock.assert_not_called()
+
+
 def test_cmd_sync_execute_db_lifecycle_success():
     conn = Mock()
-    args = argparse.Namespace(dry_run=True, force_refetch=False)
+    args = argparse.Namespace(
+        source="local",
+        limit_per_tipo=None,
+        download_only=False,
+        dry_run=True,
+        force_refetch=False,
+    )
 
     with (
         patch("infn_jobs.cli.cmd_sync.sqlite3.connect", return_value=conn) as connect_mock,
@@ -81,13 +136,26 @@ def test_cmd_sync_execute_db_lifecycle_success():
 
     connect_mock.assert_called_once_with(str(DB_PATH))
     init_db_mock.assert_called_once_with(conn)
-    run_sync_mock.assert_called_once_with(conn, dry_run=True, force_refetch=False)
+    run_sync_mock.assert_called_once_with(
+        conn,
+        source="local",
+        limit_per_tipo=None,
+        download_only=False,
+        dry_run=True,
+        force_refetch=False,
+    )
     conn.close.assert_called_once()
 
 
 def test_cmd_sync_execute_closes_db_on_error():
     conn = Mock()
-    args = argparse.Namespace(dry_run=False, force_refetch=True)
+    args = argparse.Namespace(
+        source="remote",
+        limit_per_tipo=5,
+        download_only=False,
+        dry_run=False,
+        force_refetch=True,
+    )
 
     with (
         patch("infn_jobs.cli.cmd_sync.sqlite3.connect", return_value=conn),
@@ -102,7 +170,13 @@ def test_cmd_sync_execute_closes_db_on_error():
 
 def test_cmd_sync_execute_closes_db_on_keyboard_interrupt():
     conn = Mock()
-    args = argparse.Namespace(dry_run=False, force_refetch=False)
+    args = argparse.Namespace(
+        source="auto",
+        limit_per_tipo=2,
+        download_only=True,
+        dry_run=False,
+        force_refetch=False,
+    )
 
     with (
         patch("infn_jobs.cli.cmd_sync.sqlite3.connect", return_value=conn),
