@@ -55,6 +55,32 @@ def test_parse_detail_pdf_url_absolute_used_as_is():
     assert result.pdf_url == "https://external.example.com/bando.pdf"
 
 
+def test_parse_detail_pdf_url_relative_no_leading_slash():
+    html = (
+        b"<html><head><meta charset='utf-8'></head><body>"
+        b"<table><tbody>"
+        b"<tr><th>Bando (PDF)</th><td>"
+        b"<a href='bandi/bando123.pdf'>bando123.pdf</a>"
+        b"</td></tr>"
+        b"</tbody></table></body></html>"
+    )
+    result = parse_detail(html, "999")
+    assert result.pdf_url == "https://jobs.dsi.infn.it/bandi/bando123.pdf"
+
+
+def test_parse_detail_pdf_url_relative_with_leading_slash():
+    html = (
+        b"<html><head><meta charset='utf-8'></head><body>"
+        b"<table><tbody>"
+        b"<tr><th>Bando (PDF)</th><td>"
+        b"<a href='/bandi/bando123.pdf'>bando123.pdf</a>"
+        b"</td></tr>"
+        b"</tbody></table></body></html>"
+    )
+    result = parse_detail(html, "999")
+    assert result.pdf_url == "https://jobs.dsi.infn.it/bandi/bando123.pdf"
+
+
 def test_parse_detail_returns_call_raw_instance():
     result = parse_detail(_read("detail_page_full.html"), "1234")
     assert isinstance(result, CallRaw)

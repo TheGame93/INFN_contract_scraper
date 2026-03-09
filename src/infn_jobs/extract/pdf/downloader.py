@@ -38,8 +38,8 @@ def download(
     try:
         response = _session.get(url)
         response.raise_for_status()
-    except requests.HTTPError as exc:
-        logger.warning("PDF %s: HTTP error downloading: %s", dest.name, exc)
+    except requests.RequestException as exc:
+        logger.warning("PDF %s: error downloading: %s", dest.name, exc)
         return None
 
     dest.write_bytes(response.content)

@@ -19,7 +19,7 @@ def _resolve_url(href: str) -> str:
     """Resolve a relative or absolute href to a full URL using BASE_URL origin."""
     if href.startswith("http"):
         return href
-    return _ORIGIN + href
+    return _ORIGIN + ("" if href.startswith("/") else "/") + href
 
 
 def _find_field(tbody: BeautifulSoup, label: str) -> str | None:

@@ -37,8 +37,8 @@ def fetch_all_calls(session: requests.Session, tipo: str) -> list[CallRaw]:
             try:
                 detail_resp = session.get(row["detail_url"])
                 detail_resp.raise_for_status()
-            except requests.HTTPError as exc:
-                logger.warning("detail_id=%s: HTTP error fetching detail page: %s", detail_id, exc)
+            except requests.RequestException as exc:
+                logger.warning("detail_id=%s: error fetching detail page: %s", detail_id, exc)
                 continue
 
             call = parse_detail(detail_resp.content, detail_id)
