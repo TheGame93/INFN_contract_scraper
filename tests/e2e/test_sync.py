@@ -5,8 +5,6 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.domain.enums import TextQuality
 from infn_jobs.pipeline.export import run_export
@@ -179,13 +177,35 @@ def test_export_csv_creates_four_files(tmp_path: Path) -> None:
         run_sync(conn)
     run_export(conn, export_dir)
 
-    expected = {"calls_raw.csv", "calls_curated.csv", "position_rows_raw.csv", "position_rows_curated.csv"}
+    expected = {
+        "calls_raw.csv",
+        "calls_curated.csv",
+        "position_rows_raw.csv",
+        "position_rows_curated.csv",
+    }
     created = {p.name for p in export_dir.glob("*.csv")}
     assert expected == created
 
     for name in expected:
         lines = (export_dir / name).read_text(encoding="utf-8").splitlines()
         assert len(lines) >= 2, f"{name} must have header + at least 1 data row"
+    conn.close()
+
+
+def test_sync_rebuilds_curated_tables(tmp_path: Path) -> None:
+    """run_sync must keep calls_curated in sync with calls_raw when not dry-run."""
+    conn = _make_conn(tmp_path)
+    fac_p, dl_p, et_p = _patch_sync(tmp_path)
+    with fac_p, dl_p, et_p:
+        run_sync(conn)
+
+    raw_count = conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
+    curated_count = conn.execute("SELECT COUNT(*) FROM calls_curated").fetchone()[0]
+    curated_rows = conn.execute("SELECT COUNT(*) FROM position_rows_curated").fetchone()[0]
+
+    assert raw_count == 5
+    assert curated_count == raw_count
+    assert curated_rows > 0
     conn.close()
 
 

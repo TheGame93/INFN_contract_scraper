@@ -10,6 +10,7 @@ from infn_jobs.extract.pdf.downloader import download
 from infn_jobs.extract.pdf.mutool import extract_text
 from infn_jobs.fetch.client import get_session
 from infn_jobs.fetch.orchestrator import fetch_all_calls
+from infn_jobs.store.export.curate import rebuild_curated
 from infn_jobs.store.upsert import upsert_call, upsert_position_rows
 
 logger = logging.getLogger(__name__)
@@ -66,3 +67,7 @@ def run_sync(
                 upsert_call(conn, call)
                 if rows:
                     upsert_position_rows(conn, rows)
+
+    if not dry_run:
+        logger.info("Rebuilding curated tables after sync")
+        rebuild_curated(conn)

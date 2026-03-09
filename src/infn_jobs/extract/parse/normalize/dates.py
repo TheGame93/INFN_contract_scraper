@@ -7,6 +7,7 @@ from datetime import date
 
 def parse_date(s: str | None) -> date | None:
     """Parse a date string in DD-MM-YYYY or DD/MM/YYYY format. Returns None if invalid."""
+    # NOTE: shared infrastructure for v2/v3; currently not used by v1 production code.
     if not s:
         return None
 

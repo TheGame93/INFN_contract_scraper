@@ -22,5 +22,4 @@ def test_build_urls_expired_url_has_scad():
 
 def test_build_urls_tipo_is_url_encoded_correctly():
     result = build_urls("Incarico di ricerca")
-    # The tipo string appears verbatim in the URL (encoding happens at request time)
-    assert "tipo=Incarico di ricerca" in result[0] or "tipo=Incarico" in result[0]
+    assert "tipo=Incarico%20di%20ricerca" in result[0]

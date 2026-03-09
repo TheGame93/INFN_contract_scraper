@@ -4,15 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from infn_jobs.domain.enums import ContractType
+
 BASE_URL: str = "https://jobs.dsi.infn.it"
 
-TIPOS: list[str] = [
-    "Borsa",
-    "Incarico di ricerca",
-    "Incarico Post-Doc",
-    "Contratto di ricerca",
-    "Assegno di ricerca",
-]
+TIPOS: list[str] = [ct.value for ct in ContractType]
 
 _PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent
 DATA_DIR: Path = _PROJECT_ROOT / "data"

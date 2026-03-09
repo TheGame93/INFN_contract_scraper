@@ -2,17 +2,13 @@
 
 import sqlite3
 
+from infn_jobs.domain.enums import ContractType
+
 # In v1, the scraper only fetches these 5 employment-like source tipos, so
 # calls_curated will be identical to calls_raw in practice. The curated layer
 # is infrastructure for v2, which may add new source types (e.g., prizes,
 # awards) that this filter would then exclude.
-_EMPLOYMENT_TIPOS = (
-    "Borsa",
-    "Incarico di ricerca",
-    "Incarico Post-Doc",
-    "Contratto di ricerca",
-    "Assegno di ricerca",
-)
+_EMPLOYMENT_TIPOS = tuple(ct.value for ct in ContractType)
 
 
 def rebuild_curated(conn: sqlite3.Connection) -> None:
