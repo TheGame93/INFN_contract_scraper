@@ -7,6 +7,54 @@
 
 ---
 
+### `execute`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/cli/cmd_export.py` |
+| **Name** | `execute` |
+| **Parent** | `infn_jobs.cli.cmd_export` |
+| **Inputs** | `args: argparse.Namespace` |
+| **Output** | `None` |
+| **Description** | Open DB, rebuild curated tables, export 4 CSVs, close DB. |
+
+---
+
+### `execute`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/cli/cmd_sync.py` |
+| **Name** | `execute` |
+| **Parent** | `infn_jobs.cli.cmd_sync` |
+| **Inputs** | `args: argparse.Namespace` |
+| **Output** | `None` |
+| **Description** | Open DB, run full sync pipeline, close DB. |
+
+---
+
+### `build_parser`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/cli/main.py` |
+| **Name** | `build_parser` |
+| **Parent** | `infn_jobs.cli.main` |
+| **Inputs** | — |
+| **Output** | `argparse.ArgumentParser` |
+| **Description** | Build and return the argument parser with all subcommands registered. |
+
+---
+
+### `run`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/cli/main.py` |
+| **Name** | `run` |
+| **Parent** | `infn_jobs.cli.main` |
+| **Inputs** | — |
+| **Output** | `None` |
+| **Description** | Configure logging, parse arguments, and dispatch to the selected subcommand. |
+
+---
+
 ### `init_data_dirs`
 | Field | Value |
 |---|---|
@@ -304,6 +352,30 @@
 | **Inputs** | `session: requests.Session`, `tipo: str` |
 | **Output** | `list[CallRaw]` |
 | **Description** | Fetch all active and expired calls for one tipo. Returns assembled CallRaw list. |
+
+---
+
+### `run_export`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/pipeline/export.py` |
+| **Name** | `run_export` |
+| **Parent** | `infn_jobs.pipeline.export` |
+| **Inputs** | `conn: sqlite3.Connection`, `export_dir: Path` |
+| **Output** | `None` |
+| **Description** | Rebuild curated tables, then export all 4 CSVs to export_dir. |
+
+---
+
+### `run_sync`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/pipeline/sync.py` |
+| **Name** | `run_sync` |
+| **Parent** | `infn_jobs.pipeline.sync` |
+| **Inputs** | `conn: sqlite3.Connection`, `dry_run: bool`, `force_refetch: bool` |
+| **Output** | `None` |
+| **Description** | Full idempotent sync pipeline: fetch all calls → extract PDFs → store. |
 
 ---
 

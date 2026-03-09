@@ -9,8 +9,7 @@
 
 ## Currently Active
 
-> **Next to start:** Step 9 — End-to-End Verification
-> **File:** `docs/step/implement_step9.md`
+> **All steps complete.** No active sub-substep.
 
 ---
 
@@ -91,10 +90,10 @@
 [x] 8.5 Exit codes: 0 on success, 1 on fatal error
 
 ### Step 9 — End-to-End Verification `implement_step9.md`
-[ ] 9.1 Write `tests/e2e/test_sync.py`
-[ ] 9.2 Run full verification checklist from `docs/plan_implementation.md`
-[ ] 9.3 Regenerate `docs/info_functions.md` via `python3 scripts/gen_info_functions.py`
-[ ] 9.4 Mark all steps `[x]` in this file
+[x] 9.1 Write `tests/e2e/test_sync.py`
+[x] 9.2 Run full verification checklist from `docs/plan_implementation.md`
+[x] 9.3 Regenerate `docs/info_functions.md` via `python3 scripts/gen_info_functions.py`
+[x] 9.4 Mark all steps `[x]` in this file
 
 ---
 
@@ -110,4 +109,4 @@
 | 6 | Store layer | [x] |
 | 7 | Pipeline layer | [x] |
 | 8 | CLI layer | [x] |
-| 9 | End-to-end verification | [ ] |
+| 9 | End-to-end verification | [x] |

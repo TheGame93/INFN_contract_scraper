@@ -32,6 +32,16 @@ def test_parse_rows_detail_url_is_absolute():
         result = parse_rows(_read(fixture))
         for row in result:
             assert row["detail_url"].startswith("http"), f"Not absolute: {row['detail_url']}"
+            # Must not smash origin and path together (no leading slash bug)
+            assert "://" in row["detail_url"], f"Malformed URL: {row['detail_url']}"
+            parts = row["detail_url"].split("://", 1)
+            assert "/" in parts[1], f"Missing path separator in URL: {row['detail_url']}"
+
+
+def test_parse_rows_detail_url_correct_format():
+    result = parse_rows(_read("listing_active.html"))
+    assert result[0]["detail_url"] == "https://jobs.dsi.infn.it/dettagli_job.php?id=1234"
+    assert result[1]["detail_url"] == "https://jobs.dsi.infn.it/dettagli_job.php?id=1235"
 
 
 def test_parse_rows_empty_table_returns_empty_list():

@@ -96,7 +96,7 @@ source file.
   - **Parametrize note:** do not parametrize tests that share state (DB connection). Run each test with an independent `tmp_path` to avoid inter-test interference.
   - **`tests/e2e/` directory** was created in Step 1 (`.gitkeep`). Remove the `.gitkeep` file when this test file is created, or simply create the test file and let git track it instead of the placeholder.
 
-[ ] done
+[x] done
 
 **Substep 9.1 done when:** all sub-substeps above are `[x]` and
 `pytest tests/e2e/ -v` passes with no failures.
@@ -125,7 +125,7 @@ source file.
   - If any checklist item fails, diagnose the root cause before marking this substep `[x]`. Document any new failure pattern in `docs/known_edge_cases.md`.
   - Item 9 (`pytest tests/ -v`) must pass with the real DB absent — the unit tests use tmp databases and fixture files, so they must not depend on `data/infn_jobs.db`.
 
-[ ] done
+[x] done
 
 **Substep 9.2 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -155,7 +155,7 @@ This substep runs it after all source files are in place and verifies the output
   - Commit both `scripts/gen_info_functions.py` and the generated `docs/info_functions.md` together.
   - Re-run the script whenever functions are added, renamed, or removed. Add `python3 scripts/gen_info_functions.py` as a reminder in the commit checklist (or as a pre-commit hook if desired).
 
-[ ] done
+[x] done
 
 **Substep 9.3 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.
@@ -175,7 +175,7 @@ This substep runs it after all source files are in place and verifies the output
   - The Completion Summary table in `planning_step.md` should go from all `[ ]` to all `[x]` as the final act of this step.
   - Update `## Currently Active` section to: `> **All steps complete.** No active sub-substep.`
 
-[ ] done
+[x] done
 
 **Substep 9.4 done when:** all sub-substeps above are `[x]` and
 `pytest tests/ -v` passes with no failures.

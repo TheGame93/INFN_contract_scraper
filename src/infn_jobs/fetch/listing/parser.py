@@ -28,7 +28,7 @@ def _resolve_url(href: str) -> str:
     """Resolve a relative or absolute href to a full URL."""
     if href.startswith("http"):
         return href
-    return _ORIGIN + href
+    return _ORIGIN + ("" if href.startswith("/") else "/") + href
 
 
 def parse_rows(html: bytes) -> list[dict]:
