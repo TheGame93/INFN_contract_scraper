@@ -13,6 +13,7 @@ from infn_jobs.domain.position import PositionRow
 from infn_jobs.pipeline.export import run_export
 from infn_jobs.pipeline.sync import run_sync
 from infn_jobs.store.schema import init_db
+from infn_jobs.store.upsert import upsert_call
 
 # ---------------------------------------------------------------------------
 # Fixtures and helpers
@@ -78,7 +79,9 @@ def _patch_sync(tmp_path: Path, text: str = MULTI_TEXT, quality: TextQuality = T
     return (
         patch(
             "infn_jobs.pipeline.sync.fetch_all_calls",
-            side_effect=lambda session, tipo: [c for c in make_calls() if c.source_tipo == tipo],
+            side_effect=lambda session, tipo, *_args: [
+                c for c in make_calls() if c.source_tipo == tipo
+            ],
         ),
         patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
         patch("infn_jobs.pipeline.sync.extract_text", return_value=(text, quality)),
@@ -95,11 +98,11 @@ def test_sync_runs_without_error(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     with patch(
         "infn_jobs.pipeline.sync.fetch_all_calls",
-        side_effect=lambda session, tipo: [c for c in make_calls() if c.source_tipo == tipo],
+        side_effect=lambda session, tipo, *_args: [c for c in make_calls() if c.source_tipo == tipo],
     ), patch("infn_jobs.pipeline.sync.download", return_value=tmp_path / "mock.pdf"), patch(
         "infn_jobs.pipeline.sync.extract_text", return_value=(MULTI_TEXT, TextQuality.DIGITAL)
     ):
-        run_sync(conn, dry_run=False, force_refetch=False)
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
     conn.close()
 
 
@@ -165,18 +168,18 @@ def test_sync_request_processing_is_serial(tmp_path: Path) -> None:
         patch("infn_jobs.pipeline.sync.rebuild_curated", side_effect=_rebuild_curated),
         patch("infn_jobs.pipeline.sync.init_data_dirs"),
     ):
-        run_sync(conn, dry_run=False, force_refetch=False)
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
 
     assert events == [
         "fetch_all_calls:Borsa",
         "download:serial-1",
-        "extract_text",
-        "build_rows:serial-1",
-        "upsert_call:serial-1",
-        "upsert_position_rows:serial-1",
         "download:serial-2",
         "extract_text",
+        "build_rows:serial-1",
+        "extract_text",
         "build_rows:serial-2",
+        "upsert_call:serial-1",
+        "upsert_position_rows:serial-1",
         "upsert_call:serial-2",
         "upsert_position_rows:serial-2",
         "rebuild_curated",
@@ -213,6 +216,7 @@ def test_sync_auto_source_passes_limit_to_fetch_orchestrator() -> None:
         patch("infn_jobs.pipeline.sync.get_session", return_value=session),
         patch("infn_jobs.pipeline.sync.init_data_dirs"),
         patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.list_calls_for_pdf_processing", return_value=[]),
         patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
     ):
         run_sync(
@@ -228,13 +232,15 @@ def test_sync_auto_source_passes_limit_to_fetch_orchestrator() -> None:
 
 
 def test_sync_local_source_does_not_pass_limit_to_fetch_orchestrator() -> None:
-    """run_sync must ignore limit_per_tipo for source=local."""
+    """run_sync local discovery must not call fetch_all_calls."""
     conn = Mock()
     session = Mock()
+    local_call = CallRaw(detail_id="local-1", pdf_url=None)
     with (
         patch("infn_jobs.pipeline.sync.get_session", return_value=session),
         patch("infn_jobs.pipeline.sync.init_data_dirs"),
         patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.list_calls_for_pdf_processing", return_value=[local_call]),
         patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
     ):
         run_sync(
@@ -246,7 +252,318 @@ def test_sync_local_source_does_not_pass_limit_to_fetch_orchestrator() -> None:
             force_refetch=False,
         )
 
+    fetch_mock.assert_not_called()
+
+
+def test_sync_local_source_bootstrap_empty_db_raises_actionable_error(tmp_path: Path) -> None:
+    """source=local with empty calls_raw must fail fast with actionable guidance."""
+    conn = _make_conn(tmp_path)
+
+    with pytest.raises(ValueError, match="--source remote"):
+        run_sync(conn, source="local", dry_run=True)
+
+    conn.close()
+
+
+def test_sync_local_source_uses_db_calls_and_local_cache_only(tmp_path: Path) -> None:
+    """source=local must parse existing cache without listing/detail fetch or downloads."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    local_pdf = cache_dir / "local-1.pdf"
+    local_pdf.write_bytes(b"%PDF-local")
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="local-1",
+            source_tipo="Borsa",
+            pdf_url="https://jobs.dsi.infn.it/local-1.pdf",
+            pdf_cache_path=str(local_pdf),
+            listing_status="active",
+            anno="2022",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls") as fetch_mock,
+        patch("infn_jobs.pipeline.sync.download") as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)) as extract_mock,
+    ):
+        run_sync(conn, source="local", dry_run=True)
+
+    fetch_mock.assert_not_called()
+    download_mock.assert_not_called()
+    extract_mock.assert_called_once_with(local_pdf)
+    conn.close()
+
+
+def test_sync_auto_source_uses_local_db_and_downloads_missing_cache(tmp_path: Path) -> None:
+    """source=auto with non-empty DB must avoid listing fetch and download only missing caches."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    expected_dest = cache_dir / "auto-1.pdf"
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="auto-1",
+            source_tipo="Borsa",
+            pdf_url="https://jobs.dsi.infn.it/auto-1.pdf",
+            pdf_cache_path=None,
+            listing_status="active",
+            anno="2021",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls") as fetch_mock,
+        patch("infn_jobs.pipeline.sync.download", return_value=expected_dest) as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
+    ):
+        run_sync(conn, source="auto", dry_run=True)
+
+    fetch_mock.assert_not_called()
+    download_mock.assert_called_once()
+    assert download_mock.call_args.args[0] == "https://jobs.dsi.infn.it/auto-1.pdf"
+    assert download_mock.call_args.args[1] == cache_dir / "auto-1.pdf"
+    assert download_mock.call_args.kwargs["force"] is False
+    conn.close()
+
+
+def test_sync_auto_source_falls_back_to_remote_when_db_empty() -> None:
+    """source=auto must fetch remotely when local DB has zero calls."""
+    conn = Mock()
+    session = Mock()
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.list_calls_for_pdf_processing", return_value=[]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]) as fetch_mock,
+    ):
+        run_sync(conn, source="auto", dry_run=True)
+
     fetch_mock.assert_called_once_with(session, "Borsa")
+
+
+def test_sync_download_only_skips_parse_and_db_writes(tmp_path: Path) -> None:
+    """download_only=True must stop after cache materialization and skip persistence."""
+    conn = Mock()
+    session = Mock()
+    cached_pdf = tmp_path / "download-only.pdf"
+    cached_pdf.write_bytes(b"%PDF-download-only")
+    remote_call = CallRaw(
+        detail_id="download-only-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/download-only-1.pdf",
+    )
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=cached_pdf) as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text") as extract_mock,
+        patch("infn_jobs.pipeline.sync.build_rows") as build_rows_mock,
+        patch("infn_jobs.pipeline.sync.upsert_call") as upsert_call_mock,
+        patch("infn_jobs.pipeline.sync.upsert_position_rows") as upsert_rows_mock,
+        patch("infn_jobs.pipeline.sync.rebuild_curated") as rebuild_mock,
+    ):
+        run_sync(conn, source="remote", download_only=True, dry_run=False)
+
+    download_mock.assert_called_once()
+    extract_mock.assert_not_called()
+    build_rows_mock.assert_not_called()
+    upsert_call_mock.assert_not_called()
+    upsert_rows_mock.assert_not_called()
+    rebuild_mock.assert_not_called()
+
+
+def test_sync_local_source_falls_back_to_canonical_cache_when_stored_path_is_stale(
+    tmp_path: Path,
+) -> None:
+    """source=local must use canonical cache path when stored path is stale."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    canonical_pdf = cache_dir / "fallback-1.pdf"
+    canonical_pdf.write_bytes(b"%PDF-fallback")
+    stale_path = tmp_path / "missing.pdf"
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="fallback-1",
+            source_tipo="Borsa",
+            pdf_url=None,
+            pdf_cache_path=str(stale_path),
+            listing_status="active",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.download") as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)) as extract_mock,
+    ):
+        run_sync(conn, source="local", dry_run=True)
+
+    download_mock.assert_not_called()
+    extract_mock.assert_called_once_with(canonical_pdf)
+    conn.close()
+
+
+def test_sync_local_source_logs_orphan_cache_files(tmp_path: Path, caplog) -> None:
+    """source=local must warn about orphan cache files without matching calls_raw detail_id."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "known-1.pdf").write_bytes(b"%PDF-known")
+    (cache_dir / "orphan-999.pdf").write_bytes(b"%PDF-orphan")
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="known-1",
+            source_tipo="Borsa",
+            pdf_url=None,
+            pdf_cache_path=str(cache_dir / "known-1.pdf"),
+            listing_status="active",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
+        caplog.at_level("WARNING", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="local", dry_run=True)
+
+    assert "Orphan cache file orphan-999.pdf" in caplog.text
+    conn.close()
+
+
+def test_sync_local_source_missing_cache_warns_and_skips(tmp_path: Path, caplog) -> None:
+    """source=local must warn and skip when no valid cache is available."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="missing-local-1",
+            source_tipo="Borsa",
+            pdf_url="https://jobs.dsi.infn.it/missing-local-1.pdf",
+            pdf_cache_path=None,
+            listing_status="active",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.download") as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text") as extract_mock,
+        caplog.at_level("WARNING", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="local", dry_run=True)
+
+    download_mock.assert_not_called()
+    extract_mock.assert_not_called()
+    assert "missing valid local cache" in caplog.text
+    conn.close()
+
+
+def test_sync_local_source_zero_byte_cache_warns_and_skips(tmp_path: Path, caplog) -> None:
+    """source=local must treat zero-byte cache as invalid and skip without download."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    zero_pdf = cache_dir / "zero-local-1.pdf"
+    zero_pdf.write_bytes(b"")
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="zero-local-1",
+            source_tipo="Borsa",
+            pdf_url="https://jobs.dsi.infn.it/zero-local-1.pdf",
+            pdf_cache_path=str(zero_pdf),
+            listing_status="active",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.download") as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text") as extract_mock,
+        caplog.at_level("WARNING", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="local", dry_run=True)
+
+    download_mock.assert_not_called()
+    extract_mock.assert_not_called()
+    assert "zero-byte local cache detected" in caplog.text
+    conn.close()
+
+
+def test_sync_remote_source_zero_byte_cache_forces_redownload(tmp_path: Path) -> None:
+    """source=remote must force re-download when canonical cache is zero-byte."""
+    conn = Mock()
+    session = Mock()
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    zero_pdf = cache_dir / "zero-remote-1.pdf"
+    zero_pdf.write_bytes(b"")
+    remote_call = CallRaw(
+        detail_id="zero-remote-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/zero-remote-1.pdf",
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.get_session", return_value=session),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=zero_pdf) as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
+    ):
+        run_sync(conn, source="remote", dry_run=True)
+
+    assert download_mock.call_args.kwargs["force"] is True
+
+
+def test_sync_auto_source_zero_byte_cache_forces_redownload(tmp_path: Path) -> None:
+    """source=auto (local discovery) must re-download zero-byte cached PDFs when URL exists."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    zero_pdf = cache_dir / "zero-auto-1.pdf"
+    zero_pdf.write_bytes(b"")
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="zero-auto-1",
+            source_tipo="Borsa",
+            pdf_url="https://jobs.dsi.infn.it/zero-auto-1.pdf",
+            pdf_cache_path=str(zero_pdf),
+            listing_status="active",
+        ),
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls") as fetch_mock,
+        patch("infn_jobs.pipeline.sync.download", return_value=cache_dir / "zero-auto-1.pdf") as download_mock,
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
+    ):
+        run_sync(conn, source="auto", dry_run=True)
+
+    fetch_mock.assert_not_called()
+    assert download_mock.call_args.kwargs["force"] is True
+    conn.close()
 
 
 def test_sync_db_has_calls_across_tipos(tmp_path: Path) -> None:
@@ -254,7 +571,7 @@ def test_sync_db_has_calls_across_tipos(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     count = conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
     assert count == 5
@@ -269,10 +586,10 @@ def test_sync_is_idempotent(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
         first_calls = conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
         first_rows = conn.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0]
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     assert conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0] == first_calls
     assert conn.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0] == first_rows
@@ -284,12 +601,12 @@ def test_first_seen_at_immutable(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
         t1 = conn.execute(
             "SELECT first_seen_at FROM calls_raw WHERE detail_id='e2e-borsa-1'"
         ).fetchone()[0]
         time.sleep(0.05)
-        run_sync(conn)
+        run_sync(conn, source="remote")
         t2 = conn.execute(
             "SELECT first_seen_at FROM calls_raw WHERE detail_id='e2e-borsa-1'"
         ).fetchone()[0]
@@ -303,12 +620,12 @@ def test_last_synced_at_updated(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
         last1 = conn.execute(
             "SELECT last_synced_at FROM calls_raw WHERE detail_id='e2e-borsa-1'"
         ).fetchone()[0]
         time.sleep(0.05)
-        run_sync(conn)
+        run_sync(conn, source="remote")
         last2 = conn.execute(
             "SELECT last_synced_at FROM calls_raw WHERE detail_id='e2e-borsa-1'"
         ).fetchone()[0]
@@ -323,7 +640,7 @@ def test_export_csv_creates_four_files(tmp_path: Path) -> None:
     export_dir = tmp_path / "exports"
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
     run_export(conn, export_dir)
 
     expected = {
@@ -346,7 +663,7 @@ def test_sync_rebuilds_curated_tables(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     raw_count = conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
     curated_count = conn.execute("SELECT COUNT(*) FROM calls_curated").fetchone()[0]
@@ -363,7 +680,7 @@ def test_position_row_count_exceeds_call_count(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     fac_p, dl_p, et_p = _patch_sync(tmp_path)
     with fac_p, dl_p, et_p:
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     nc = conn.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
     nr = conn.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0]
@@ -390,7 +707,7 @@ def test_no_text_produces_zero_position_rows(tmp_path: Path) -> None:
     ), patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf), patch(
         "infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)
     ):
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     assert conn.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0] == 0
     status = conn.execute(
@@ -420,7 +737,7 @@ def test_ocr_degraded_produces_low_confidence_rows(tmp_path: Path) -> None:
         "infn_jobs.pipeline.sync.extract_text",
         return_value=(OCR_DEGRADED_TEXT, TextQuality.OCR_DEGRADED),
     ):
-        run_sync(conn)
+        run_sync(conn, source="remote")
 
     row_count = conn.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0]
     assert row_count >= 1, "ocr_degraded must attempt extraction and produce ≥1 row"
@@ -445,7 +762,7 @@ def test_sync_logs_throttle_reminder_on_success(caplog):
         patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[]),
         caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
     ):
-        run_sync(conn, dry_run=True, force_refetch=False)
+        run_sync(conn, source="remote", dry_run=True, force_refetch=False)
 
     assert "Throttle reminder" in caplog.text
     assert "5-10s" in caplog.text
@@ -462,7 +779,7 @@ def test_sync_logs_throttle_reminder_on_keyboard_interrupt(caplog):
         caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
     ):
         with pytest.raises(KeyboardInterrupt):
-            run_sync(conn, dry_run=True, force_refetch=False)
+            run_sync(conn, source="remote", dry_run=True, force_refetch=False)
 
     assert "Throttle reminder" in caplog.text
     assert "5-10s" in caplog.text

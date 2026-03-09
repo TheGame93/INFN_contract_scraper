@@ -349,9 +349,9 @@
 | **File** | `src/infn_jobs/fetch/orchestrator.py` |
 | **Name** | `fetch_all_calls` |
 | **Parent** | `infn_jobs.fetch.orchestrator` |
-| **Inputs** | `session: requests.Session`, `tipo: str` |
+| **Inputs** | `session: requests.Session`, `tipo: str`, `limit_per_tipo: int | None` |
 | **Output** | `list[CallRaw]` |
-| **Description** | Fetch all active and expired calls for one tipo. Returns assembled CallRaw list. |
+| **Description** | Fetch calls for one tipo, optionally capped after combined active+expired ordering. |
 
 ---
 
