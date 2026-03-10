@@ -7,7 +7,7 @@ Implementation is incremental: each turn completes one checklist step and update
 
 ### 1) Mandatory reads (at start of turn)
 1. Read `CLAUDE.md` (if not already read in this turn)
-2. Read `docs/info_functions.md` (if present) for API overview.
+2. Read `docs/info_functions.md` (if this is a new context window or if it changed from the last time) for API overview.
 3. Read `docs/plan_implementation.md` for architecture boundaries (if not already read in this turn)
 4. Read the plan file
 
