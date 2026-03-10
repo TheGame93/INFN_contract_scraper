@@ -11,13 +11,19 @@ from infn_jobs.store.schema import init_db
 def _validate_sync_args(args: argparse.Namespace) -> None:
     """Validate sync-flag combinations before opening DB connections."""
     if args.limit_per_tipo is not None and args.limit_per_tipo <= 0:
-        raise ValueError("--limit-per-tipo must be a positive integer.")
+        raise ValueError("--limit-per-tipo must be a positive integer (for example: 20).")
 
     if args.source == "local" and args.force_refetch:
-        raise ValueError("--force-refetch cannot be used with --source local.")
+        raise ValueError(
+            "--force-refetch cannot be used with --source local. "
+            "Use --source remote to re-download PDFs."
+        )
 
     if args.source == "local" and args.download_only:
-        raise ValueError("--download-only cannot be used with --source local.")
+        raise ValueError(
+            "--download-only cannot be used with --source local. "
+            "Use --source remote to build cache files from the network."
+        )
 
 
 def execute(args: argparse.Namespace) -> None:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import re
 from unittest.mock import Mock, patch
 
 import pytest
@@ -93,27 +92,44 @@ def test_run_fatal_error_exits_with_code_1(capsys):
 
 
 @pytest.mark.parametrize(
-    ("argv", "message"),
+    ("argv", "expected_parts"),
     [
-        (["sync", "--limit-per-tipo", "0"], "--limit-per-tipo must be a positive integer."),
+        (
+            ["sync", "--limit-per-tipo", "0"],
+            [
+                "--limit-per-tipo must be a positive integer",
+                "for example: 20",
+            ],
+        ),
         (
             ["sync", "--force-refetch"],
-            "--force-refetch cannot be used with --source local.",
+            [
+                "--force-refetch cannot be used with --source local",
+                "--source remote",
+            ],
         ),
         (
             ["sync", "--download-only"],
-            "--download-only cannot be used with --source local.",
+            [
+                "--download-only cannot be used with --source local",
+                "--source remote",
+            ],
         ),
     ],
 )
-def test_cmd_sync_execute_rejects_invalid_flag_combinations(argv: list[str], message: str):
+def test_cmd_sync_execute_rejects_invalid_flag_combinations(
+    argv: list[str], expected_parts: list[str]
+):
     parser = build_parser()
     args = parser.parse_args(argv)
 
     with patch("infn_jobs.cli.cmd_sync.sqlite3.connect") as connect_mock:
-        with pytest.raises(ValueError, match=re.escape(message)):
+        with pytest.raises(ValueError) as exc_info:
             cmd_sync.execute(args)
 
+    message = str(exc_info.value)
+    for expected_part in expected_parts:
+        assert expected_part in message
     connect_mock.assert_not_called()
 
 
@@ -143,6 +159,55 @@ def test_cmd_sync_execute_db_lifecycle_success():
         download_only=False,
         dry_run=True,
         force_refetch=False,
+    )
+    conn.close.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        argparse.Namespace(
+            source="remote",
+            limit_per_tipo=None,
+            download_only=True,
+            dry_run=False,
+            force_refetch=False,
+        ),
+        argparse.Namespace(
+            source="remote",
+            limit_per_tipo=5,
+            download_only=False,
+            dry_run=True,
+            force_refetch=True,
+        ),
+        argparse.Namespace(
+            source="auto",
+            limit_per_tipo=2,
+            download_only=True,
+            dry_run=True,
+            force_refetch=False,
+        ),
+    ],
+)
+def test_cmd_sync_execute_accepts_valid_source_combinations(args: argparse.Namespace):
+    conn = Mock()
+
+    with (
+        patch("infn_jobs.cli.cmd_sync.sqlite3.connect", return_value=conn) as connect_mock,
+        patch("infn_jobs.cli.cmd_sync.init_db") as init_db_mock,
+        patch("infn_jobs.cli.cmd_sync.run_sync") as run_sync_mock,
+    ):
+        cmd_sync.execute(args)
+
+    connect_mock.assert_called_once_with(str(DB_PATH))
+    init_db_mock.assert_called_once_with(conn)
+    run_sync_mock.assert_called_once_with(
+        conn,
+        source=args.source,
+        limit_per_tipo=args.limit_per_tipo,
+        download_only=args.download_only,
+        dry_run=args.dry_run,
+        force_refetch=args.force_refetch,
     )
     conn.close.assert_called_once()
 

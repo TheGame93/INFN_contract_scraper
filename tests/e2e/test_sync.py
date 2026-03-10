@@ -444,6 +444,79 @@ def test_sync_local_source_logs_orphan_cache_files(tmp_path: Path, caplog) -> No
     conn.close()
 
 
+def test_sync_remote_source_orphan_scan_respects_discovered_and_db_ids(
+    tmp_path: Path, caplog
+) -> None:
+    """source=remote orphan scan must ignore cache files tied to DB or discovered calls."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "known-db-1.pdf").write_bytes(b"%PDF-known-db")
+    (cache_dir / "known-remote-1.pdf").write_bytes(b"%PDF-known-remote")
+    (cache_dir / "orphan-remote-1.pdf").write_bytes(b"%PDF-orphan-remote")
+    upsert_call(
+        conn,
+        CallRaw(
+            detail_id="known-db-1",
+            source_tipo="Borsa",
+            pdf_url=None,
+            pdf_cache_path=str(cache_dir / "known-db-1.pdf"),
+            listing_status="active",
+        ),
+    )
+    remote_call = CallRaw(
+        detail_id="known-remote-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url=None,
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        caplog.at_level("WARNING", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=True)
+
+    assert "Orphan cache file orphan-remote-1.pdf" in caplog.text
+    assert "Orphan cache file known-db-1.pdf" not in caplog.text
+    assert "Orphan cache file known-remote-1.pdf" not in caplog.text
+    conn.close()
+
+
+def test_sync_auto_fallback_remote_runs_orphan_scan(tmp_path: Path, caplog) -> None:
+    """source=auto fallback-to-remote must run orphan scan with discovered ids."""
+    conn = _make_conn(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "auto-fallback-1.pdf").write_bytes(b"%PDF-known-auto-fallback")
+    (cache_dir / "orphan-auto-fallback-1.pdf").write_bytes(b"%PDF-orphan-auto-fallback")
+    remote_call = CallRaw(
+        detail_id="auto-fallback-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url=None,
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]) as fetch_mock,
+        caplog.at_level("WARNING", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="auto", dry_run=True)
+
+    fetch_mock.assert_called_once()
+    assert "Orphan cache file orphan-auto-fallback-1.pdf" in caplog.text
+    assert "Orphan cache file auto-fallback-1.pdf" not in caplog.text
+    conn.close()
+
+
 def test_sync_local_source_missing_cache_warns_and_skips(tmp_path: Path, caplog) -> None:
     """source=local must warn and skip when no valid cache is available."""
     conn = _make_conn(tmp_path)

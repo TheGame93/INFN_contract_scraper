@@ -96,12 +96,11 @@ def _find_existing_cache_path(call: CallRaw) -> tuple[Path | None, bool]:
     return None, has_zero_byte
 
 
-def _warn_orphan_cache_files(calls: list[CallRaw]) -> None:
-    """Warn about cache files without a matching detail_id in discovered local calls."""
+def _warn_orphan_cache_files(expected_detail_ids: set[str]) -> None:
+    """Warn about cache files that do not map to known detail_ids for this sync run."""
     if not PDF_CACHE_DIR.exists():
         return
 
-    expected_detail_ids = {call.detail_id for call in calls if call.detail_id is not None}
     for cached_pdf in PDF_CACHE_DIR.glob("*.pdf"):
         if cached_pdf.stem not in expected_detail_ids:
             logger.warning(
@@ -249,8 +248,16 @@ def run_sync(
     try:
         logger.info("Phase A: discover calls (source=%s)", source)
         calls, discovered_from_local_db = _discover_calls(conn, session, source, limit_per_tipo)
-        if discovered_from_local_db:
-            _warn_orphan_cache_files(calls)
+        expected_detail_ids = {call.detail_id for call in calls if call.detail_id is not None}
+        # Include existing persisted ids for remote discovery so partial fetches do not
+        # mislabel valid historical cache files as orphan.
+        if not discovered_from_local_db and isinstance(conn, sqlite3.Connection):
+            expected_detail_ids.update(
+                call.detail_id
+                for call in list_calls_for_pdf_processing(conn)
+                if call.detail_id is not None
+            )
+        _warn_orphan_cache_files(expected_detail_ids)
 
         items = [_SyncWorkItem(call=call) for call in calls]
 
