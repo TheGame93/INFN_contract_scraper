@@ -1,6 +1,6 @@
 ## Codex Plan Author (Strict)
 
-Default output plan file: `docs/plan_codex_3.md`.
+Default output plan file: `docs/plan_codex_4.md`.
 
 You are a planning agent. Your job is to produce a concrete implementation plan that will be executed with `docs/codex_implementing.md`.
 Do not implement code in this turn unless the user explicitly asks for both planning and implementation.
@@ -8,31 +8,7 @@ The produced plan must support incremental implementation across multiple turns.
 
 ### 0) The things I want to do
 
-## Sync Modes for Partial Fetch, Incremental PDF Cache, and Local-First DB Build
-
-The implementation should extend the existing `sync` command so that users can run the scraper in a local-first workflow while preserving compatibility with the current architecture. The codebase is already well aligned with this direction because incremental PDF caching is already implemented in the downloader and exposed through `--force-refetch`, so the main effort is to formalize source selection, phase control, and behavior on missing local inputs.
-
-The CLI contract should be expanded with `--source local|remote|auto`, `--limit-per-tipo N`, and `--download-only`, while keeping `--dry-run` and `--force-refetch`. The default source should become `local`, and this change must be explicit in help text and logs because it alters current expectations. The debug partial fetch behavior should apply in remote mode by taking the first N calls per contract type after active and expired listings are combined in their current parsed order. This keeps behavior deterministic and easy to reason about during debugging without introducing additional sorting logic.
-
-The pipeline should be refactored into clear internal phases: call discovery, PDF cache materialization, PDF parsing and row building, and persistence. In `download-only`, the process should stop after discovery and cache materialization so users can warm the local PDF corpus without paying parse/store costs. In `local` source mode, discovery from network should be skipped and parsing should run from cached files linked to known calls. The authoritative local input should be cached PDFs associated with existing `calls_raw` metadata, and orphan files in cache that do not map to a known `detail_id` should be skipped with warnings rather than ingested as synthetic calls. On a fresh machine where local prerequisites are absent, `sync` should fail fast with a clear actionable message instructing the user to run with `--source remote`, instead of silently falling back to network.
-
-No mandatory schema change is required for this version, because existing fields already support the intended behavior and status tracking. Current `calls_raw` and `position_rows` structures can remain unchanged, and existing idempotency guarantees should be preserved. If provenance tracking becomes important later, an additive field can be introduced in a future iteration, but it should not block this implementation.
-
-Validation should include parser tests for the new CLI flags and compatibility of flag combinations, orchestrator tests to confirm correct limit-per-type application semantics, and pipeline tests proving that local mode does not make network calls, download-only mode skips parse/store, cache hits avoid redundant downloads unless forced, orphan local PDFs are skipped with warnings, and local-default bootstrap failure emits clear remediation guidance. Regression coverage should explicitly confirm that remote mode still reproduces current full-sync idempotent behavior.
-
-```bash
-python3 -m infn_jobs --help
-python3 -m infn_jobs sync                                  # default local mode: parse/store from local cache + existing DB metadata
-python3 -m infn_jobs sync --source remote                  # full remote sync: fetch + download + parse + write to DB
-python3 -m infn_jobs sync --source remote --dry-run        # fetch + parse only, no DB writes
-python3 -m infn_jobs sync --source remote --force-refetch  # full remote sync and re-download PDFs even if cached
-python3 -m infn_jobs sync --source remote --limit-per-tipo 20   # debug partial fetch: first 20 calls per tipo
-python3 -m infn_jobs sync --source remote --download-only        # fetch calls + download/cache PDFs only (no parse/store)
-python3 -m infn_jobs sync --source remote --download-only --limit-per-tipo 20  # debug cache warm-up
-python3 -m infn_jobs sync --source local --dry-run         # parse local cached PDFs only, no DB writes
-python3 -m infn_jobs sync --source auto                    # hybrid mode (local-first behavior, remote when needed)
-python3 -m infn_jobs export-csv                            # rebuild curated data and write the 4 CSV files
-```
+Read the things to fix from `docs/plan_codex_3_codexreview.md`
 
 ### 1) Mandatory reads (at start of turn)
 1. Read `CLAUDE.md`.

@@ -1,6 +1,6 @@
 ## Codex Step Executor (Strict)
 
-Plan file: `docs/plan_codex_3.md`.
+Plan file: `docs/plan_codex_4.md`.
 
 You are an implementation agent. Execute exactly one “next step” from the plan with full verification, minimal scope, and explicit traceability.
 Implementation is incremental: each turn completes one checklist step and updates progress in the plan file.
