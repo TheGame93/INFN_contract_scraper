@@ -86,7 +86,9 @@ src/infn_jobs/
 - **`position_row_index`:** 0-based integer, assigned by order of appearance in `segment()` output. Deterministic for identical PDF text. Never reorder — v2 winner tables will use `(detail_id, position_row_index)` as FK.
 - **`fetch_all_calls` conversion:** `fetch/orchestrator.py` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. It sets `listing_status` (`active`/`expired`) from the URL variant used, then returns the assembled `CallRaw` list.
 - **`build_rows` return type:** `extract/parse/row_builder.py` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`.
-- **`--dry-run` semantics:** fetches and parses normally but skips all `upsert_*` and `rebuild_curated` calls. PDFs are still downloaded and cached (network I/O is allowed). Logs show what would be upserted.
+- **Sync source modes:** `sync` defaults to `source=local` (reuse `calls_raw` + local cache). First-run bootstrap on empty DB/cache must use `--source remote` ("Run sync with --source remote first.").
+- **`--dry-run` semantics:** runs discovery/cache/parse for the selected source mode, then skips all `upsert_*` and `rebuild_curated` calls.
+- **Sync guardrails:** `--download-only` and `--force-refetch` are invalid with `--source local`; `--limit-per-tipo` applies to remote discovery flows.
 - **`detail_url` construction:** `{BASE_URL}/dettagli_job.php?id={detail_id}`. Built in `fetch/detail/parser.py` and stored on `CallRaw`.
 - **Pagination fallback:** listings are assumed single-page (no pagination observed). If any tipo returns 0 rows, investigate for pagination params, update `url_builder.py`, and document in `docs/known_edge_cases.md`.
 - **`no_text` PDFs:** `text_quality = no_text` means mutool succeeded but extracted nothing. Set `pdf_fetch_status = ok` (not `parse_error`). Produce 0 `position_rows`. Reserve `parse_error` for actual mutool failures (non-zero exit code).
@@ -218,9 +220,13 @@ ruff check --fix src/
 ## CLI
 
 ```bash
-python3 -m infn_jobs sync                   # full idempotent pipeline
-python3 -m infn_jobs sync --dry-run         # parse only, no DB writes
-python3 -m infn_jobs sync --force-refetch   # re-download all PDFs even if cached
+python3 -m infn_jobs sync                                  # default source=local: parse/store from existing calls_raw + cache
+python3 -m infn_jobs sync --source remote                  # bootstrap/full remote sync: fetch + download + parse + DB writes
+python3 -m infn_jobs sync --source remote --dry-run        # fetch + parse only, no DB writes
+python3 -m infn_jobs sync --source remote --force-refetch  # remote sync and re-download PDFs even if cached
+python3 -m infn_jobs sync --source remote --download-only  # fetch calls + download/cache PDFs only
+python3 -m infn_jobs sync --source remote --limit-per-tipo 20
+python3 -m infn_jobs sync --source auto                    # local-first; remote fallback when calls_raw is empty
 python3 -m infn_jobs export-csv             # write 4 CSVs to data/exports/
 ```
 

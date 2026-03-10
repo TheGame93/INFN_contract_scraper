@@ -91,7 +91,8 @@ src/infn_jobs/
 │
 └── pipeline/
     ├── __init__.py
-    ├── sync.py                      # run_sync(conn, dry_run, force_refetch) — main orchestrator
+    ├── sync.py                      # run_sync(conn, source, limit_per_tipo, download_only, dry_run, force_refetch)
+    │                                #   source=local|remote|auto; default local consumes DB/cache
     └── export.py                    # run_export(conn, export_dir) — rebuild curated tables + write 4 CSVs
 ```
 
@@ -174,10 +175,16 @@ tests/
 
 | Command | File | What it does |
 |---|---|---|
-| `python3 -m infn_jobs sync` | `cli/cmd_sync.py` | Full idempotent pipeline: fetch → extract → store |
-| `python3 -m infn_jobs sync --dry-run` | same | Parse but skip DB writes |
-| `python3 -m infn_jobs sync --force-refetch` | same | Re-download all PDFs even if cached |
+| `python3 -m infn_jobs sync` | `cli/cmd_sync.py` | Default `source=local`: parse/store using existing `calls_raw` metadata and local cache |
+| `python3 -m infn_jobs sync --source remote` | same | Bootstrap/full remote pipeline: fetch → cache/download → parse → store |
+| `python3 -m infn_jobs sync --source remote --dry-run` | same | Fetch + parse but skip DB writes |
+| `python3 -m infn_jobs sync --source remote --force-refetch` | same | Remote sync and re-download PDFs even if cached |
+| `python3 -m infn_jobs sync --source remote --download-only` | same | Fetch calls and materialize cache only; skip parse/store |
+| `python3 -m infn_jobs sync --source remote --limit-per-tipo N` | same | Debug partial remote discovery (first `N` calls per tipo) |
+| `python3 -m infn_jobs sync --source auto` | same | Local-first mode with remote fallback when `calls_raw` is empty |
 | `python3 -m infn_jobs export-csv` | `cli/cmd_export.py` | Rebuild curated tables → write 4 CSV files (via `pipeline.export`) |
+
+Guardrails: local mode bootstrap guidance is `Run sync with --source remote first.`; `--download-only` and `--force-refetch` are invalid with `--source local`.
 
 ---
 
@@ -395,7 +402,7 @@ is validated.
 
 ## Verification Checklist
 
-1. `python3 -m infn_jobs sync` completes without error; DB has rows across all 5 source types.
+1. `python3 -m infn_jobs sync --source remote` completes without error; DB has rows across all 5 source types.
 2. Second `sync` run produces identical row counts (idempotency).
 3. `first_seen_at` is unchanged on second run; `last_synced_at` is updated.
 4. At least one call has `pdf_fetch_status = skipped` (old record without PDF link).

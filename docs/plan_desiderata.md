@@ -146,10 +146,15 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 
 ### CLI
 
-- `python3 -m infn_jobs sync` — full idempotent backfill, active+expired for all 5 types.
-- `python3 -m infn_jobs sync --force-refetch` — re-download all PDFs, even if cached.
-- `python3 -m infn_jobs sync --dry-run` — parse only, no DB writes.
+- `python3 -m infn_jobs sync` — default `source=local`; parse/store using existing `calls_raw` metadata and local PDF cache.
+- `python3 -m infn_jobs sync --source remote` — bootstrap/full remote sync (active+expired all 5 types): fetch + download + parse + DB writes.
+- `python3 -m infn_jobs sync --source remote --force-refetch` — remote sync with forced PDF re-download.
+- `python3 -m infn_jobs sync --source remote --dry-run` — fetch + parse, no DB writes.
+- `python3 -m infn_jobs sync --source remote --download-only` — fetch calls + materialize PDF cache only.
+- `python3 -m infn_jobs sync --source remote --limit-per-tipo 20` — debug partial remote fetch (first N calls per tipo).
+- `python3 -m infn_jobs sync --source auto` — local-first; falls back to remote discovery when `calls_raw` is empty.
 - `python3 -m infn_jobs export-csv` — write 4 CSVs to `data/exports/`.
+- Guardrails: if local source is empty, run bootstrap first (`Run sync with --source remote first.`). `--download-only` and `--force-refetch` are invalid with `--source local`.
 
 ---
 
@@ -259,11 +264,11 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - PDF download returns 404 → `pdf_fetch_status = download_error`, sync continues, no crash.
 - `mutool` not installed or exits non-zero → `pdf_fetch_status = parse_error`, sync continues.
 - Detail page has no PDF link → `pdf_fetch_status = skipped`, no download attempted.
-- `--force-refetch` flag causes cached PDF to be re-downloaded.
+- `--force-refetch` in remote discovery paths causes cached PDF to be re-downloaded.
 
 #### End-to-end smoke test
 
-- `sync` runs without error; DB has rows across all 5 source types.
+- `sync --source remote` runs without error; DB has rows across all 5 source types.
 - Second `sync` run produces identical row counts (idempotency).
 - `first_seen_at` is unchanged on second run; `last_synced_at` is updated.
 - `position_rows_curated.csv` is non-empty; every row has `detail_id + position_row_index`.
@@ -286,7 +291,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - NULL EUR fields in old or undisclosing records are correct data. `parse_confidence` is behavioral only.
 - `text_quality` reflects the PDF source quality independently of field extraction results.
 - If one PDF contains multiple opportunities, each is a separate `position_rows` record.
-- PDFs are cached indefinitely in `data/pdf_cache/`. Re-download only with `--force-refetch`.
+- PDFs are cached indefinitely in `data/pdf_cache/`. Re-download only with `--force-refetch` in remote discovery paths.
 - `first_seen_at` is set once and never overwritten. `last_synced_at` is updated on every sync.
 - `numero_posti_html` reflects the HTML detail page value. PDF row count is implicit in `position_row_index`. Both are stored; neither overwrites the other.
 - `section_structure_department` is row-level: different rows in the same PDF may have different values.
