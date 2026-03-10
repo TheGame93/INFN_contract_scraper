@@ -66,12 +66,6 @@ def _row_to_call_raw(row: tuple[object, ...]) -> CallRaw:
     )
 
 
-def list_calls_raw(conn: sqlite3.Connection) -> list[CallRaw]:
-    """Return all calls_raw rows as CallRaw ordered by detail_id."""
-    rows = conn.execute(f"{_CALLS_RAW_SELECT} ORDER BY detail_id").fetchall()
-    return [_row_to_call_raw(row) for row in rows]
-
-
 def list_calls_for_pdf_processing(conn: sqlite3.Connection) -> list[CallRaw]:
     """Return calls with detail_id set, ordered deterministically for PDF processing."""
     rows = conn.execute(

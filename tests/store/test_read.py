@@ -3,13 +3,8 @@
 import sqlite3
 
 from infn_jobs.domain.call import CallRaw
-from infn_jobs.store.read import list_calls_for_pdf_processing, list_calls_raw
+from infn_jobs.store.read import list_calls_for_pdf_processing
 from infn_jobs.store.upsert import upsert_call
-
-
-def test_list_calls_raw_empty_table_returns_empty_list(tmp_db: sqlite3.Connection) -> None:
-    """list_calls_raw must return an empty list when calls_raw has no rows."""
-    assert list_calls_raw(tmp_db) == []
 
 
 def test_list_calls_for_pdf_processing_empty_table_returns_empty_list(
@@ -19,8 +14,10 @@ def test_list_calls_for_pdf_processing_empty_table_returns_empty_list(
     assert list_calls_for_pdf_processing(tmp_db) == []
 
 
-def test_list_calls_raw_maps_all_call_fields(tmp_db: sqlite3.Connection) -> None:
-    """list_calls_raw must hydrate CallRaw with nullable-safe values from calls_raw."""
+def test_list_calls_for_pdf_processing_maps_all_call_fields(
+    tmp_db: sqlite3.Connection,
+) -> None:
+    """list_calls_for_pdf_processing must hydrate CallRaw with nullable-safe values."""
     upsert_call(
         tmp_db,
         CallRaw(
@@ -41,7 +38,7 @@ def test_list_calls_raw_maps_all_call_fields(tmp_db: sqlite3.Connection) -> None
         ),
     )
 
-    calls = list_calls_raw(tmp_db)
+    calls = list_calls_for_pdf_processing(tmp_db)
     assert len(calls) == 1
     call = calls[0]
     assert call.detail_id == "A-100"

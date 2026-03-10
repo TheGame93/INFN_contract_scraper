@@ -403,18 +403,6 @@
 
 ---
 
-### `list_calls_raw`
-| Field | Value |
-|---|---|
-| **File** | `src/infn_jobs/store/read.py` |
-| **Name** | `list_calls_raw` |
-| **Parent** | `infn_jobs.store.read` |
-| **Inputs** | `conn: sqlite3.Connection` |
-| **Output** | `list[CallRaw]` |
-| **Description** | Return all calls_raw rows as CallRaw ordered by detail_id. |
-
----
-
 ### `list_calls_for_pdf_processing`
 | Field | Value |
 |---|---|
