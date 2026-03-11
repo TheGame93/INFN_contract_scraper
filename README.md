@@ -88,8 +88,8 @@ Manual equivalent:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r pythonrequirements.txt
-python -m pip install -e .
+python3 -m pip install -r pythonrequirements.txt
+python3 -m pip install -e .
 ```
 
 ### 3. Smoke run (small remote batch)
