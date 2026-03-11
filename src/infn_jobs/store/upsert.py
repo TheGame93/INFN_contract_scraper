@@ -50,9 +50,15 @@ def upsert_call(conn: sqlite3.Connection, call: CallRaw) -> None:
 
 
 def upsert_position_rows(conn: sqlite3.Connection, rows: list[PositionRow]) -> None:
-    """Replace all position_rows for rows[0].detail_id. Deletes existing rows first."""
+    """Replace all position_rows for one detail_id batch; reject heterogeneous batches."""
     if not rows:
         return
+
+    detail_ids = {row.detail_id for row in rows}
+    if len(detail_ids) != 1:
+        raise ValueError(
+            "upsert_position_rows expects a homogeneous batch with exactly one detail_id"
+        )
 
     detail_id = rows[0].detail_id
     conn.execute("DELETE FROM position_rows WHERE detail_id = ?", (detail_id,))

@@ -107,6 +107,28 @@ def test_upsert_position_rows_empty_list_is_noop(tmp_db: sqlite3.Connection) -> 
     assert count == 1
 
 
+def test_upsert_position_rows_rejects_mixed_detail_id_without_mutation(
+    tmp_db: sqlite3.Connection,
+) -> None:
+    """Mixed detail_id batches must raise and keep existing rows unchanged."""
+    upsert_call(tmp_db, _make_call("1"))
+    upsert_call(tmp_db, _make_call("2"))
+    upsert_position_rows(tmp_db, [_make_row("1", 0)])
+    upsert_position_rows(tmp_db, [_make_row("2", 0)])
+
+    before = tmp_db.execute(
+        "SELECT detail_id, position_row_index FROM position_rows ORDER BY detail_id, position_row_index"
+    ).fetchall()
+
+    with pytest.raises(ValueError, match="homogeneous batch"):
+        upsert_position_rows(tmp_db, [_make_row("1", 1), _make_row("2", 1)])
+
+    after = tmp_db.execute(
+        "SELECT detail_id, position_row_index FROM position_rows ORDER BY detail_id, position_row_index"
+    ).fetchall()
+    assert after == before
+
+
 def test_upsert_generated_insert_columns_match_specs() -> None:
     """Generated upsert insert columns must match table specs exactly."""
     assert upsert_module._CALLS_INSERT_COLUMNS == CALLS_RAW_COLUMN_NAMES

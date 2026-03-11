@@ -20,7 +20,7 @@
 
 ## Implementation Checklist
 - [x] Step 1 — Baseline and decision gate for `upsert_position_rows` batch contract
-- [ ] Step 2 — Enforce homogeneous `detail_id` contract and add regression tests
+- [x] Step 2 — Enforce homogeneous `detail_id` contract and add regression tests
 - [ ] Step 3 — Verification closure and contract documentation sync
 
 ## Step 1 — Baseline and decision gate for `upsert_position_rows` batch contract
@@ -67,10 +67,12 @@
 - Risks:
   - Overly broad checks may alter current idempotent replace semantics.
   - Missing regression tests may leave mixed-batch paths unprotected.
+  - If validation runs after `DELETE`, a later insert error can leave partial in-transaction mutations.
 - Mitigations:
   - Enforce only the minimum contract needed: all rows in one call must share the same `detail_id`.
   - Preserve existing delete-then-insert behavior for valid homogeneous inputs.
   - Add explicit tests for mixed-`detail_id` and contract-failure behavior.
+  - Validate the whole batch before any SQL write (`DELETE`/`INSERT`) to keep failure atomic.
 
 ### 2.1 Add explicit batch-contract validation to `upsert_position_rows`
 - Target files to edit/create:
