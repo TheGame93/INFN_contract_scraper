@@ -9,6 +9,9 @@ import pytest
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.store.export.curate import rebuild_curated
 from infn_jobs.store.export.csv_writer import export_all
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
+from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
+from infn_jobs.store.spec.position_rows_curated import POSITION_ROWS_CURATED_OUTPUT_COLUMNS
 from infn_jobs.store.upsert import upsert_call
 
 
@@ -60,22 +63,31 @@ def test_export_calls_raw_csv_has_call_title_column(
 def test_export_calls_raw_csv_columns_complete(
     tmp_db: sqlite3.Connection, tmp_path: Path
 ) -> None:
-    """calls_raw.csv must contain expected core columns."""
+    """calls_raw.csv header must follow spec order plus derived call_title."""
     _seed(tmp_db)
     export_all(tmp_db, tmp_path)
     with (tmp_path / "calls_raw.csv").open(encoding="utf-8") as f:
         header = next(csv.reader(f))
-    for col in ("detail_id", "source_tipo", "pdf_fetch_status"):
-        assert col in header, f"Missing column: {col}"
+    assert header == [*CALLS_RAW_COLUMN_NAMES, "call_title"]
 
 
 def test_export_position_rows_csv_has_detail_id_and_index(
     tmp_db: sqlite3.Connection, tmp_path: Path
 ) -> None:
-    """position_rows_raw.csv must contain detail_id and position_row_index columns."""
+    """position_rows_raw.csv header must match spec order exactly."""
     _seed(tmp_db)
     export_all(tmp_db, tmp_path)
     with (tmp_path / "position_rows_raw.csv").open(encoding="utf-8") as f:
         header = next(csv.reader(f))
-    assert "detail_id" in header
-    assert "position_row_index" in header
+    assert header == list(POSITION_ROWS_COLUMN_NAMES)
+
+
+def test_export_position_rows_curated_csv_header_matches_view_spec_order(
+    tmp_db: sqlite3.Connection, tmp_path: Path
+) -> None:
+    """position_rows_curated.csv header must match the curated-view projection spec order."""
+    _seed(tmp_db)
+    export_all(tmp_db, tmp_path)
+    with (tmp_path / "position_rows_curated.csv").open(encoding="utf-8") as f:
+        header = next(csv.reader(f))
+    assert header == list(POSITION_ROWS_CURATED_OUTPUT_COLUMNS)

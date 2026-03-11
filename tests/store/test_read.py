@@ -3,6 +3,8 @@
 import sqlite3
 
 from infn_jobs.domain.call import CallRaw
+from infn_jobs.store import read as read_module
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
 from infn_jobs.store.read import list_calls_for_pdf_processing
 from infn_jobs.store.upsert import upsert_call
 
@@ -100,3 +102,13 @@ def test_list_calls_for_pdf_processing_is_ordered_and_null_tolerant(
     assert calls[1].anno is None
     assert calls[1].pdf_url is None
     assert calls[2].pdf_cache_path == "/tmp/C-300.pdf"
+
+
+def test_list_calls_for_pdf_processing_uses_spec_column_projection_order() -> None:
+    """Read helper projection must match the calls_raw spec ordering exactly."""
+    assert read_module._CALLS_RAW_COLUMNS == CALLS_RAW_COLUMN_NAMES
+    assert read_module._CALLS_RAW_SELECT == (
+        "SELECT detail_id, source_tipo, listing_status, numero, anno, titolo, pdf_call_title, "
+        "numero_posti_html, data_bando, data_scadenza, detail_url, pdf_url, pdf_cache_path, "
+        "pdf_fetch_status, first_seen_at, last_synced_at FROM calls_raw"
+    )

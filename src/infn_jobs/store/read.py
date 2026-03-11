@@ -5,26 +5,11 @@ from __future__ import annotations
 import sqlite3
 
 from infn_jobs.domain.call import CallRaw
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
+from infn_jobs.store.spec.sql_parts import comma_separated
 
-_CALLS_RAW_COLUMNS = (
-    "detail_id",
-    "source_tipo",
-    "listing_status",
-    "numero",
-    "anno",
-    "titolo",
-    "pdf_call_title",
-    "numero_posti_html",
-    "data_bando",
-    "data_scadenza",
-    "detail_url",
-    "pdf_url",
-    "pdf_cache_path",
-    "pdf_fetch_status",
-    "first_seen_at",
-    "last_synced_at",
-)
-_CALLS_RAW_SELECT = f"SELECT {', '.join(_CALLS_RAW_COLUMNS)} FROM calls_raw"
+_CALLS_RAW_COLUMNS = CALLS_RAW_COLUMN_NAMES
+_CALLS_RAW_SELECT = f"SELECT {comma_separated(_CALLS_RAW_COLUMNS)} FROM calls_raw"
 
 
 def _row_to_call_raw(row: tuple[object, ...]) -> CallRaw:
