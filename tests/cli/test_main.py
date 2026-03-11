@@ -63,6 +63,7 @@ def test_run_dispatches_to_selected_command():
 
     with (
         patch("infn_jobs.cli.main.logging.basicConfig"),
+        patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=True),
         patch("infn_jobs.cli.main.init_data_dirs"),
         patch("infn_jobs.cli.main.build_parser", return_value=parser),
     ):
@@ -80,6 +81,7 @@ def test_run_fatal_error_exits_with_code_1(capsys):
 
     with (
         patch("infn_jobs.cli.main.logging.basicConfig"),
+        patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=True),
         patch("infn_jobs.cli.main.init_data_dirs"),
         patch("infn_jobs.cli.main.build_parser", return_value=parser),
         pytest.raises(SystemExit) as exc_info,
@@ -89,6 +91,21 @@ def test_run_fatal_error_exits_with_code_1(capsys):
     assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "Error: boom" in captured.err
+
+
+def test_run_stops_when_update_check_returns_false():
+    parser = Mock()
+
+    with (
+        patch("infn_jobs.cli.main.logging.basicConfig"),
+        patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=False),
+        patch("infn_jobs.cli.main.init_data_dirs") as init_data_dirs_mock,
+        patch("infn_jobs.cli.main.build_parser", return_value=parser),
+    ):
+        run()
+
+    init_data_dirs_mock.assert_not_called()
+    parser.parse_args.assert_not_called()
 
 
 @pytest.mark.parametrize(

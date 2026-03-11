@@ -5,6 +5,7 @@ import logging
 import sys
 
 from infn_jobs.cli import cmd_export, cmd_sync
+from infn_jobs.cli.update_check import maybe_handle_startup_update_check
 from infn_jobs.config.settings import init_data_dirs
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
 def run() -> None:
     """Configure logging, parse arguments, and dispatch to the selected subcommand."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
+    if not maybe_handle_startup_update_check():
+        return
     init_data_dirs()
     parser = build_parser()
     args = parser.parse_args()

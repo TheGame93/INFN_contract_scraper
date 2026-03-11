@@ -45,6 +45,8 @@ Goal: build an analytics-ready dataset of INFN opportunities (borse, assegni di 
 
 This project scrapes INFN job calls from listings and detail pages, downloads the related PDFs, parses position-level information, and writes both raw and curated datasets for analysis.
 
+When launched from a git checkout in an interactive terminal, the CLI also checks whether `origin/<current-branch>` is ahead and prompts you to continue or pull updates first.
+
 ## What You Get
 
 You get four CSV files because the data is split in two ways:
@@ -115,6 +117,8 @@ python3 -m infn_jobs export-csv
 | `python3 -m infn_jobs sync --source remote` | Re-discover from network and materialize cache |
 | `python3 -m infn_jobs sync --source auto` | Use local first; fallback to remote if DB is empty |
 | `python3 -m infn_jobs export-csv` | Rebuild curated tables and export the 4 CSV files |
+
+Set `INFN_JOBS_SKIP_UPDATE_CHECK=1` to disable the startup update prompt.
 
 ## Sync Option Matrix
 

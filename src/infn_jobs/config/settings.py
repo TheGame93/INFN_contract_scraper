@@ -10,8 +10,8 @@ BASE_URL: str = "https://jobs.dsi.infn.it"
 
 TIPOS: list[str] = [ct.value for ct in ContractType]
 
-_PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent
-DATA_DIR: Path = _PROJECT_ROOT / "data"
+PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent
+DATA_DIR: Path = PROJECT_ROOT / "data"
 DB_PATH: Path = DATA_DIR / "infn_jobs.db"
 EXPORT_DIR: Path = DATA_DIR / "exports"
 PDF_CACHE_DIR: Path = DATA_DIR / "pdf_cache"
