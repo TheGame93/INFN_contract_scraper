@@ -17,12 +17,13 @@ If something important change in the code, review the command /review-full-code
 
 
 ## Feature
+- checking for update on github each time is launched
 
 - Let's talk about the database columns. Which are them now? Is the program flexible about the creation of new fields? Is there a dedicated interface for managing fields?
     - Current state: columns are duplicated across at least 4 places: schema DDL, dataclasses, upsert SQL, export/view/tests. Best pragmatic setup is a single source of truth per table plus generated SQL.
         - How the "logic" works? If i set a column where should the rule for filling the column is?
     - Can we make a single entry point to change? Or is it necessary that they are spread into more files? I want that changing the fields will be a "coded" thing. It's not something that will be made while the program is running. The code has to change.
-        - How many files do I need to keep this clean? I want to avoid repetitions but I'm ok with having multiple files in nested folders (always check CLAUDE.md for the general rules)
+        - Which is the minimum number of files that is needed to keep the code clean? I want to avoid repetitions but I'm ok with having multiple files in nested folders (always check CLAUDE.md for the general rules)
 
 
 ## Codex
@@ -30,8 +31,8 @@ If something important change in the code, review the command /review-full-code
 1. Plan with `docs/codex_planning.md`, creating `plan_codex_N.md`
 2. Implement it with `docs/codex_instructions.md`
 3. Review it with `docs/codex_reviewing.md`, creating `docs/plan_codex_N_codexreview.md`
-4. Plan again with `docs/codex_planning.md` with the "### 0) The things I want to do" command
-    > Read the things to fix from `docs/plan_codex_3_codexreview.md`
+4. Plan again with `docs/codex_planning.md` writing in **### 0) The things I want to do** the command
+    > Read the things to fix from `docs/plan_codex_N_codexreview.md`
 
 ## Future
 

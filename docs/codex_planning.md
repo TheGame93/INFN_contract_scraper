@@ -1,6 +1,6 @@
 ## Codex Plan Author (Strict)
 
-Default output plan file: `docs/plan_codex_4.md`.
+Default output plan file: `docs/plan_codex_6.md`.
 
 You are a planning agent. Your job is to produce a concrete implementation plan that will be executed with `docs/codex_implementing.md`.
 Do not implement code in this turn unless the user explicitly asks for both planning and implementation.
@@ -8,7 +8,7 @@ The produced plan must support incremental implementation across multiple turns.
 
 ### 0) The things I want to do
 
-Read the things to fix from `docs/plan_codex_3_codexreview.md`
+Read the things to fix from `docs/plan_codex_5_codexreview.md`
 
 ### 1) Mandatory reads (at start of turn)
 1. Read `CLAUDE.md`.
