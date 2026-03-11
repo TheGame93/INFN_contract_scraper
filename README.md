@@ -34,7 +34,6 @@ Goal: build an analytics-ready dataset of INFN opportunities (borse, assegni di 
 
 - [Overview](#overview)
 - [What You Get](#what-you-get)
-- [Pipeline](#pipeline)
 - [Quick Start](#quick-start)
 - [Commands](#commands)
 - [Sync Option Matrix](#sync-option-matrix)
@@ -48,24 +47,23 @@ This project scrapes INFN job calls from listings and detail pages, downloads th
 
 ## What You Get
 
-| Layer | Content |
+You get four CSV files because the data is split in two ways:
+
+1. By granularity:
+   - `calls_*`: one row per call/announcement.
+   - `position_rows_*`: one row per position found inside call PDFs.
+2. By cleaning level:
+   - `*_raw`: close to the original extraction.
+   - `*_curated`: normalized and easier to analyze.
+
+That gives `2 x 2 = 4` exports:
+
+| File | Why you would use it |
 | --- | --- |
-| `calls_raw` | Canonical call metadata from listing/detail pages |
-| `position_rows_raw` | Position-level rows extracted from PDF text |
-| Curated tables | Normalized fields for analytics-ready export |
-| CSV exports | 4 ready-to-use files in `data/exports/` |
-
-## Pipeline
-
-```mermaid
-flowchart LR
-  A[Listing + Detail Discovery] --> B[PDF Cache Materialization]
-  B --> C[PDF Text Extraction]
-  C --> D[Position Row Parsing]
-  D --> E[SQLite Upsert]
-  E --> F[Curated Rebuild]
-  F --> G[CSV Export]
-```
+| `calls_raw.csv` | Keep original call metadata for auditing and debugging extraction |
+| `calls_curated.csv` | Analyze calls quickly with cleaner and normalized fields |
+| `position_rows_raw.csv` | Inspect raw position-level extraction from PDF text |
+| `position_rows_curated.csv` | Do analytics on positions with cleaner values |
 
 ## Quick Start
 
@@ -94,6 +92,8 @@ python3 -m infn_jobs export-csv
 ```
 
 ### 4. Full remote bootstrap
+
+With the current number of contracts and with a standard internet connection, the full download takes about 4 hours.
 
 ```bash
 python3 -m infn_jobs sync --source remote
@@ -197,4 +197,4 @@ python3 -m infn_jobs sync --limit-per-tipo 0
 
 ## Disclaimer
 
-This codebase has been written with heavy AI assistance.
+This codebase has been written with **heavy** AI assistance.
