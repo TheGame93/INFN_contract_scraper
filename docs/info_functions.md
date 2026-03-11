@@ -427,6 +427,150 @@
 
 ---
 
+### `comma_separated`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `comma_separated` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `items: tuple[str, ...]` |
+| **Output** | `str` |
+| **Description** | Join items with a comma+space separator preserving order. |
+
+---
+
+### `named_placeholders`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `named_placeholders` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `column_names: tuple[str, ...]` |
+| **Output** | `str` |
+| **Description** | Return SQLite named placeholders for column_names preserving order. |
+
+---
+
+### `excluded_assignments`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `excluded_assignments` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `column_names: tuple[str, ...]`, `indent: str` |
+| **Output** | `str` |
+| **Description** | Return ON CONFLICT assignment lines using excluded.<column> values. |
+
+---
+
+### `render_column_definition`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `render_column_definition` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `column: ColumnSpec` |
+| **Output** | `str` |
+| **Description** | Render one column definition for CREATE TABLE statements. |
+
+---
+
+### `render_table_body`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `render_table_body` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `spec: TableSpec`, `indent: str` |
+| **Output** | `str` |
+| **Description** | Render CREATE TABLE body lines for columns and constraints. |
+
+---
+
+### `render_view_select_list`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/sql_parts.py` |
+| **Name** | `render_view_select_list` |
+| **Parent** | `infn_jobs.store.spec.sql_parts` |
+| **Inputs** | `spec: ViewSpec`, `indent: str` |
+| **Output** | `str` |
+| **Description** | Render SELECT projection lines with explicit aliases. |
+
+---
+
+### `ColumnSpec`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `ColumnSpec` |
+| **Parent** | `infn_jobs.store.spec.types` |
+| **Inputs** | — |
+| **Output** | — |
+| **Description** | Describe one table column in storage specs. |
+
+---
+
+### `TableSpec`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `TableSpec` |
+| **Parent** | `infn_jobs.store.spec.types` |
+| **Inputs** | — |
+| **Output** | — |
+| **Description** | Describe one SQLite table in storage specs. |
+
+---
+
+### `column_names`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `column_names` |
+| **Parent** | `TableSpec` |
+| **Inputs** | — |
+| **Output** | `tuple[str, ...]` |
+| **Description** | Return ordered column names for this table. |
+
+---
+
+### `ViewColumnSpec`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `ViewColumnSpec` |
+| **Parent** | `infn_jobs.store.spec.types` |
+| **Inputs** | — |
+| **Output** | — |
+| **Description** | Describe one output column in a SQLite view. |
+
+---
+
+### `ViewSpec`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `ViewSpec` |
+| **Parent** | `infn_jobs.store.spec.types` |
+| **Inputs** | — |
+| **Output** | — |
+| **Description** | Describe one SQLite view projection in storage specs. |
+
+---
+
+### `column_names`
+| Field | Value |
+|---|---|
+| **File** | `src/infn_jobs/store/spec/types.py` |
+| **Name** | `column_names` |
+| **Parent** | `ViewSpec` |
+| **Inputs** | — |
+| **Output** | `tuple[str, ...]` |
+| **Description** | Return ordered output column names for this view. |
+
+---
+
 ### `upsert_call`
 | Field | Value |
 |---|---|
