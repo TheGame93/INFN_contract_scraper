@@ -80,9 +80,16 @@ git clone git@github.com:TheGame93/INFN_contract_scraper.git
 ### 2. Create environment and install deps
 
 ```bash
+source scripts/setup_venv.sh
+```
+
+Manual equivalent:
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip3 install -r pythonrequirements.txt
+python -m pip install -r pythonrequirements.txt
+python -m pip install -e .
 ```
 
 ### 3. Smoke run (small remote batch)
