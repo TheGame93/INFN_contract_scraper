@@ -1,8 +1,10 @@
 """Tests for the row builder."""
 
+from dataclasses import asdict
 from pathlib import Path
 
 from infn_jobs.extract.parse.row_builder import build_rows
+from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
 
 FIXTURES = Path("tests/fixtures/pdf_text")
 
@@ -46,3 +48,8 @@ def test_build_rows_position_row_index_sequential():
 def test_build_rows_text_quality_stored_as_string():
     rows, _ = build_rows(_read("single_contract.txt"), "test-1", "digital", 2022)
     assert rows[0].text_quality == "digital"
+
+
+def test_build_rows_row_shape_matches_position_rows_spec_order():
+    rows, _ = build_rows(_read("single_contract.txt"), "test-1", "digital", 2022)
+    assert tuple(asdict(rows[0]).keys()) == POSITION_ROWS_COLUMN_NAMES
