@@ -4,6 +4,19 @@
 #   source scripts/setup_venv.sh
 #
 # This script must be sourced so that `.venv` activation affects the current shell.
+# 
+##########################
+# 
+# Manual equivalent:
+# 
+# ```bash
+# python3 -m venv .venv
+# source .venv/bin/activate
+# python3 -m pip install -r pythonrequirements.txt
+# python3 -m pip install -e .
+# ```
+#
+##########################
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     echo "Run this with: source scripts/setup_venv.sh"

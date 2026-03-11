@@ -57,23 +57,12 @@ def _render_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
 def _entry(
     name: str,
     parent: str,
-    file_rel: str,
     inputs: str,
     output: str,
     description: str,
 ) -> str:
-    """Format one markdown index entry."""
-    return (
-        f"### `{name}`\n"
-        f"| Field | Value |\n"
-        f"|---|---|\n"
-        f"| **File** | `{file_rel}` |\n"
-        f"| **Name** | `{name}` |\n"
-        f"| **Parent** | `{parent}` |\n"
-        f"| **Inputs** | {inputs} |\n"
-        f"| **Output** | {output} |\n"
-        f"| **Description** | {description} |\n"
-    )
+    """Format one compact markdown entry line."""
+    return f"- `{name}` | `{parent}` | {inputs} | {output} | {description}"
 
 
 def _extract_entries(path: Path) -> list[tuple[int, str]]:
@@ -94,7 +83,7 @@ def _extract_entries(path: Path) -> list[tuple[int, str]]:
             if node.name.startswith("_"):
                 continue
             doc = ast.get_docstring(node) or "(no docstring)"
-            e = _entry(node.name, mod_name, file_rel, "—", "—", doc.splitlines()[0])
+            e = _entry(node.name, mod_name, "—", "—", doc.splitlines()[0])
             entries.append((node.lineno, e))
 
             # Public methods (excluding dunder methods except __init__)
@@ -107,7 +96,6 @@ def _extract_entries(path: Path) -> list[tuple[int, str]]:
                 e = _entry(
                     item.name,
                     node.name,
-                    file_rel,
                     _render_args(item.args),
                     _render_return(item),
                     mdoc.splitlines()[0],
@@ -122,7 +110,6 @@ def _extract_entries(path: Path) -> list[tuple[int, str]]:
             e = _entry(
                 node.name,
                 mod_name,
-                file_rel,
                 _render_args(node.args),
                 _render_return(node),
                 doc.splitlines()[0],
@@ -155,10 +142,20 @@ def main() -> None:
         "> **Auto-generated** by `scripts/gen_info_functions.py` — do not edit by hand.  \n"
         "> Re-run whenever public functions are added, renamed, or removed:\n"
         "> `python3 scripts/gen_info_functions.py`\n\n"
-        "---\n\n"
+        "Fields per entry: `name | parent | inputs | output | description`\n\n"
     )
 
-    body = "\n---\n\n".join(text for _, _, text in all_entries)
+    lines: list[str] = []
+    current_file: str | None = None
+    for file_rel, _, text in all_entries:
+        if file_rel != current_file:
+            if current_file is not None:
+                lines.append("")
+            lines.append(f"## `{file_rel}`")
+            current_file = file_rel
+        lines.append(text)
+
+    body = "\n".join(lines)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(header + body + "\n", encoding="utf-8")
     print(f"Written {len(all_entries)} entries to {OUTPUT}")
