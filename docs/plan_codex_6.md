@@ -21,7 +21,7 @@
 ## Implementation Checklist
 - [x] Step 1 — Baseline and decision gate for `upsert_position_rows` batch contract
 - [x] Step 2 — Enforce homogeneous `detail_id` contract and add regression tests
-- [ ] Step 3 — Verification closure and contract documentation sync
+- [x] Step 3 — Verification closure and contract documentation sync
 
 ## Step 1 — Baseline and decision gate for `upsert_position_rows` batch contract
 ### 1.0 Pre-check findings and mitigations
@@ -110,9 +110,11 @@
 - Risks:
   - Contract change lands without synchronized documentation of store-layer expectations.
   - API index regeneration may be skipped if signatures/docstrings change.
+  - Developer docs may still imply permissive batch inputs for `upsert_position_rows`, causing misuse.
 - Mitigations:
   - Add a concise contract note in architecture/conventions docs only if behavior wording changed.
   - Regenerate `docs/info_functions.md` only if public function/class signatures changed.
+  - Add a one-line homogeneous-batch contract note in `CLAUDE.md` and `docs/plan_implementation.md`.
 
 ### 3.1 Update docs for contract-level behavior change (if required)
 - Target files to edit/create:

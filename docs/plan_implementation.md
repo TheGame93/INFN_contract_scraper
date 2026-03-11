@@ -227,6 +227,7 @@ calls_raw (
 
 One-to-many: each row is one contract entry extracted from a PDF.
 Ordered columns are defined once in `store/spec/position_rows.py` and consumed by schema/upsert/read/export paths.
+`upsert_position_rows(conn, rows)` expects a homogeneous batch (all rows share the same `detail_id`) and validates this before `DELETE`/`INSERT`.
 
 ```sql
 position_rows (

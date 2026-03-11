@@ -72,6 +72,7 @@ src/infn_jobs/
 - **Store field definitions are spec-driven.** `src/infn_jobs/store/spec/` is the single source of truth for ordered table columns and view projections; `schema`, `upsert`, `read`, and CSV export must consume these specs, not hardcoded lists.
 - **All fields are nullable — always.** HTML fields missing on old pages → `NULL`, never a crash. PDF fields not found → `NULL` + `NULL` evidence, never a crash.
 - **Upsert by `detail_id`.** Running `sync` twice must produce identical row counts.
+- **`upsert_position_rows` input contract:** each call must receive rows for exactly one `detail_id`; mixed-detail batches raise `ValueError` before any SQL write.
 - **`detail_id` is the stable FK.** Never delete or rename it — v2 winner tables will reference it.
 - **Italian number format:** `33.681,30` normalizes to `33681.30`. See `extract/parse/normalize/currency.py`.
 - **Date format:** `DD-MM-YYYY`. See `extract/parse/normalize/dates.py`.
