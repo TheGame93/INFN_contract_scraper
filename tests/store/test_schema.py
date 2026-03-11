@@ -4,6 +4,8 @@ import sqlite3
 
 import pytest
 
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
+from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
 from infn_jobs.store.schema import init_db
 
 
@@ -52,35 +54,22 @@ def test_init_db_idempotent(tmp_db: sqlite3.Connection) -> None:
 
 
 def test_calls_raw_has_expected_columns(tmp_db: sqlite3.Connection) -> None:
-    """calls_raw must have all expected columns."""
+    """calls_raw must keep the exact ordered schema columns."""
     cols = _column_names(tmp_db, "calls_raw")
-    expected = [
-        "detail_id", "source_tipo", "listing_status", "numero", "anno", "titolo",
-        "pdf_call_title", "numero_posti_html", "data_bando", "data_scadenza",
-        "detail_url", "pdf_url", "pdf_cache_path", "pdf_fetch_status",
-        "first_seen_at", "last_synced_at",
-    ]
-    for col in expected:
-        assert col in cols, f"Missing column: {col}"
+    assert cols == list(CALLS_RAW_COLUMN_NAMES)
+
+
+def test_calls_curated_matches_calls_raw_column_order(tmp_db: sqlite3.Connection) -> None:
+    """calls_curated must keep the same ordered columns as calls_raw."""
+    raw_cols = _column_names(tmp_db, "calls_raw")
+    curated_cols = _column_names(tmp_db, "calls_curated")
+    assert curated_cols == raw_cols
 
 
 def test_position_rows_has_expected_columns(tmp_db: sqlite3.Connection) -> None:
-    """position_rows must have all expected columns."""
+    """position_rows must keep the exact ordered schema columns."""
     cols = _column_names(tmp_db, "position_rows")
-    expected = [
-        "detail_id", "position_row_index", "text_quality",
-        "contract_type", "contract_subtype", "duration_months", "duration_raw",
-        "section_structure_department",
-        "institute_cost_total_eur", "institute_cost_yearly_eur",
-        "gross_income_total_eur", "gross_income_yearly_eur",
-        "net_income_total_eur", "net_income_yearly_eur", "net_income_monthly_eur",
-        "contract_type_evidence", "contract_subtype_evidence",
-        "duration_evidence", "section_evidence",
-        "institute_cost_evidence", "gross_income_evidence", "net_income_evidence",
-        "parse_confidence",
-    ]
-    for col in expected:
-        assert col in cols, f"Missing column: {col}"
+    assert cols == list(POSITION_ROWS_COLUMN_NAMES)
 
 
 def test_position_rows_has_contract_type_raw_column(tmp_db: sqlite3.Connection) -> None:

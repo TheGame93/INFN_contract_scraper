@@ -7,6 +7,9 @@ import pytest
 
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.domain.position import PositionRow
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
+from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
+from infn_jobs.store import upsert as upsert_module
 from infn_jobs.store.upsert import upsert_call, upsert_position_rows
 
 
@@ -102,3 +105,9 @@ def test_upsert_position_rows_empty_list_is_noop(tmp_db: sqlite3.Connection) -> 
 
     count = tmp_db.execute("SELECT COUNT(*) FROM position_rows").fetchone()[0]
     assert count == 1
+
+
+def test_upsert_generated_insert_columns_match_specs() -> None:
+    """Generated upsert insert columns must match table specs exactly."""
+    assert upsert_module._CALLS_INSERT_COLUMNS == CALLS_RAW_COLUMN_NAMES
+    assert upsert_module._POSITION_ROWS_INSERT_COLUMNS == POSITION_ROWS_COLUMN_NAMES

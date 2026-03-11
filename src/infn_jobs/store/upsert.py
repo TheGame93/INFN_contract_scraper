@@ -6,6 +6,23 @@ from datetime import UTC, datetime
 
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.domain.position import PositionRow
+from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
+from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
+from infn_jobs.store.spec.sql_parts import comma_separated, excluded_assignments, named_placeholders
+
+_CALLS_INSERT_COLUMNS = CALLS_RAW_COLUMN_NAMES
+_CALLS_UPDATABLE_COLUMNS = tuple(
+    column
+    for column in CALLS_RAW_COLUMN_NAMES
+    if column not in {"detail_id", "first_seen_at", "last_synced_at"}
+)
+_CALLS_UPDATE_ASSIGNMENTS = (
+    f"{excluded_assignments(_CALLS_UPDATABLE_COLUMNS)},\n"
+    "            first_seen_at = calls_raw.first_seen_at,\n"
+    "            last_synced_at = excluded.last_synced_at"
+)
+
+_POSITION_ROWS_INSERT_COLUMNS = POSITION_ROWS_COLUMN_NAMES
 
 
 def upsert_call(conn: sqlite3.Connection, call: CallRaw) -> None:
@@ -14,34 +31,14 @@ def upsert_call(conn: sqlite3.Connection, call: CallRaw) -> None:
     first_seen = call.first_seen_at if call.first_seen_at is not None else now
 
     conn.execute(
-        """
+        f"""
         INSERT INTO calls_raw (
-            detail_id, source_tipo, listing_status, numero, anno, titolo,
-            pdf_call_title, numero_posti_html, data_bando, data_scadenza,
-            detail_url, pdf_url, pdf_cache_path, pdf_fetch_status,
-            first_seen_at, last_synced_at
+            {comma_separated(_CALLS_INSERT_COLUMNS)}
         ) VALUES (
-            :detail_id, :source_tipo, :listing_status, :numero, :anno, :titolo,
-            :pdf_call_title, :numero_posti_html, :data_bando, :data_scadenza,
-            :detail_url, :pdf_url, :pdf_cache_path, :pdf_fetch_status,
-            :first_seen_at, :last_synced_at
+            {named_placeholders(_CALLS_INSERT_COLUMNS)}
         )
         ON CONFLICT(detail_id) DO UPDATE SET
-            source_tipo         = excluded.source_tipo,
-            listing_status      = excluded.listing_status,
-            numero              = excluded.numero,
-            anno                = excluded.anno,
-            titolo              = excluded.titolo,
-            pdf_call_title      = excluded.pdf_call_title,
-            numero_posti_html   = excluded.numero_posti_html,
-            data_bando          = excluded.data_bando,
-            data_scadenza       = excluded.data_scadenza,
-            detail_url          = excluded.detail_url,
-            pdf_url             = excluded.pdf_url,
-            pdf_cache_path      = excluded.pdf_cache_path,
-            pdf_fetch_status    = excluded.pdf_fetch_status,
-            first_seen_at       = calls_raw.first_seen_at,
-            last_synced_at      = excluded.last_synced_at
+{_CALLS_UPDATE_ASSIGNMENTS}
         """,
         {
             **asdict(call),
@@ -62,29 +59,11 @@ def upsert_position_rows(conn: sqlite3.Connection, rows: list[PositionRow]) -> N
 
     for row in rows:
         conn.execute(
-            """
+            f"""
             INSERT INTO position_rows (
-                detail_id, position_row_index, text_quality,
-                contract_type, contract_type_raw, contract_subtype, contract_subtype_raw,
-                duration_months, duration_raw, section_structure_department,
-                institute_cost_total_eur, institute_cost_yearly_eur,
-                gross_income_total_eur, gross_income_yearly_eur,
-                net_income_total_eur, net_income_yearly_eur, net_income_monthly_eur,
-                contract_type_evidence, contract_subtype_evidence,
-                duration_evidence, section_evidence,
-                institute_cost_evidence, gross_income_evidence, net_income_evidence,
-                parse_confidence
+                {comma_separated(_POSITION_ROWS_INSERT_COLUMNS)}
             ) VALUES (
-                :detail_id, :position_row_index, :text_quality,
-                :contract_type, :contract_type_raw, :contract_subtype, :contract_subtype_raw,
-                :duration_months, :duration_raw, :section_structure_department,
-                :institute_cost_total_eur, :institute_cost_yearly_eur,
-                :gross_income_total_eur, :gross_income_yearly_eur,
-                :net_income_total_eur, :net_income_yearly_eur, :net_income_monthly_eur,
-                :contract_type_evidence, :contract_subtype_evidence,
-                :duration_evidence, :section_evidence,
-                :institute_cost_evidence, :gross_income_evidence, :net_income_evidence,
-                :parse_confidence
+                {named_placeholders(_POSITION_ROWS_INSERT_COLUMNS)}
             )
             """,
             asdict(row),
