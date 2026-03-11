@@ -1,126 +1,200 @@
-# INFN Jobs Scraper
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0A5EA8,100:1F2937&height=220&section=header&text=INFN%20Jobs%20Scraper&fontSize=42&fontColor=ffffff&animation=fadeIn&desc=Fetch%20-%3E%20Parse%20PDFs%20-%3E%20Export%20Analytics-Ready%20CSV&descSize=15&descAlignY=63" alt="INFN Jobs Scraper banner" />
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11+" />
+  </a>
+  <a href="https://jobs.dsi.infn.it/">
+    <img src="https://img.shields.io/badge/Target-jobs.dsi.infn.it-0A5EA8?style=for-the-badge&logo=firefox-browser&logoColor=white" alt="Target jobs.dsi.infn.it" />
+  </a>
+  <a href="https://github.com/TheGame93/INFN_contract_scraper/tree/main/data">
+    <img src="https://img.shields.io/badge/Output-SQLite%20%2B%204%20CSV-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="Output SQLite and CSV" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/TheGame93/INFN_contract_scraper/stargazers">
+    <img src="https://img.shields.io/github/stars/TheGame93/INFN_contract_scraper?style=flat-square" alt="GitHub stars" />
+  </a>
+  <a href="https://github.com/TheGame93/INFN_contract_scraper/commits/main">
+    <img src="https://img.shields.io/github/last-commit/TheGame93/INFN_contract_scraper?style=flat-square" alt="Last commit" />
+  </a>
+  <a href="https://github.com/TheGame93/INFN_contract_scraper/issues">
+    <img src="https://img.shields.io/github/issues/TheGame93/INFN_contract_scraper?style=flat-square" alt="Open issues" />
+  </a>
+</p>
 
 Scraper for [jobs.dsi.infn.it](https://jobs.dsi.infn.it/).
 
 Goal: build an analytics-ready dataset of INFN opportunities (borse, assegni di ricerca, incarichi di ricerca, incarichi post-doc, contratti di ricerca), extracting key fields from listings and PDF calls (title, structure, type/subtype, duration, deadlines, positions, and economic data when available).
 
-## Roadmap
+## Table of Contents
 
-- [x] Full download from [jobs.dsi.infn.it](https://jobs.dsi.infn.it/)
-- [ ] Filling the DB with useful entries
-- [ ] Analytics on the entries
+- [Overview](#overview)
+- [What You Get](#what-you-get)
+- [Pipeline](#pipeline)
+- [Quick Start](#quick-start)
+- [Commands](#commands)
+- [Sync Option Matrix](#sync-option-matrix)
+- [Output Artifacts](#output-artifacts)
+- [Roadmap](#roadmap)
+- [Disclaimer](#disclaimer)
 
-## Run
+## Overview
 
-### Download the code
-```bash
-cd #into the folder you want to install it
-gh repo clone TheGame93/INFN_contract_scraper .
+This project scrapes INFN job calls from listings and detail pages, downloads the related PDFs, parses position-level information, and writes both raw and curated datasets for analysis.
+
+## What You Get
+
+| Layer | Content |
+| --- | --- |
+| `calls_raw` | Canonical call metadata from listing/detail pages |
+| `position_rows_raw` | Position-level rows extracted from PDF text |
+| Curated tables | Normalized fields for analytics-ready export |
+| CSV exports | 4 ready-to-use files in `data/exports/` |
+
+## Pipeline
+
+```mermaid
+flowchart LR
+  A[Listing + Detail Discovery] --> B[PDF Cache Materialization]
+  B --> C[PDF Text Extraction]
+  C --> D[Position Row Parsing]
+  D --> E[SQLite Upsert]
+  E --> F[Curated Rebuild]
+  F --> G[CSV Export]
 ```
 
-### Requirements
+## Quick Start
+
+### 1. Clone
+
+```bash
+gh repo clone TheGame93/INFN_contract_scraper .
+# or
+git clone git@github.com:TheGame93/INFN_contract_scraper.git
+```
+
+### 2. Create environment and install deps
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip3 install -r pythonrequirements.txt
 ```
 
-### First run
-In order to test that everything is ok, a first batch of 10 contracts of each type will be downloaded
+### 3. Smoke run (small remote batch)
 
 ```bash
 python3 -m infn_jobs --help
 python3 -m infn_jobs sync --source remote --limit-per-tipo 10
-python3 -m infn_jobs export-csv                            # rebuild curated data and write the 4 CSV files
+python3 -m infn_jobs export-csv
 ```
 
-### First full run
-
-Full download from the jobs website: it will build the pdf database
+### 4. Full remote bootstrap
 
 ```bash
-python3 -m infn_jobs --help
 python3 -m infn_jobs sync --source remote
-python3 -m infn_jobs export-csv                            # rebuild curated data and write the 4 CSV files
+python3 -m infn_jobs export-csv
 ```
 
-### Future runs
-
-In the future, `--source auto` will fetch only the missing contracts
+### 5. Routine updates
 
 ```bash
-python3 -m infn_jobs --help
 python3 -m infn_jobs sync --source auto
-python3 -m infn_jobs export-csv                            # rebuild curated data and write the 4 CSV files
+python3 -m infn_jobs export-csv
 ```
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `python3 -m infn_jobs sync` | Parse local DB/cache entries (default `source=local`) |
+| `python3 -m infn_jobs sync --source remote` | Re-discover from network and materialize cache |
+| `python3 -m infn_jobs sync --source auto` | Use local first; fallback to remote if DB is empty |
+| `python3 -m infn_jobs export-csv` | Rebuild curated tables and export the 4 CSV files |
 
 ## Sync Option Matrix
 
-The `sync` command has these flags:
-- `--source {local,remote,auto}` (default: `local`)
-- `--dry-run`
-- `--force-refetch`
-- `--download-only`
-- `--limit-per-tipo N` (must be a positive integer)
+| Flag | Default | Notes |
+| --- | --- | --- |
+| `--source {local,remote,auto}` | `local` | Discovery + cache strategy |
+| `--dry-run` | `False` | Parse only; skip DB writes |
+| `--force-refetch` | `False` | Re-download PDFs (remote/auto flows) |
+| `--download-only` | `False` | Build cache only; skip parse and DB writes (`--dry-run` has no extra effect) |
+| `--limit-per-tipo N` | `None` | Positive integer, used in remote discovery flows |
 
-First run bootstrap? : run the code with `--source remote`
+<details>
+<summary><strong>Source behavior details</strong></summary>
 
-### `source=local` (DB/cache-only discovery)
-
-Not specifying source is like running `--source local`
+### `source=local`
 
 ```bash
 python3 -m infn_jobs sync
 python3 -m infn_jobs sync --dry-run
 ```
 
-- In `source=local`, `--limit-per-tipo` is accepted but has no effect (no remote listing fetch happens).
+- Uses DB/cache only.
+- If DB is empty, run one remote bootstrap first.
 
-### `source=remote` (network listing/detail discovery)
+### `source=remote`
 
 ```bash
-# full pipeline variants
 python3 -m infn_jobs sync --source remote
 python3 -m infn_jobs sync --source remote --dry-run
 python3 -m infn_jobs sync --source remote --force-refetch
 python3 -m infn_jobs sync --source remote --limit-per-tipo 20
-```
-
-```bash
-# cache-materialization-only variants
 python3 -m infn_jobs sync --source remote --download-only
-python3 -m infn_jobs sync --source remote --download-only --force-refetch
-python3 -m infn_jobs sync --source remote --download-only --limit-per-tipo 20
 ```
 
-Option `--download.only` is not compatible with `--dry-run`: it would have the same behavior as equivalent command without `--dry-run`.
+- Always re-discovers calls from network.
+- Materializes PDF cache through downloader.
 
-### `source=auto` (local-first, remote fallback)
-
-Same commands as before, with the following caveat:
-- In `source=auto`, `--limit-per-tipo` is used only if auto falls back to remote discovery.
-- In `source=auto` with non-empty local DB, `--force-refetch` does not re-download already-valid local cache files; it affects cache materialization for missing/invalid files and remote-fallback flows.
-
-### Invalid combinations (fail fast)
+### `source=auto`
 
 ```bash
-python3 -m infn_jobs sync --download-only     # invalid because default source is local
-python3 -m infn_jobs sync --force-refetch     # invalid because default source is local
+python3 -m infn_jobs sync --source auto
+python3 -m infn_jobs sync --source auto --force-refetch
+python3 -m infn_jobs sync --source auto --limit-per-tipo 20
+```
+
+- Uses local DB first.
+- Falls back to remote discovery only when local DB is empty.
+- Downloads missing/invalid cache files when URLs are available.
+
+</details>
+
+<details>
+<summary><strong>Invalid combinations (fail fast)</strong></summary>
+
+```bash
+python3 -m infn_jobs sync --download-only
+python3 -m infn_jobs sync --force-refetch
 python3 -m infn_jobs sync --source local --download-only
 python3 -m infn_jobs sync --source local --force-refetch
-python3 -m infn_jobs sync --limit-per-tipo 0      # also invalid for negative values
+python3 -m infn_jobs sync --limit-per-tipo 0
 ```
 
-## Output
+</details>
+
+## Output Artifacts
 
 - SQLite DB: `data/infn_jobs.db`
-- CSV files in `data/exports/`:
+- CSV exports in `data/exports/`:
   - `calls_raw.csv`
   - `calls_curated.csv`
   - `position_rows_raw.csv`
   - `position_rows_curated.csv`
-- PDF cache in `data/pdf_cache/`
+- PDF cache: `data/pdf_cache/`
+
+## Roadmap
+
+- [x] Full download from [jobs.dsi.infn.it](https://jobs.dsi.infn.it/)
+- [ ] Fill DB with high-quality parsed entries
+- [ ] Analytics notebooks/dashboards on curated outputs
 
 ## Disclaimer
 
-This code has been written totally with AI.
+This codebase has been written with heavy AI assistance.
