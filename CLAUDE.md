@@ -54,6 +54,7 @@ src/infn_jobs/
 │       ├── fields/    → one file per extracted field group
 │       └── normalize/ → pure conversion functions (currency, dates, subtypes/era-variants)
 ├── store/        → SQLite schema, upsert, CSV export
+│   ├── spec/     → ordered table/view specs (single source of truth for store SQL/projections)
 │   └── export/
 └── pipeline/     → orchestration only
 ```
@@ -68,6 +69,7 @@ src/infn_jobs/
 
 - **Docstrings are mandatory.** Every public function, method, and class must have a one-line docstring summarising what it does. Private helpers (`_name`) may omit them if the logic is self-evident.
 - **One concern per file.** No file mixes HTTP with parsing, or schema with queries.
+- **Store field definitions are spec-driven.** `src/infn_jobs/store/spec/` is the single source of truth for ordered table columns and view projections; `schema`, `upsert`, `read`, and CSV export must consume these specs, not hardcoded lists.
 - **All fields are nullable — always.** HTML fields missing on old pages → `NULL`, never a crash. PDF fields not found → `NULL` + `NULL` evidence, never a crash.
 - **Upsert by `detail_id`.** Running `sync` twice must produce identical row counts.
 - **`detail_id` is the stable FK.** Never delete or rename it — v2 winner tables will reference it.
@@ -93,6 +95,7 @@ src/infn_jobs/
 - **Pagination fallback:** listings are assumed single-page (no pagination observed). If any tipo returns 0 rows, investigate for pagination params, update `url_builder.py`, and document in `docs/known_edge_cases.md`.
 - **`no_text` PDFs:** `text_quality = no_text` means mutool succeeded but extracted nothing. Set `pdf_fetch_status = ok` (not `parse_error`). Produce 0 `position_rows`. Reserve `parse_error` for actual mutool failures (non-zero exit code).
 - **Shared utilities must stay atomic.** Modules in `extract/pdf/`, `extract/parse/normalize/`, and `fetch/client.py` are designed for reuse by v2 (winner scraper). They must not import v1-specific logic (no imports from `fetch/listing/`, `fetch/detail/`, `extract/parse/fields/`, or `pipeline/sync.py`). See `plan_implementation.md § Extensibility`.
+- **Field-change workflow:** when adding/removing persistence fields, update `store/spec` first, then align dataclasses/tests (`test_specs.py`, `test_specs_consistency.py`, `test_row_builder.py`) before changing runtime wiring. Regenerate `docs/info_functions.md` when public functions/classes change.
 
 ---
 

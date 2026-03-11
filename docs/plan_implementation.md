@@ -9,6 +9,7 @@
 
 - **Each file does one thing.** No file mixes I/O with parsing, no file mixes schema with queries.
 - **Dependency direction:** `domain` has no dependencies. `fetch`, `extract`, `store` depend on `domain` and `config`. `pipeline` depends on all infrastructure layers. `cli` depends only on `pipeline`.
+- **Store schema/projections are spec-driven.** `store/spec/` is the single source of truth for ordered table columns and view projections; store SQL wiring consumes these specs.
 - **New sections = primarily new files.** Adding a new INFN source type means new files under `fetch/` and `extract/parse/fields/`. Schema extensions (`store/schema.py`) and CLI registration (`cli/main.py`) are the only expected edit points.
 
 ---
@@ -84,6 +85,12 @@ src/infn_jobs/
 │   ├── __init__.py
 │   ├── schema.py                    # init_db(conn) — CREATE TABLE IF NOT EXISTS x4
 │   ├── upsert.py                    # upsert_call(), upsert_position_rows()
+│   ├── spec/
+│   │   ├── calls_raw.py             # calls_raw/calls_curated ordered column specs
+│   │   ├── position_rows.py         # position_rows ordered column specs
+│   │   ├── position_rows_curated.py # position_rows_curated view projection spec
+│   │   ├── sql_parts.py             # deterministic SQL/projection fragment renderers
+│   │   └── types.py                 # dataclasses: ColumnSpec/TableSpec/ViewSpec
 │   └── export/
 │       ├── __init__.py
 │       ├── curate.py                # SQL for curated filtering + rebuild_curated(conn)
@@ -193,6 +200,7 @@ Guardrails: local mode bootstrap guidance is `Run sync with --source remote firs
 ### `calls_raw`
 
 One row per `detail_id`. All fields except `detail_id` are nullable (older records may omit any of them).
+Ordered columns are defined once in `store/spec/calls_raw.py` and consumed by schema/upsert/read/export paths.
 
 ```sql
 calls_raw (
@@ -218,6 +226,7 @@ calls_raw (
 ### `position_rows`
 
 One-to-many: each row is one contract entry extracted from a PDF.
+Ordered columns are defined once in `store/spec/position_rows.py` and consumed by schema/upsert/read/export paths.
 
 ```sql
 position_rows (
@@ -262,6 +271,7 @@ Same schema as `calls_raw`. Populated by `rebuild_curated(conn)` using the emplo
 ### `position_rows_curated`
 
 **Denormalized analytical VIEW** joining `position_rows` with `calls_curated`. This is the flat table described in `plan_desiderata.md` "Canonical Fields in `position_rows_curated`".
+Projection order and expressions are defined once in `store/spec/position_rows_curated.py`.
 
 ```sql
 CREATE VIEW IF NOT EXISTS position_rows_curated AS
@@ -317,6 +327,14 @@ JOIN calls_curated c ON pr.detail_id = c.detail_id;
 ```
 
 The `call_title` column is a derived field (`COALESCE(pdf_call_title, titolo)`). It exists only in the VIEW and in CSV exports — not stored as a separate DB column.
+
+### Field-Change Workflow
+
+When adding/removing persistence fields:
+1. Edit `store/spec/*` definitions first (single source of truth).
+2. Align domain dataclasses and assembly/read paths as needed.
+3. Update/extend drift guards (`tests/store/test_specs.py`, `tests/store/test_specs_consistency.py`, `tests/extract/test_row_builder.py`).
+4. Run `pytest tests/ -v` and `ruff check src/`.
 
 ---
 
