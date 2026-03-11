@@ -67,6 +67,7 @@ If planned work changes behavior, fields, schema, file structure, or public func
 2. `docs/plan_implementation.md`
 3. `CLAUDE.md`
 4. `docs/info_functions.md` via `python3 scripts/gen_info_functions.py` (when functions/classes are added, renamed, removed)
+5. `docs/info_csvfields.md` when exported CSV structure changes (add/remove rows for changed fields)
 
 ### 7) Output format (must follow)
 Write/update the target plan file in Markdown with this structure:

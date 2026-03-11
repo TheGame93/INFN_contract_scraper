@@ -135,6 +135,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - `position_rows_curated` (filtered analytical rows).
 - Persistence schema/projection definitions are spec-driven: `src/infn_jobs/store/spec/` is the single source of truth for ordered columns and view output fields.
 - Field evolution workflow: update `store/spec` first, then align dataclasses/extractor/store wiring, and keep drift-guard tests updated (`tests/store/test_specs.py`, `tests/store/test_specs_consistency.py`, `tests/extract/test_row_builder.py`).
+- CSV field tracking rule: if any exported CSV structure changes, update `docs/info_csvfields.md` by adding/removing rows in the impacted table(s).
 - Employment-like filter for curated datasets:
   - Keep calls/rows matching: `borsa di studio`, `incarico di ricerca`, `incarico post-doc/postdoc`, `contratto di ricerca`, `assegno di ricerca`.
   - Exclude prize-only/non-employment notices unless linked to an extracted job row.

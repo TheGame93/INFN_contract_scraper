@@ -28,6 +28,7 @@ All design documents live in `docs/`:
 | `docs/plan_desiderata.md` | What to build: fields, rules, test plan, assumptions |
 | `docs/plan_implementation.md` | How to build it: file tree, layers, DB schema, extensibility |
 | `docs/info_functions.md` | Index of every function and class in the codebase |
+| `docs/info_csvfields.md` | Tracking grid for exported CSV field lists and per-field parsing status |
 | `docs/step/planning_step.md` | Active step tracker — **read this at every new session** |
 | `docs/step/policy_step.md` | Rules for the step system (adding steps, marking done) |
 | `docs/known_edge_cases.md` | Specific detail_ids with parser failures or unexpected behavior |
@@ -97,6 +98,7 @@ src/infn_jobs/
 - **`no_text` PDFs:** `text_quality = no_text` means mutool succeeded but extracted nothing. Set `pdf_fetch_status = ok` (not `parse_error`). Produce 0 `position_rows`. Reserve `parse_error` for actual mutool failures (non-zero exit code).
 - **Shared utilities must stay atomic.** Modules in `extract/pdf/`, `extract/parse/normalize/`, and `fetch/client.py` are designed for reuse by v2 (winner scraper). They must not import v1-specific logic (no imports from `fetch/listing/`, `fetch/detail/`, `extract/parse/fields/`, or `pipeline/sync.py`). See `plan_implementation.md § Extensibility`.
 - **Field-change workflow:** when adding/removing persistence fields, update `store/spec` first, then align dataclasses/tests (`test_specs.py`, `test_specs_consistency.py`, `test_row_builder.py`) before changing runtime wiring. Regenerate `docs/info_functions.md` when public functions/classes change.
+- **CSV structure change rule:** if exported CSV structure changes (fields added/removed/renamed/reordered), update `docs/info_csvfields.md` by adding/removing the corresponding rows in the affected CSV table(s).
 
 ---
 

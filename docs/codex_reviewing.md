@@ -45,6 +45,7 @@ For all changed or plan-targeted areas, explicitly check:
 3. **Fringe/edge cases:** missing handling for boundary inputs, nullable/legacy variability, idempotency regressions, error-path gaps.
 4. **Dead or vestigial code:** obsolete branches, unused code paths, stale helpers, stale tests, duplicated legacy logic.
 5. **Refactor-needed structure:** modules/scripts that now mix themes and should be split into coherent units (identify cause and risk only, no redesign proposal).
+6. **CSV field tracking compliance:** when exported CSV structure changed, verify `docs/info_csvfields.md` was updated with row additions/removals matching the new CSV fields.
 
 ### 4) Severity model (mandatory)
 Rank every finding in one of these levels:

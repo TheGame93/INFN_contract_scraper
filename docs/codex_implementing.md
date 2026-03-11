@@ -59,7 +59,8 @@ If the step introduces new source types or fields, also update:
 1. `docs/plan_desiderata.md` (fields/tests),
 2. `docs/plan_implementation.md` (file tree/schema/contracts),
 3. `CLAUDE.md` (Key Conventions if behavior changed).
-4. Run this whenever functions are added, renamed, or removed: `python3 scripts/gen_info_functions.py`
+4. `docs/info_csvfields.md` when exported CSV structure changes (add/remove rows for changed fields).
+5. Run this whenever functions are added, renamed, or removed: `python3 scripts/gen_info_functions.py`
 
 ### 8) Response format (must follow)
 1. `Step selected`
