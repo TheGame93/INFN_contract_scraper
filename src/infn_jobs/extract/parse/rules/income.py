@@ -4,15 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from infn_jobs.extract.parse.rules import income_helpers
-from infn_jobs.extract.parse.rules.executor import execute_rules
-from infn_jobs.extract.parse.rules.income_rule_specs import INCOME_FIELD_RULE_SPECS
-from infn_jobs.extract.parse.rules.models import (
-    ExecutionResult,
-    PriorityTier,
-    RuleContext,
-    RuleDefinition,
+from infn_jobs.extract.parse.rules.income_resolution_helpers import (
+    _pick_group_evidence,
+    _resolve_field,
 )
+from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext
 
 
 @dataclass(frozen=True)
@@ -37,101 +33,6 @@ def _to_income_amount(candidate: tuple[float, str] | None) -> IncomeAmount | Non
         return None
     value, evidence = candidate
     return IncomeAmount(value=value, evidence=evidence)
-
-
-def _candidate(
-    context: RuleContext,
-    *,
-    label_re,
-    require_total: bool = False,
-    require_yearly: bool = False,
-    require_monthly: bool = False,
-    require_no_qualifier: bool = False,
-) -> IncomeAmount | None:
-    """Resolve one candidate amount for a rule invocation."""
-    return _to_income_amount(
-        income_helpers.find_amount(
-            segment_text=context.segment_text,
-            label_re=label_re,
-            require_total=require_total,
-            require_yearly=require_yearly,
-            require_monthly=require_monthly,
-            require_no_qualifier=require_no_qualifier,
-        )
-    )
-
-
-def _make_rule(
-    *,
-    rule_id: str,
-    field_name: str,
-    tier: PriorityTier,
-    label_re,
-    require_total: bool = False,
-    require_yearly: bool = False,
-    require_monthly: bool = False,
-    require_no_qualifier: bool = False,
-) -> RuleDefinition:
-    """Return one deterministic income rule definition."""
-    return RuleDefinition(
-        rule_id=rule_id,
-        field_name=field_name,
-        priority_tier=tier,
-        transformer=lambda context: _candidate(
-            context,
-            label_re=label_re,
-            require_total=require_total,
-            require_yearly=require_yearly,
-            require_monthly=require_monthly,
-            require_no_qualifier=require_no_qualifier,
-        ),
-        evidence_selector=lambda _context, value: value.evidence,
-    )
-
-
-def _rules_for_field(field_name: str) -> tuple[RuleDefinition, ...]:
-    """Return deterministic rule set for one income field."""
-    if field_name not in INCOME_FIELD_RULE_SPECS:
-        raise ValueError(f"Unsupported income field: {field_name}")
-    return tuple(
-        _make_rule(field_name=field_name, **kwargs)
-        for kwargs in INCOME_FIELD_RULE_SPECS[field_name]
-    )
-
-
-def _resolve_field(
-    field_name: str,
-    context: RuleContext,
-) -> tuple[float | None, str | None, ExecutionResult]:
-    """Resolve one income field via deterministic rules."""
-    result = execute_rules(_rules_for_field(field_name), context)
-    winner = result.winner
-    if winner is None or not isinstance(winner.value, IncomeAmount):
-        return None, None, result
-    return winner.value.value, winner.value.evidence, result
-
-
-def _pick_group_evidence(
-    values: dict[str, float | str | None],
-    *,
-    monthly_key: str | None = None,
-    total_key: str | None = None,
-    yearly_key: str | None = None,
-) -> str | None:
-    """Return deterministic group evidence by qualifier preference."""
-    evidence_lookup = {
-        "monthly": f"{monthly_key}_evidence" if monthly_key else None,
-        "total": f"{total_key}_evidence" if total_key else None,
-        "yearly": f"{yearly_key}_evidence" if yearly_key else None,
-    }
-    for order_key in ("monthly", "total", "yearly"):
-        key = evidence_lookup[order_key]
-        if key is None:
-            continue
-        evidence = values.get(key)
-        if isinstance(evidence, str):
-            return evidence
-    return None
 
 
 def resolve_income(
@@ -171,7 +72,11 @@ def resolve_income(
         "net_income_yearly_eur",
         "net_income_monthly_eur",
     ):
-        amount, evidence, result = _resolve_field(field_name, context)
+        amount, evidence, result = _resolve_field(
+            field_name,
+            context,
+            to_income_amount=_to_income_amount,
+        )
         values[field_name] = amount
         values[f"{field_name}_evidence"] = evidence
         execution_results[field_name] = result

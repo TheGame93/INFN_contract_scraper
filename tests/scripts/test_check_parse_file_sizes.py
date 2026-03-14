@@ -50,3 +50,24 @@ def test_check_parse_file_sizes_fails_when_file_exceeds_limit(
     assert exit_code == 1
     assert "FAIL" in output
     assert "failures=1" in output
+
+
+def test_check_parse_file_sizes_real_parse_tree_has_no_warnings(capsys) -> None:
+    """Project parse tree should currently fit within warn/fail size thresholds."""
+    module = _load_module(Path("scripts/check_parse_file_sizes.py"))
+
+    exit_code = module.main(
+        [
+            "--root",
+            "src/infn_jobs/extract/parse",
+            "--warn",
+            "150",
+            "--fail",
+            "250",
+        ]
+    )
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "warnings=0" in output
+    assert "failures=0" in output

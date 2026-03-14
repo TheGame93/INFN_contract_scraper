@@ -6,8 +6,13 @@ from dataclasses import dataclass
 
 from infn_jobs.extract.parse.core.conflict_resolution import merge_execution_results
 from infn_jobs.extract.parse.rules import duration_helpers
+from infn_jobs.extract.parse.rules.duration_rule_builders import (
+    _duration_fallback_rules,
+    _duration_guard_rules,
+    _duration_primary_rules,
+)
 from infn_jobs.extract.parse.rules.executor import execute_rules
-from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext, RuleDefinition
+from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext
 
 
 @dataclass(frozen=True)
@@ -28,6 +33,7 @@ class DurationResolution:
     evidence: str | None
     execution_result: ExecutionResult
 
+
 def _has_duration_context(context: RuleContext) -> bool:
     """Return True when segment includes duration-like context words."""
     return duration_helpers.has_duration_context(context.segment_text)
@@ -39,109 +45,6 @@ def _to_duration_value(candidate: tuple[int, str, str] | None) -> DurationValue 
         return None
     months, raw, evidence = candidate
     return DurationValue(months=months, raw=raw, evidence=evidence)
-
-
-def _duration_primary_rules() -> tuple[RuleDefinition, ...]:
-    """Return primary duration rules with labeled evidence precedence."""
-    return (
-        RuleDefinition(
-            rule_id="duration.primary.10.labeled_numeric",
-            field_name="duration",
-            priority_tier="primary",
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_labeled_numeric(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.primary.20.labeled_one_month",
-            field_name="duration",
-            priority_tier="primary",
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_labeled_one_month(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.primary.30.labeled_triennale",
-            field_name="duration",
-            priority_tier="primary",
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_labeled_triennale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.primary.40.labeled_biennale",
-            field_name="duration",
-            priority_tier="primary",
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_labeled_biennale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.primary.50.labeled_annuale",
-            field_name="duration",
-            priority_tier="primary",
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_labeled_annuale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-    )
-
-
-def _duration_fallback_rules() -> tuple[RuleDefinition, ...]:
-    """Return fallback duration rules for bare word expressions."""
-    return (
-        RuleDefinition(
-            rule_id="duration.fallback.10.bare_triennale",
-            field_name="duration",
-            priority_tier="fallback",
-            guards=(_has_duration_context,),
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_bare_triennale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.fallback.20.bare_biennale",
-            field_name="duration",
-            priority_tier="fallback",
-            guards=(_has_duration_context,),
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_bare_biennale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-        RuleDefinition(
-            rule_id="duration.fallback.30.bare_annuale",
-            field_name="duration",
-            priority_tier="fallback",
-            guards=(_has_duration_context,),
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_bare_annuale(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-    )
-
-
-def _duration_guard_rules() -> tuple[RuleDefinition, ...]:
-    """Return guard-tier duration rules for constrained numeric fallback."""
-    return (
-        RuleDefinition(
-            rule_id="duration.guard.10.numeric_context",
-            field_name="duration",
-            priority_tier="guard",
-            guards=(_has_duration_context,),
-            transformer=lambda context: _to_duration_value(
-                duration_helpers.extract_numeric_guarded(context.segment_text)
-            ),
-            evidence_selector=lambda _context, value: value.evidence,
-        ),
-    )
 
 
 def resolve_duration(
@@ -160,9 +63,21 @@ def resolve_duration(
     )
     merged = merge_execution_results(
         (
-            execute_rules(_duration_primary_rules(), context),
-            execute_rules(_duration_fallback_rules(), context),
-            execute_rules(_duration_guard_rules(), context),
+            execute_rules(_duration_primary_rules(_to_duration_value), context),
+            execute_rules(
+                _duration_fallback_rules(
+                    to_duration_value=_to_duration_value,
+                    has_duration_context=_has_duration_context,
+                ),
+                context,
+            ),
+            execute_rules(
+                _duration_guard_rules(
+                    to_duration_value=_to_duration_value,
+                    has_duration_context=_has_duration_context,
+                ),
+                context,
+            ),
         )
     )
 
