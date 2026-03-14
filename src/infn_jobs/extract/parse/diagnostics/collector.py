@@ -43,6 +43,7 @@ class EventCollector:
                 rule_id=candidate.rule_id,
                 candidate_value=candidate.value,
                 priority_tier=candidate.priority_tier,
+                resolution_policy="tier_then_rule_id",
             )
         )
 
@@ -66,5 +67,6 @@ class EventCollector:
                 field_name=rejected.field_name,
                 rule_id=rejected.rule_id,
                 reason_code=rejected.reason_code,
+                resolution_policy="tier_then_rule_id",
             )
         )

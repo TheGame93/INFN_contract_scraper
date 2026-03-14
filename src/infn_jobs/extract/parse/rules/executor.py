@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from infn_jobs.extract.parse.core.conflict_resolution import choose_winner
 from infn_jobs.extract.parse.rules.common import (
     anno_filter_matches,
     contract_filter_matches,
-    priority_rank,
 )
 from infn_jobs.extract.parse.rules.models import (
     ExecutionResult,
@@ -14,11 +14,6 @@ from infn_jobs.extract.parse.rules.models import (
     RuleContext,
     RuleDefinition,
 )
-
-
-def _winner_key(candidate: RuleCandidate) -> tuple[int, str]:
-    """Return stable sorting key for winner selection."""
-    return priority_rank(candidate.priority_tier), candidate.rule_id
 
 
 def execute_rules(
@@ -96,10 +91,9 @@ def execute_rules(
             )
         )
 
-    winner = min(candidates, key=_winner_key) if candidates else None
+    winner = choose_winner(tuple(candidates))
     return ExecutionResult(
         winner=winner,
         candidates=tuple(candidates),
         rejected=tuple(rejected),
     )
-

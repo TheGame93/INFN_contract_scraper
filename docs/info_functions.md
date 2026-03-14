@@ -67,6 +67,11 @@ Fields per entry: `name | parent | inputs | output | description`
 - `classify_segment` | `infn_jobs.extract.parse.core.classification` | `segment_text: str` | `SegmentClassification` | Classify one segment into a contract family with deterministic tie-breaks.
 - `classify_segments` | `infn_jobs.extract.parse.core.classification` | `spans: list[SegmentSpan]` | `list[SegmentClassification]` | Classify all segment spans in order.
 
+## `src/infn_jobs/extract/parse/core/conflict_resolution.py`
+- `candidate_sort_key` | `infn_jobs.extract.parse.core.conflict_resolution` | `candidate: RuleCandidate` | `tuple[int, str]` | Return a stable precedence key `(tier_rank, rule_id)` for one candidate.
+- `choose_winner` | `infn_jobs.extract.parse.core.conflict_resolution` | `candidates: tuple[RuleCandidate, ...]` | `RuleCandidate | None` | Return deterministic winner candidate from a candidate set.
+- `merge_execution_results` | `infn_jobs.extract.parse.core.conflict_resolution` | `results: tuple[ExecutionResult, ...]` | `ExecutionResult` | Merge execution results and resolve one deterministic winner.
+
 ## `src/infn_jobs/extract/parse/core/models.py`
 - `ParseRequest` | `infn_jobs.extract.parse.core.models` | — | — | Input payload for one parser execution.
 - `ParseResult` | `infn_jobs.extract.parse.core.models` | — | — | Output payload produced by one parser execution.
@@ -132,6 +137,11 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/extract/parse/rules/contract_identity.py`
 - `ContractIdentityResolution` | `infn_jobs.extract.parse.rules.contract_identity` | — | — | Resolved contract identity/subtype values plus underlying rule traces.
 - `resolve_contract_identity` | `infn_jobs.extract.parse.rules.contract_identity` | `segment_text: str`, `anno: int | None`, `predicted_contract_type: str | None`, `detail_id: str` | `ContractIdentityResolution` | Resolve contract type/subtype fields via deterministic profile-aware rules.
+
+## `src/infn_jobs/extract/parse/rules/duration.py`
+- `DurationValue` | `infn_jobs.extract.parse.rules.duration` | — | — | One duration candidate value plus its raw snippet and evidence line.
+- `DurationResolution` | `infn_jobs.extract.parse.rules.duration` | — | — | Resolved duration fields plus underlying rule execution trace.
+- `resolve_duration` | `infn_jobs.extract.parse.rules.duration` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `DurationResolution` | Resolve duration fields via primary/fallback/guard rule groups.
 
 ## `src/infn_jobs/extract/parse/rules/executor.py`
 - `execute_rules` | `infn_jobs.extract.parse.rules.executor` | `rules: tuple[RuleDefinition, ...]`, `context: RuleContext` | `ExecutionResult` | Execute rules and return winner/candidates/rejected trace.

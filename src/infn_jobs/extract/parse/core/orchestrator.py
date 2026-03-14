@@ -9,13 +9,13 @@ from infn_jobs.extract.parse.core.preprocess import preprocess_text
 from infn_jobs.extract.parse.core.segmentation import segment_preprocessed
 from infn_jobs.extract.parse.diagnostics.collector import EventCollector
 from infn_jobs.extract.parse.fields.confidence import score_confidence
-from infn_jobs.extract.parse.fields.duration import extract_duration
 from infn_jobs.extract.parse.fields.income import extract_income
 from infn_jobs.extract.parse.fields.metadata import extract_pdf_call_title
 from infn_jobs.extract.parse.rules.contract_identity import (
     ContractIdentityResolution,
     resolve_contract_identity,
 )
+from infn_jobs.extract.parse.rules.duration import resolve_duration
 from infn_jobs.extract.parse.rules.models import ExecutionResult
 from infn_jobs.extract.parse.rules.section import resolve_section
 
@@ -101,7 +101,20 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
             source_line_start=span.source_line_start,
             source_line_end=span.source_line_end,
         )
-        dur_months, dur_raw, dur_ev = extract_duration(seg)
+        duration_resolved = resolve_duration(
+            segment_text=seg,
+            detail_id=request.detail_id,
+            anno=request.anno,
+            contract_type=identity.contract_type,
+        )
+        _record_execution_events(
+            diagnostics=diagnostics,
+            detail_id=request.detail_id,
+            result=duration_resolved.execution_result,
+            field_name="duration",
+            source_line_start=span.source_line_start,
+            source_line_end=span.source_line_end,
+        )
         income = extract_income(seg)
         section_resolved = resolve_section(
             segment_text=seg,
@@ -128,9 +141,9 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
             contract_subtype=identity.contract_subtype,
             contract_subtype_raw=identity.contract_subtype_raw,
             contract_subtype_evidence=identity.contract_subtype_evidence,
-            duration_months=dur_months,
-            duration_raw=dur_raw,
-            duration_evidence=dur_ev,
+            duration_months=duration_resolved.duration_months,
+            duration_raw=duration_resolved.duration_raw,
+            duration_evidence=duration_resolved.evidence,
             section_structure_department=section_resolved.value,
             section_evidence=section_resolved.evidence,
             institute_cost_total_eur=income["institute_cost_total_eur"],

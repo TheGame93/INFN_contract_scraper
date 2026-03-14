@@ -20,3 +20,4 @@ class ParseEvent:
     reason_code: str | None = None
     candidate_value: object | None = None
     priority_tier: str | None = None
+    resolution_policy: str | None = None
