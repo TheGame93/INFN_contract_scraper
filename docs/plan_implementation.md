@@ -99,14 +99,15 @@ src/infn_jobs/
 │       │   ├── income_helpers.py    # income text/amount helper extractors
 │       │   ├── income_rule_specs.py # declarative income-field rule specs
 │       │   ├── income_resolution_helpers.py # internal income-resolution helpers
+│       │   ├── text_windows.py      # shared deterministic adjacent-line matching windows
 │       │   └── section.py           # rule-driven section resolution
 │       └── normalize/
 │           ├── __init__.py
 │           ├── currency.py          # normalize_eur(s) -> float | None
 │           ├── dates.py             # parse_date(s) -> date | None  (DD-MM-YYYY)
 │           └── subtypes.py          # normalize_subtype(s, anno) -> str | None
-│                                    #   Fascia II → Fascia 2
-│                                    #   Tipo A / Tipo B (post-2010 only; pre-2010 → NULL)
+│                                    #   Fascia I/II/III + 1/2/3 → Fascia 1/2/3
+│                                    #   Tipo A/B (post-2010) → Junior/Senior; pre-2010/unknown anno → NULL
 │
 ├── store/
 │   ├── __init__.py
@@ -160,7 +161,7 @@ tests/
 │       ├── multi_mixed_department.txt      # multiple entries, different section per row
 │       ├── ocr_clean.txt                   # scanned, readable
 │       ├── ocr_degraded.txt                # scanned, garbled output
-│       ├── assegno_tipo_ab.txt             # Assegno di ricerca post-2010 (Tipo A + Tipo B)
+│       ├── assegno_tipo_ab.txt             # Assegno di ricerca post-2010 (raw Tipo A/B -> canonical Junior/Senior)
 │       └── assegno_old.txt                 # Assegno di ricerca pre-2010 (no subtype)
 │
 ├── fetch/
@@ -172,13 +173,13 @@ tests/
 │   ├── test_mutool.py                      # mock subprocess; verify text + TextQuality output
 │   ├── test_segmenter.py                   # split logic for 1 / N entries
 │   ├── fields/
-│   │   ├── test_contract_type.py           # includes Assegno Tipo A/B, pre-2010 → NULL
+│   │   ├── test_contract_type.py           # includes Assegno Tipo A/B -> Junior/Senior, pre-2010 -> NULL
 │   │   ├── test_duration.py                # era label variants
 │   │   └── test_income.py                  # era label variants (Compenso/Importo/Reddito lordo)
 │   └── normalize/
 │       ├── test_currency.py                # Italian EUR format variants
 │       ├── test_dates.py
-│       └── test_subtypes.py                # Fascia II→2, Tipo A/B era-gating, pre-2010 → NULL
+│       └── test_subtypes.py                # Fascia I/II/III + 1/2/3 canonicalization, Tipo A/B -> Junior/Senior era-gating
 │
 ├── store/
 │   ├── test_schema.py                      # tables created, idempotent init
@@ -265,7 +266,7 @@ position_rows (
   -- extracted fields (all nullable):
   contract_type                 TEXT,
   contract_type_raw             TEXT,    -- original contract-type text as found in PDF
-  contract_subtype              TEXT,    -- canonical: "Fascia 2", "Tipo A", "Tipo B"
+  contract_subtype              TEXT,    -- canonical: "Fascia 1/2/3", "Junior", "Senior"
   contract_subtype_raw          TEXT,    -- original text as found in PDF
   duration_months               INTEGER,
   duration_raw                  TEXT,

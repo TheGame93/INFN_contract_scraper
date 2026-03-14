@@ -50,7 +50,7 @@ The dataset spans records from 2003 to present. This means **high variability is
   - The normalization layer must handle all known variants per era.
 - **`Assegno di ricerca` subtype changes with Italian law:**
   - Pre-2010 (L. 449/1997): single type, 1-year renewable. No `Tipo A / B` distinction.
-  - Post-2010 (L. 240/2010 Gelmini reform, art. 22): `Tipo A` (junior, 3yr renewable once) and `Tipo B` (senior, 3yr non-renewable). The subtype must be extracted and normalized per era context.
+  - Post-2010 (L. 240/2010 Gelmini reform, art. 22): raw `Tipo A` (junior, 3yr renewable once) and raw `Tipo B` (senior, 3yr non-renewable). Canonical stored subtype is `Junior` / `Senior`, with era-aware guards.
 
 ---
 
@@ -102,7 +102,8 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 - Build robust normalization for era variants, Italian/English variants, and OCR noise:
   - `Fascia II` / `Fascia 2`, `post-doc` / `postdoc`, `€` formats, line breaks in numbers, garbled characters.
   - Multiple label variants per field across 20+ years of PDF templates (see examples in "Field Variability Over Time").
-  - `Assegno di ricerca` subtypes: `Tipo A` / `Tipo B` (post-2010); single type (pre-2010, inferred from `anno`).
+  - `Assegno di ricerca` subtypes: raw `Tipo A` / `Tipo B` (post-2010) map to canonical `Junior` / `Senior`; pre-2010 remains single-type (`NULL` subtype).
+  - Field rules must handle deterministic adjacent-line multiline windows so labels and amounts split across two lines are still extractable.
 - Extract **row-level** fields for each position entry:
   - `section_structure_department` — may differ across rows in the same PDF.
   - `contract_type_raw` (original contract-type text as found in the PDF body, if stated).
@@ -115,7 +116,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 - For each extracted position row, parse nullable fields:
   - `contract_type`,
   - `contract_type_raw` (original text as found in the PDF),
-  - `contract_subtype` (canonical: `Fascia 2`, `Tipo A`, `Tipo B`, etc.),
+  - `contract_subtype` (canonical: `Fascia 1/2/3`, `Junior`, `Senior`, etc.),
   - `contract_subtype_raw` (original text as found in the PDF),
   - `duration_months` (and raw duration text),
   - `institute_cost_total_eur`, `institute_cost_yearly_eur`,
@@ -202,7 +203,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 | `section_structure_department` | extracted per row from PDF (nullable) |
 | `contract_type` | extracted per row from PDF (nullable) |
 | `contract_type_raw` | extracted per row — original text as found in PDF |
-| `contract_subtype` | extracted per row — canonical form (e.g. `Fascia 2`, `Tipo A`, `Tipo B`) |
+| `contract_subtype` | extracted per row — canonical form (e.g. `Fascia 1/2/3`, `Junior`, `Senior`) |
 | `contract_subtype_raw` | extracted per row — original text as found in PDF |
 | `duration_months` | extracted per row (nullable) |
 | `duration_raw` | original text before normalization (nullable) |
@@ -244,8 +245,8 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - EUR normalization: Italian format (`33.681,30`), plain (`1200`), with `€` symbol, line-broken numbers.
 - Duration extraction: `12 mesi`, `biennale`, `24 (venti quattro) mesi`, split across lines, era variants (`della durata di 12 mesi`).
 - Subtype normalization:
-  - `Fascia II` → canonical `Fascia 2`, raw kept.
-  - `Tipo A` / `Tipo B` (Assegno di ricerca, post-2010).
+  - `Fascia I/II/III` and `Fascia 1/2/3` → canonical `Fascia 1/2/3`, raw kept.
+  - raw `Tipo A` / `Tipo B` (Assegno di ricerca, post-2010) → canonical `Junior` / `Senior`.
   - Pre-2010 Assegno: no subtype present → `contract_subtype = NULL`.
 - Label name variants: `Compenso lordo` / `Importo lordo` / `Reddito lordo` all map to gross income.
 - OCR noise: garbled characters around numbers, extra whitespace, partial words.
@@ -262,7 +263,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - Multi-contract same-type PDF → N rows, same `contract_type`.
 - Multi-contract mixed-type/mixed-subtype PDF → N rows, different `contract_type`/`contract_subtype`.
 - PDF with different `section_structure_department` per row.
-- Assegno di ricerca PDF with `Tipo A` / `Tipo B` entries.
+- Assegno di ricerca PDF with raw `Tipo A` / `Tipo B` entries mapped to canonical `Junior` / `Senior`.
 - Old-format Assegno PDF (pre-2010, no Tipo A/B) → `contract_subtype = NULL`.
 
 #### Failure handling tests
@@ -303,7 +304,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - `first_seen_at` is set once and never overwritten. `last_synced_at` is updated on every sync.
 - `numero_posti_html` reflects the HTML detail page value. PDF row count is implicit in `position_row_index`. Both are stored; neither overwrites the other.
 - `section_structure_department` is row-level: different rows in the same PDF may have different values.
-- `Assegno di ricerca` subtypes (`Tipo A` / `Tipo B`) apply only to records from 2010 onward. Earlier records have `contract_subtype = NULL` for this type.
+- `Assegno di ricerca` raw labels (`Tipo A` / `Tipo B`) apply only to records from 2010 onward and canonicalize to `Junior` / `Senior`. Earlier records have `contract_subtype = NULL` for this type.
 - `detail_id` must remain stable across all future versions. Winner correlation in v2 will use it as a foreign key.
 
 ---

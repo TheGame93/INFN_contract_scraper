@@ -188,6 +188,10 @@ Fields per entry: `name | parent | inputs | output | description`
 - `SectionResolution` | `infn_jobs.extract.parse.rules.section` | — | — | Resolved section value/evidence plus underlying rule trace.
 - `resolve_section` | `infn_jobs.extract.parse.rules.section` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `SectionResolution` | Resolve section/structure/department field via deterministic rules.
 
+## `src/infn_jobs/extract/parse/rules/text_windows.py`
+- `TextWindow` | `infn_jobs.extract.parse.rules.text_windows` | — | — | One deterministic text window and its evidence snippet.
+- `iter_adjacent_line_windows` | `infn_jobs.extract.parse.rules.text_windows` | `segment_text: str`, `max_lines: int` | `tuple[TextWindow, ...]` | Return deterministic adjacent-line windows from non-empty segment lines.
+
 ## `src/infn_jobs/extract/parse/segmenter.py`
 - `segment` | `infn_jobs.extract.parse.segmenter` | `text: str` | `list[str]` | Split mutool text output into per-entry segments. Returns list with at least one element.
 

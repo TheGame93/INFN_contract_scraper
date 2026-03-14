@@ -81,8 +81,8 @@ src/infn_jobs/
 - **Italian number format:** `33.681,30` normalizes to `33681.30`. See `extract/parse/normalize/currency.py`.
 - **Date format:** `DD-MM-YYYY`. See `extract/parse/normalize/dates.py`.
 - **Subtype normalization:** always store both canonical and raw values. Key mappings:
-  - `Fascia II` → canonical `Fascia 2`
-  - `Tipo A` / `Tipo B` (Assegno di ricerca, post-2010 only; pre-2010 → `NULL`)
+  - `Fascia I/II/III` and `Fascia 1/2/3` → canonical `Fascia 1/2/3`
+  - `Tipo A` / `Tipo B` (Assegno di ricerca, post-2010 only) → canonical `Junior` / `Senior` (`anno < 2010` or missing `anno` → `NULL`)
 - **`text_quality`** classifies the PDF source: `digital | ocr_clean | ocr_degraded | no_text`. Classification policy lives in `extract/pdf/text_quality.py` and is consumed by `extract/pdf/mutool.py`. Determines whether missing financial fields are a parse failure or an expected gap.
 - **Temporal variability:** pre-2010 PDFs are often scanned. Label variants for the same field differ across 20+ years of templates. The `normalize/` layer must handle all known variants. Use `anno` in analytics to contextualize NULL financial fields.
 - **`parse_confidence` is behavioral only** — it reflects parser success, not data availability. NULL EUR fields in old records do not lower confidence.
@@ -94,6 +94,7 @@ src/infn_jobs/
 - **`fetch_all_calls` conversion:** `fetch/orchestrator.py` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. It sets `listing_status` (`active`/`expired`) from the URL variant used, then returns the assembled `CallRaw` list.
 - **`build_rows` return type:** `extract/parse/row_builder.py` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`.
 - **Runtime/review parser parity contract:** `extract/parse/row_builder.py` and `extract/parse/diagnostics/review_mode.py` must both consume shared segment execution internals from `extract/parse/core/execution_shared.py` to avoid drift.
+- **Multiline extraction policy:** rule extractors must support adjacent-line label/value splits deterministically (shared helper: `extract/parse/rules/text_windows.py`) and keep stable winner precedence.
 - **Sync source modes:** `sync` defaults to `source=local` (reuse `calls_raw` + local cache). First-run bootstrap on empty DB/cache must use `--source remote` ("Run sync with --source remote first.").
 - **`--dry-run` semantics:** runs discovery/cache/parse for the selected source mode, then skips all `upsert_*` and `rebuild_curated` calls.
 - **Sync guardrails:** `--download-only` and `--force-refetch` are invalid with `--source local`; `--limit-per-tipo` applies to remote discovery flows.
