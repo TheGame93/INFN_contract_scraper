@@ -123,6 +123,7 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - `net_income_total_eur`, `net_income_yearly_eur`, `net_income_monthly_eur`,
   - `section_structure_department`.
 - Keep raw evidence snippets for every parsed field group (or `NULL` if missing). One evidence column per logical group, not per individual field.
+- Keep a deterministic review workflow for manual parser audits: one command should print segment boundaries, predicted contract family, extracted outcomes, winning rule IDs, and evidence snippets for a single `detail_id` + local PDF case.
 - Normalize EUR numbers from Italian format (`33.681,30` → `33681.30`).
 
 #### 3. `store/export`
@@ -248,6 +249,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
   - Pre-2010 Assegno: no subtype present → `contract_subtype = NULL`.
 - Label name variants: `Compenso lordo` / `Importo lordo` / `Reddito lordo` all map to gross income.
 - OCR noise: garbled characters around numbers, extra whitespace, partial words.
+- Parse-review utility: deterministic output includes segment-level predictions, winner rule IDs, and evidence snippets for one local review case.
 
 #### PDF extraction tests (text fixtures — mutool output)
 
@@ -279,6 +281,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - At least one call has `pdf_fetch_status = ok`.
 - At least one call has `pdf_fetch_status = skipped` (old record without PDF).
 - `text_quality` values present in output; `ocr_degraded` rows have `parse_confidence = low`. `no_text` PDFs produce 0 `position_rows` (nothing to score).
+- Parse-module size policy check passes: files above `250` lines fail (`scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`), files above `150` are warning-only.
 
 ---
 

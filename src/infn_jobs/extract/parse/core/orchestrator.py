@@ -1,4 +1,4 @@
-"""Compatibility orchestrator for parser execution."""
+"""Core orchestrator for rule-driven parser execution."""
 
 from __future__ import annotations
 
@@ -68,8 +68,8 @@ def _resolve_identity(
     )
 
 
-def run_compat_pipeline(request: ParseRequest) -> ParseResult:
-    """Build PositionRow values using the current legacy extraction flow."""
+def run_parse_pipeline(request: ParseRequest) -> ParseResult:
+    """Build PositionRow values through the rule-driven parser pipeline."""
     if not request.text or request.text_quality == "no_text":
         return ParseResult(rows=[], pdf_call_title=None)
 

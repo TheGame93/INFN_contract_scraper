@@ -2,30 +2,17 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
-from infn_jobs.extract.parse.normalize.currency import normalize_eur
+from infn_jobs.extract.parse.rules import income_helpers
 from infn_jobs.extract.parse.rules.executor import execute_rules
-from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext, RuleDefinition
-
-_CURRENCY_ANCHORED_RE = re.compile(r"(?:€|euro)\s*([\d][\d.,\s]*)", re.IGNORECASE)
-_FORMATTED_AMOUNT_RE = re.compile(r"\d[\d.]*,\d{1,2}|\d+\.\d{2}")
-_BARE_AMOUNT_RE = re.compile(r"[\d][\d.,\s]*")
-
-_INSTITUTE_RE = re.compile(
-    r"(?:Costo\s+a\s+carico\s+dell['\u2019]?Ente|Costo\s+istituzionale)",
-    re.IGNORECASE,
+from infn_jobs.extract.parse.rules.income_rule_specs import INCOME_FIELD_RULE_SPECS
+from infn_jobs.extract.parse.rules.models import (
+    ExecutionResult,
+    PriorityTier,
+    RuleContext,
+    RuleDefinition,
 )
-_GROSS_RE = re.compile(
-    r"(?:Compenso|Importo|Reddito)\s+lordo|Retribuzione\s+lorda",
-    re.IGNORECASE,
-)
-_NET_RE = re.compile(r"(?:Compenso|Importo|Reddito)\s+netto", re.IGNORECASE)
-
-_TOTAL_RE = re.compile(r"\btotale\b", re.IGNORECASE)
-_YEARLY_RE = re.compile(r"\b(?:annuo|annuale)\b", re.IGNORECASE)
-_MONTHLY_RE = re.compile(r"\bmensile\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -44,203 +31,72 @@ class IncomeResolution:
     execution_results: dict[str, ExecutionResult]
 
 
-def _iter_lines(segment_text: str) -> tuple[str, ...]:
-    """Return non-empty stripped segment lines preserving source order."""
-    return tuple(line.strip() for line in segment_text.splitlines() if line.strip())
+def _to_income_amount(candidate: tuple[float, str] | None) -> IncomeAmount | None:
+    """Convert helper tuple output into a typed income candidate."""
+    if candidate is None:
+        return None
+    value, evidence = candidate
+    return IncomeAmount(value=value, evidence=evidence)
 
 
-def _extract_amount(line: str, start_pos: int = 0) -> float | None:
-    """Extract amount from one line using stable precedence patterns."""
-    for pattern, group in (
-        (_CURRENCY_ANCHORED_RE, 1),
-        (_FORMATTED_AMOUNT_RE, 0),
-        (_BARE_AMOUNT_RE, 0),
-    ):
-        match = pattern.search(line, pos=start_pos)
-        if match is None:
-            continue
-        value = normalize_eur(match.group(group))
-        if value is not None:
-            return value
-    return None
-
-
-def _line_has_no_qualifier(line: str) -> bool:
-    """Return True when line has no total/yearly/monthly qualifier token."""
-    return not (_TOTAL_RE.search(line) or _YEARLY_RE.search(line) or _MONTHLY_RE.search(line))
-
-
-def _find_amount(
+def _candidate(
+    context: RuleContext,
     *,
-    segment_text: str,
-    label_re: re.Pattern[str],
+    label_re,
     require_total: bool = False,
     require_yearly: bool = False,
     require_monthly: bool = False,
     require_no_qualifier: bool = False,
 ) -> IncomeAmount | None:
-    """Return last matching amount/evidence candidate for the given constraints."""
-    candidate: IncomeAmount | None = None
-    for line in _iter_lines(segment_text):
-        label_match = label_re.search(line)
-        if label_match is None:
-            continue
-        if require_total and _TOTAL_RE.search(line) is None:
-            continue
-        if require_yearly and _YEARLY_RE.search(line) is None:
-            continue
-        if require_monthly and _MONTHLY_RE.search(line) is None:
-            continue
-        if require_no_qualifier and not _line_has_no_qualifier(line):
-            continue
-        amount = _extract_amount(line, start_pos=label_match.end())
-        if amount is None:
-            continue
-        candidate = IncomeAmount(value=amount, evidence=line)
-    return candidate
+    """Resolve one candidate amount for a rule invocation."""
+    return _to_income_amount(
+        income_helpers.find_amount(
+            segment_text=context.segment_text,
+            label_re=label_re,
+            require_total=require_total,
+            require_yearly=require_yearly,
+            require_monthly=require_monthly,
+            require_no_qualifier=require_no_qualifier,
+        )
+    )
+
+
+def _make_rule(
+    *,
+    rule_id: str,
+    field_name: str,
+    tier: PriorityTier,
+    label_re,
+    require_total: bool = False,
+    require_yearly: bool = False,
+    require_monthly: bool = False,
+    require_no_qualifier: bool = False,
+) -> RuleDefinition:
+    """Return one deterministic income rule definition."""
+    return RuleDefinition(
+        rule_id=rule_id,
+        field_name=field_name,
+        priority_tier=tier,
+        transformer=lambda context: _candidate(
+            context,
+            label_re=label_re,
+            require_total=require_total,
+            require_yearly=require_yearly,
+            require_monthly=require_monthly,
+            require_no_qualifier=require_no_qualifier,
+        ),
+        evidence_selector=lambda _context, value: value.evidence,
+    )
 
 
 def _rules_for_field(field_name: str) -> tuple[RuleDefinition, ...]:
     """Return deterministic rule set for one income field."""
-    if field_name == "institute_cost_total_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.institute.total.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_INSTITUTE_RE,
-                    require_total=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-            RuleDefinition(
-                rule_id="income.institute.total.fallback_unqualified",
-                field_name=field_name,
-                priority_tier="fallback",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_INSTITUTE_RE,
-                    require_no_qualifier=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "institute_cost_yearly_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.institute.yearly.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_INSTITUTE_RE,
-                    require_yearly=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "gross_income_total_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.gross.total.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_GROSS_RE,
-                    require_total=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "gross_income_yearly_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.gross.yearly.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_GROSS_RE,
-                    require_yearly=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-            RuleDefinition(
-                rule_id="income.gross.yearly.fallback_unqualified",
-                field_name=field_name,
-                priority_tier="fallback",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_GROSS_RE,
-                    require_no_qualifier=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "net_income_total_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.net.total.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_NET_RE,
-                    require_total=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "net_income_yearly_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.net.yearly.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_NET_RE,
-                    require_yearly=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-            RuleDefinition(
-                rule_id="income.net.yearly.fallback_unqualified",
-                field_name=field_name,
-                priority_tier="fallback",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_NET_RE,
-                    require_no_qualifier=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    if field_name == "net_income_monthly_eur":
-        return (
-            RuleDefinition(
-                rule_id="income.net.monthly.primary",
-                field_name=field_name,
-                priority_tier="primary",
-                transformer=lambda context: _find_amount(
-                    segment_text=context.segment_text,
-                    label_re=_NET_RE,
-                    require_monthly=True,
-                ),
-                evidence_selector=lambda _context, value: value.evidence,
-            ),
-        )
-
-    raise ValueError(f"Unsupported income field: {field_name}")
+    if field_name not in INCOME_FIELD_RULE_SPECS:
+        raise ValueError(f"Unsupported income field: {field_name}")
+    return tuple(
+        _make_rule(field_name=field_name, **kwargs)
+        for kwargs in INCOME_FIELD_RULE_SPECS[field_name]
+    )
 
 
 def _resolve_field(

@@ -65,14 +65,14 @@ def test_build_rows_row_shape_matches_position_rows_spec_order():
     assert tuple(asdict(rows[0]).keys()) == POSITION_ROWS_COLUMN_NAMES
 
 
-def test_build_rows_delegates_to_compat_orchestrator(monkeypatch):
+def test_build_rows_delegates_to_parse_pipeline(monkeypatch):
     sentinel_row = PositionRow(detail_id="test-1", position_row_index=0, text_quality="digital")
     expected = ParseResult(rows=[sentinel_row], pdf_call_title="sentinel")
 
     def _fake_run(_request):
         return expected
 
-    monkeypatch.setattr(row_builder_module, "run_compat_pipeline", _fake_run)
+    monkeypatch.setattr(row_builder_module, "run_parse_pipeline", _fake_run)
     rows, title = build_rows("input", "test-1", "digital", 2022)
 
     assert rows == [sentinel_row]

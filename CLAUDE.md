@@ -80,7 +80,7 @@ src/infn_jobs/
 - **Subtype normalization:** always store both canonical and raw values. Key mappings:
   - `Fascia II` → canonical `Fascia 2`
   - `Tipo A` / `Tipo B` (Assegno di ricerca, post-2010 only; pre-2010 → `NULL`)
-- **`text_quality`** classifies the PDF source: `digital | ocr_clean | ocr_degraded | no_text`. Set in `extract/pdf/mutool.py`. Determines whether missing financial fields are a parse failure or an expected gap.
+- **`text_quality`** classifies the PDF source: `digital | ocr_clean | ocr_degraded | no_text`. Classification policy lives in `extract/pdf/text_quality.py` and is consumed by `extract/pdf/mutool.py`. Determines whether missing financial fields are a parse failure or an expected gap.
 - **Temporal variability:** pre-2010 PDFs are often scanned. Label variants for the same field differ across 20+ years of templates. The `normalize/` layer must handle all known variants. Use `anno` in analytics to contextualize NULL financial fields.
 - **`parse_confidence` is behavioral only** — it reflects parser success, not data availability. NULL EUR fields in old records do not lower confidence.
 - **Character encoding:** always pass `response.content` (bytes) to BeautifulSoup, never `response.text`. Let BeautifulSoup detect encoding from the HTML `<meta charset>` tag. Old pages may be ISO-8859-1.
@@ -99,6 +99,8 @@ src/infn_jobs/
 - **Shared utilities must stay atomic.** Modules in `extract/pdf/`, `extract/parse/normalize/`, and `fetch/client.py` are designed for reuse by v2 (winner scraper). They must not import v1-specific logic (no imports from `fetch/listing/`, `fetch/detail/`, `extract/parse/fields/`, or `pipeline/sync.py`). See `plan_implementation.md § Extensibility`.
 - **Field-change workflow:** when adding/removing persistence fields, update `store/spec` first, then align dataclasses/tests (`test_specs.py`, `test_specs_consistency.py`, `test_row_builder.py`) before changing runtime wiring. Regenerate `docs/info_functions.md` when public functions/classes change.
 - **CSV structure change rule:** if exported CSV structure changes (fields added/removed/renamed/reordered), update `docs/info_csvfields.md` by adding/removing the corresponding rows in the affected CSV table(s).
+- **Parse review workflow:** use `python3 scripts/review_parse_case.py --detail-id <id> --pdf-path <local.pdf> [--anno YYYY]` to emit deterministic segment/rule/evidence artifacts for manual audits.
+- **Parse file-size policy:** keep parse modules near ~150 lines and below the hard ceiling of 250 lines. Enforce with `python3 scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`.
 
 ---
 

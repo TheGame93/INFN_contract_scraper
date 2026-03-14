@@ -72,7 +72,27 @@ src/infn_jobs/
 │       │   ├── duration.py          # extract duration_months + duration_raw (era label variants)
 │       │   ├── income.py            # extract all 7 EUR income/cost fields (era label variants)
 │       │   ├── metadata.py          # extract pdf_call_title, section_structure_department
-│       │   └── confidence.py        # score_confidence(row, text_quality) -> ParseConfidence
+│       │   └── confidence.py        # score_confidence(row) -> ParseConfidence
+│       ├── diagnostics/
+│       │   ├── collector.py         # deterministic winner/rejected event collection
+│       │   ├── events.py            # ParseEvent model
+│       │   ├── render.py            # deterministic diagnostics text rendering
+│       │   └── review_mode.py       # build/render deterministic per-case parse review artifacts
+│       ├── core/
+│       │   ├── models.py            # ParseRequest/ParseResult and preprocess/segment models
+│       │   ├── preprocess.py        # deterministic text normalization with line mapping
+│       │   ├── segmentation.py      # deterministic segment boundaries
+│       │   ├── classification.py    # weighted contract-family prediction
+│       │   └── orchestrator.py      # run_parse_pipeline(request) -> ParseResult
+│       ├── rules/
+│       │   ├── models.py            # RuleDefinition/RuleContext/ExecutionResult
+│       │   ├── executor.py          # deterministic rule execution and rejection trace
+│       │   ├── contract_identity.py # rule-driven contract/subtype resolution
+│       │   ├── duration.py          # rule-driven duration resolution
+│       │   ├── duration_helpers.py  # duration text-matching helpers
+│       │   ├── income.py            # rule-driven income resolution
+│       │   ├── income_helpers.py    # income text/amount helper extractors
+│       │   └── section.py           # rule-driven section resolution
 │       └── normalize/
 │           ├── __init__.py
 │           ├── currency.py          # normalize_eur(s) -> float | None
@@ -345,11 +365,15 @@ Development utilities (not part of the installable package). Already present in 
 
 ```text
 scripts/
-└── gen_info_functions.py    # walk src/infn_jobs/, extract docstrings, write docs/info_functions.md
+├── gen_info_functions.py       # walk src/infn_jobs/, extract docstrings, write docs/info_functions.md
+├── review_parse_case.py        # deterministic manual parse review for one local PDF/detail_id
+└── check_parse_file_sizes.py   # enforce parse-file size warn/fail thresholds
 ```
 
 Run from the project root: `python3 scripts/gen_info_functions.py`.
 Re-run at the end of every session that adds, renames, or removes public functions.
+Use `python3 scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`
+to enforce parse-module split policy.
 
 ---
 

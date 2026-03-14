@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from infn_jobs.domain.position import PositionRow
 from infn_jobs.extract.parse.core.models import ParseRequest
-from infn_jobs.extract.parse.core.orchestrator import run_compat_pipeline
+from infn_jobs.extract.parse.core.orchestrator import run_parse_pipeline
 
 
 def build_rows(
@@ -20,5 +20,5 @@ def build_rows(
         text_quality=text_quality,
         anno=anno,
     )
-    result = run_compat_pipeline(request)
+    result = run_parse_pipeline(request)
     return result.rows, result.pdf_call_title

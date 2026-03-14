@@ -80,7 +80,7 @@ Fields per entry: `name | parent | inputs | output | description`
 - `SegmentClassification` | `infn_jobs.extract.parse.core.models` | — | — | Weighted contract-family classification for one segment.
 
 ## `src/infn_jobs/extract/parse/core/orchestrator.py`
-- `run_compat_pipeline` | `infn_jobs.extract.parse.core.orchestrator` | `request: ParseRequest` | `ParseResult` | Build PositionRow values using the current legacy extraction flow.
+- `run_parse_pipeline` | `infn_jobs.extract.parse.core.orchestrator` | `request: ParseRequest` | `ParseResult` | Build PositionRow values through the rule-driven parser pipeline.
 
 ## `src/infn_jobs/extract/parse/core/preprocess.py`
 - `preprocess_text` | `infn_jobs.extract.parse.core.preprocess` | `text: str` | `PreprocessResult` | Normalize text while keeping a mapping to original line numbers.
@@ -100,6 +100,12 @@ Fields per entry: `name | parent | inputs | output | description`
 
 ## `src/infn_jobs/extract/parse/diagnostics/render.py`
 - `render_events` | `infn_jobs.extract.parse.diagnostics.render` | `events: tuple[ParseEvent, ...]` | `str` | Return one deterministic text block for diagnostics events.
+
+## `src/infn_jobs/extract/parse/diagnostics/review_mode.py`
+- `SegmentReview` | `infn_jobs.extract.parse.diagnostics.review_mode` | — | — | Deterministic parse-review artifacts for one segment.
+- `ParseReviewReport` | `infn_jobs.extract.parse.diagnostics.review_mode` | — | — | Deterministic parse-review payload for one detail_id case.
+- `build_review_report` | `infn_jobs.extract.parse.diagnostics.review_mode` | `text: str`, `detail_id: str`, `text_quality: str`, `anno: int | None` | `ParseReviewReport` | Return deterministic parse-review artifacts from one mutool text payload.
+- `render_review_report` | `infn_jobs.extract.parse.diagnostics.review_mode` | `report: ParseReviewReport` | `str` | Render one deterministic text block for parse-review artifacts.
 
 ## `src/infn_jobs/extract/parse/fields/confidence.py`
 - `score_confidence` | `infn_jobs.extract.parse.fields.confidence` | `row: PositionRow` | `ParseConfidence` | Compute parse_confidence from extracted row outcomes and text_quality.
@@ -143,6 +149,20 @@ Fields per entry: `name | parent | inputs | output | description`
 - `DurationResolution` | `infn_jobs.extract.parse.rules.duration` | — | — | Resolved duration fields plus underlying rule execution trace.
 - `resolve_duration` | `infn_jobs.extract.parse.rules.duration` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `DurationResolution` | Resolve duration fields via primary/fallback/guard rule groups.
 
+## `src/infn_jobs/extract/parse/rules/duration_helpers.py`
+- `iter_nonempty_lines` | `infn_jobs.extract.parse.rules.duration_helpers` | `text: str` | `tuple[str, ...]` | Return non-empty stripped lines preserving source order.
+- `extract_labeled_value_text` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[str, str] | None` | Return `(value_text, evidence_line)` for the first labeled duration line.
+- `extract_labeled_numeric` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for numeric labeled duration.
+- `extract_labeled_one_month` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for labeled one-month duration.
+- `extract_labeled_triennale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for labeled triennale duration.
+- `extract_labeled_biennale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for labeled biennale duration.
+- `extract_labeled_annuale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for labeled annuale/annuo duration.
+- `extract_bare_triennale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for fallback triennale duration.
+- `extract_bare_biennale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for fallback biennale duration.
+- `extract_bare_annuale` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for fallback annuale/annuo duration.
+- `extract_numeric_guarded` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `tuple[int, str, str] | None` | Return `(months, raw, evidence)` for guard-tier numeric duration.
+- `has_duration_context` | `infn_jobs.extract.parse.rules.duration_helpers` | `segment_text: str` | `bool` | Return True when segment includes duration-like context words.
+
 ## `src/infn_jobs/extract/parse/rules/executor.py`
 - `execute_rules` | `infn_jobs.extract.parse.rules.executor` | `rules: tuple[RuleDefinition, ...]`, `context: RuleContext` | `ExecutionResult` | Execute rules and return winner/candidates/rejected trace.
 
@@ -150,6 +170,12 @@ Fields per entry: `name | parent | inputs | output | description`
 - `IncomeAmount` | `infn_jobs.extract.parse.rules.income` | — | — | One parsed EUR amount candidate plus its evidence line.
 - `IncomeResolution` | `infn_jobs.extract.parse.rules.income` | — | — | Resolved income fields and per-field execution traces.
 - `resolve_income` | `infn_jobs.extract.parse.rules.income` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `IncomeResolution` | Resolve all income fields through rule-driven per-field adapters.
+
+## `src/infn_jobs/extract/parse/rules/income_helpers.py`
+- `iter_lines` | `infn_jobs.extract.parse.rules.income_helpers` | `segment_text: str` | `tuple[str, ...]` | Return non-empty stripped segment lines preserving source order.
+- `extract_amount` | `infn_jobs.extract.parse.rules.income_helpers` | `line: str`, `start_pos: int` | `float | None` | Extract amount from one line using stable precedence patterns.
+- `line_has_no_qualifier` | `infn_jobs.extract.parse.rules.income_helpers` | `line: str` | `bool` | Return True when line has no total/yearly/monthly qualifier token.
+- `find_amount` | `infn_jobs.extract.parse.rules.income_helpers` | `segment_text: str`, `label_re: re.Pattern[str]`, `require_total: bool`, `require_yearly: bool`, `require_monthly: bool`, `require_no_qualifier: bool` | `tuple[float, str] | None` | Return last matching `(amount, evidence)` candidate for constraints.
 
 ## `src/infn_jobs/extract/parse/rules/models.py`
 - `RuleContext` | `infn_jobs.extract.parse.rules.models` | — | — | Execution context passed to parser rules.
