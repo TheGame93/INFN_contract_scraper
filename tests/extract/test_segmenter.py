@@ -5,6 +5,7 @@ from pathlib import Path
 from infn_jobs.extract.parse.segmenter import segment
 
 FIXTURES = Path("tests/fixtures/pdf_text")
+REGRESSION = Path("tests/fixtures/pdf_text/regression")
 
 
 def _read(name: str) -> str:
@@ -71,3 +72,9 @@ def test_segment_falls_back_when_all_headers_are_lowercase():
     )
     result = segment(text)
     assert len(result) == 2
+
+
+def test_segment_regression_4116_is_not_oversplit():
+    text = (REGRESSION / "detail_4116.txt").read_text(encoding="utf-8")
+    result = segment(text)
+    assert len(result) == 3

@@ -12,4 +12,5 @@ class ParseEvent:
     stage: str
     message: str
     detail_id: str | None = None
-
+    source_line_start: int | None = None
+    source_line_end: int | None = None

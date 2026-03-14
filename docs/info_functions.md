@@ -43,13 +43,27 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/extract/parse/contracts/registry.py`
 - `list_profiles` | `infn_jobs.extract.parse.contracts.registry` | — | `tuple[ContractProfile, ...]` | Return all known contract profiles in deterministic order.
 - `get_profile` | `infn_jobs.extract.parse.contracts.registry` | `canonical_name: str` | `ContractProfile | None` | Return profile for canonical_name, or None when unknown.
+- `profile_alias_map` | `infn_jobs.extract.parse.contracts.registry` | — | `dict[str, str]` | Return alias -> canonical contract name mapping.
+
+## `src/infn_jobs/extract/parse/core/classification.py`
+- `classify_segment` | `infn_jobs.extract.parse.core.classification` | `segment_text: str` | `SegmentClassification` | Classify one segment into a contract family with deterministic tie-breaks.
+- `classify_segments` | `infn_jobs.extract.parse.core.classification` | `spans: list[SegmentSpan]` | `list[SegmentClassification]` | Classify all segment spans in order.
 
 ## `src/infn_jobs/extract/parse/core/models.py`
 - `ParseRequest` | `infn_jobs.extract.parse.core.models` | — | — | Input payload for one parser execution.
 - `ParseResult` | `infn_jobs.extract.parse.core.models` | — | — | Output payload produced by one parser execution.
+- `PreprocessResult` | `infn_jobs.extract.parse.core.models` | — | — | Normalized text plus source-line mapping for traceability.
+- `SegmentSpan` | `infn_jobs.extract.parse.core.models` | — | — | One segmented text chunk with source-line boundaries.
+- `SegmentClassification` | `infn_jobs.extract.parse.core.models` | — | — | Weighted contract-family classification for one segment.
 
 ## `src/infn_jobs/extract/parse/core/orchestrator.py`
 - `run_compat_pipeline` | `infn_jobs.extract.parse.core.orchestrator` | `request: ParseRequest` | `ParseResult` | Build PositionRow values using the current legacy extraction flow.
+
+## `src/infn_jobs/extract/parse/core/preprocess.py`
+- `preprocess_text` | `infn_jobs.extract.parse.core.preprocess` | `text: str` | `PreprocessResult` | Normalize text while keeping a mapping to original line numbers.
+
+## `src/infn_jobs/extract/parse/core/segmentation.py`
+- `segment_preprocessed` | `infn_jobs.extract.parse.core.segmentation` | `preprocessed: PreprocessResult` | `list[SegmentSpan]` | Split preprocessed text into deterministic segment spans.
 
 ## `src/infn_jobs/extract/parse/diagnostics/collector.py`
 - `EventCollector` | `infn_jobs.extract.parse.diagnostics.collector` | — | — | Collect parser events in insertion order.

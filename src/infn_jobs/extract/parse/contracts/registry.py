@@ -40,3 +40,11 @@ def get_profile(canonical_name: str) -> ContractProfile | None:
             return profile
     return None
 
+
+def profile_alias_map() -> dict[str, str]:
+    """Return alias -> canonical contract name mapping."""
+    aliases: dict[str, str] = {}
+    for profile in _PROFILES:
+        for alias in profile.aliases:
+            aliases[alias.lower()] = profile.canonical_name
+    return aliases

@@ -70,3 +70,9 @@ def test_build_rows_delegates_to_compat_orchestrator(monkeypatch):
 
     assert rows == [sentinel_row]
     assert title == "sentinel"
+
+
+def test_build_rows_4116_uses_deterministic_three_row_segmentation():
+    text = Path("tests/fixtures/pdf_text/regression/detail_4116.txt").read_text(encoding="utf-8")
+    rows, _ = build_rows(text, "4116", "ocr_clean", 2024)
+    assert len(rows) == 3

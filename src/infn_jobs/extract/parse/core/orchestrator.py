@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from infn_jobs.domain.position import PositionRow
+from infn_jobs.extract.parse.core.classification import classify_segments
 from infn_jobs.extract.parse.core.models import ParseRequest, ParseResult
+from infn_jobs.extract.parse.core.preprocess import preprocess_text
+from infn_jobs.extract.parse.core.segmentation import segment_preprocessed
 from infn_jobs.extract.parse.fields.confidence import score_confidence
 from infn_jobs.extract.parse.fields.contract_type import extract_contract_type
 from infn_jobs.extract.parse.fields.duration import extract_duration
@@ -12,7 +15,6 @@ from infn_jobs.extract.parse.fields.metadata import (
     extract_pdf_call_title,
     extract_section_department,
 )
-from infn_jobs.extract.parse.segmenter import segment
 
 
 def run_compat_pipeline(request: ParseRequest) -> ParseResult:
@@ -21,11 +23,22 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
         return ParseResult(rows=[], pdf_call_title=None)
 
     pdf_call_title = extract_pdf_call_title(request.text)
-    segments = segment(request.text)
+    preprocessed = preprocess_text(request.text)
+    segment_spans = segment_preprocessed(preprocessed)
+    if not segment_spans:
+        return ParseResult(rows=[], pdf_call_title=pdf_call_title)
+    classifications = classify_segments(segment_spans)
     rows: list[PositionRow] = []
 
-    for i, seg in enumerate(segments):
+    for i, span in enumerate(segment_spans):
+        seg = span.text
         ct = extract_contract_type(seg, request.anno)
+        predicted = classifications[i].contract_type
+        if ct["contract_type"] is None and predicted is not None:
+            ct["contract_type"] = predicted
+            ct["contract_type_raw"] = predicted
+            ct["contract_type_evidence"] = seg.splitlines()[0] if seg.splitlines() else None
+
         dur_months, dur_raw, dur_ev = extract_duration(seg)
         income = extract_income(seg)
         section, section_ev = extract_section_department(seg)
@@ -60,4 +73,3 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
         rows.append(row)
 
     return ParseResult(rows=rows, pdf_call_title=pdf_call_title)
-
