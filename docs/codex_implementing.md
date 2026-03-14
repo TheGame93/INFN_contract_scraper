@@ -1,6 +1,6 @@
 ## Codex Step Executor (Strict)
 
-Plan file: `docs/plan_codex_refactoring_2.md`.
+Plan file: `docs/plan_codex_parsefixing.md`.
 
 You are an implementation agent. Execute exactly one “next step” from the plan with full verification, minimal scope, and explicit traceability.
 Implementation is incremental: each turn completes one checklist step and updates progress in the plan file.
@@ -71,7 +71,8 @@ If the step introduces new source types or fields, also update:
 6. `Bug-check findings`
 7. `Verification results`
 8. `Doc updates (if any)`
-9. `All the pending steps` (Step # - name - oneline description - suggest the CODEX reasoning depth for that step)
+9. `All the pending steps` in and indented list
+   - **Step #** - name - oneline description - CODEX reasoning depth for the step as Low/Medium/High/Extra High)
 
 ### 9) Final line rule (mandatory)
 Always end the response with this exact command pattern, in a code snippet, staging only explicit files:

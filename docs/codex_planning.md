@@ -1,6 +1,6 @@
 ## Codex Plan Author (Strict)
 
-Default output plan file: `docs/plan_codex_refactoring_2.md`.
+Default output plan file: `docs/plan_codex_parsefixing.md`.
 
 You are a planning agent. Your job is to produce a concrete implementation plan that will be executed with `docs/codex_implementing.md`.
 Do not implement code in this turn unless the user explicitly asks for both planning and implementation.
@@ -8,7 +8,19 @@ The produced plan must support incremental implementation across multiple turns.
 
 ### 0) The things I want to do
 
-Read the things to fix from `docs/plan_codex_parsingrefactoring_codexreview.md`
+Understood, from this point we will communicate in English.
+
+The parser specification needs to be updated so that contract subtype and income extraction are aligned with real contract language, especially in OCR-clean but line-broken PDFs like `4490.pdf`. The intended behavior is that `Contratto di ricerca`, `Incarico di ricerca`, and `Incarico post-doc` support subtype extraction for both Roman and Arabic forms of fascia levels, meaning `Fascia I/II/III` and `Fascia 1/2/3`, while preserving canonical normalization and storing the original snippet in the raw field. For `Assegno di ricerca`, subtype semantics must be aligned to `junior` and `senior`, with deterministic canonical values and raw evidence retained exactly as found. This is a behavior-level requirement and should be treated as a source-of-truth update, not just a test patch.
+
+The income rules must expand institute-cost recognition beyond current narrow labels so that wording equivalent to “oneri a carico dell’istituto” and “importo annuo complessivo … comprensivo di oneri a carico dell’Istituto” is recognized as institute cost total when monetary context is present. Gross yearly income must continue to map to annual gross compensation wording such as “compenso lordo annuo omnicomprensivo”. The desired end state for `detail_id=4490` is explicit extraction of subtype `Fascia 1`, `institute_cost_total_eur = 27.819,00`, and `gross_income_yearly_eur = 22.500,00`, each with correct evidence text.
+
+A cross-cutting refactor is required for newline robustness across parser fields, not only for income. The current single-line label/value assumption must be replaced by a shared parse-layer strategy that can evaluate adjacent lines as a logical unit while keeping deterministic behavior and evidence traceability. This capability is expected to be reusable by contract identity, income, duration, and other rule-driven fields where labels and values are frequently split across lines in INFN templates. The architecture should keep responsibilities in the parse layer and avoid duplicated ad hoc fixes inside each rule module.
+
+The expected repository touch points are the contract profile and subtype normalization logic under `src/infn_jobs/extract/parse/contracts` and `src/infn_jobs/extract/parse/normalize`, contract-identity rule modules under `src/infn_jobs/extract/parse/rules`, income helper/spec modules under the same rules package, and any shared helper introduced for multiline matching inside parse core/rules utilities. The runtime contracts must remain unchanged for `build_rows`, `run_parse_pipeline`, and persistence schema. Outputs remain nullable where evidence is absent, and rule execution must stay deterministic with stable precedence semantics.
+
+Testing and regression expectations are that canary coverage remains green and is strengthened with assertions for the new 4490 values, plus focused tests for multiline label-value extraction and subtype variants across affected contract families. The provenance and canary integrity checks must still pass. Since behavior changes are intentional, documentation must be synchronized in `docs/plan_desiderata.md`, `docs/plan_implementation.md`, and `CLAUDE.md`, and `docs/info_functions.md` must be regenerated if public signatures change. CSV structure is not expected to change, so `docs/info_csvfields.md` should only be updated if field definitions or exported columns actually change.
+
+The planner must account for false-positive risk from broad financial wording, OCR artifacts around Roman numerals (`I` vs `1`), and cross-line numeric parsing that could accidentally capture unrelated numbers. The target architecture should minimize these risks through context-aware matching, deterministic conflict resolution, and explicit evidence anchoring, while respecting project conventions on layer boundaries, idempotency, null-safety, and parser module maintainability limits.
 
 ### 1) Mandatory reads (at start of turn)
 1. Read `CLAUDE.md`.
@@ -104,4 +116,4 @@ Write/update the target plan file in Markdown with this structure:
 After writing the file, respond with:
 1. Plan file path.
 2. What changed (high level).
-3. First unchecked top-level step from `## Implementation Checklist` to execute next.
+3. All the planned steps: (Step # - name - oneline description - suggest the CODEX reasoning depth for that step)
