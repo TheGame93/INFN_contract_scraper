@@ -52,8 +52,11 @@ src/infn_jobs/
 ├── extract/      → PDF → structured data
 │   ├── pdf/      → download + mutool + text_quality classification
 │   └── parse/
-│       ├── fields/    → one file per extracted field group
-│       └── normalize/ → pure conversion functions (currency, dates, subtypes/era-variants)
+│       ├── fields/      → one file per extracted field group
+│       ├── core/        → shared parse execution internals (runtime + review mode)
+│       ├── diagnostics/ → deterministic review/event artifacts
+│       ├── rules/       → deterministic rule execution per field family
+│       └── normalize/   → pure conversion functions (currency, dates, subtypes/era-variants)
 ├── store/        → SQLite schema, upsert, CSV export
 │   ├── spec/     → ordered table/view specs (single source of truth for store SQL/projections)
 │   └── export/
@@ -90,6 +93,7 @@ src/infn_jobs/
 - **`position_row_index`:** 0-based integer, assigned by order of appearance in `segment()` output. Deterministic for identical PDF text. Never reorder — v2 winner tables will use `(detail_id, position_row_index)` as FK.
 - **`fetch_all_calls` conversion:** `fetch/orchestrator.py` calls `parse_rows()` to get listing dicts, then for each row calls `parse_detail()` to build `CallRaw`. It sets `listing_status` (`active`/`expired`) from the URL variant used, then returns the assembled `CallRaw` list.
 - **`build_rows` return type:** `extract/parse/row_builder.py` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`.
+- **Runtime/review parser parity contract:** `extract/parse/row_builder.py` and `extract/parse/diagnostics/review_mode.py` must both consume shared segment execution internals from `extract/parse/core/execution_shared.py` to avoid drift.
 - **Sync source modes:** `sync` defaults to `source=local` (reuse `calls_raw` + local cache). First-run bootstrap on empty DB/cache must use `--source remote` ("Run sync with --source remote first.").
 - **`--dry-run` semantics:** runs discovery/cache/parse for the selected source mode, then skips all `upsert_*` and `rebuild_curated` calls.
 - **Sync guardrails:** `--download-only` and `--force-refetch` are invalid with `--source local`; `--limit-per-tipo` applies to remote discovery flows.
@@ -100,6 +104,7 @@ src/infn_jobs/
 - **Field-change workflow:** when adding/removing persistence fields, update `store/spec` first, then align dataclasses/tests (`test_specs.py`, `test_specs_consistency.py`, `test_row_builder.py`) before changing runtime wiring. Regenerate `docs/info_functions.md` when public functions/classes change.
 - **CSV structure change rule:** if exported CSV structure changes (fields added/removed/renamed/reordered), update `docs/info_csvfields.md` by adding/removing the corresponding rows in the affected CSV table(s).
 - **Parse review workflow:** use `python3 scripts/review_parse_case.py --detail-id <id> --pdf-path <local.pdf> [--anno YYYY]` to emit deterministic segment/rule/evidence artifacts for manual audits.
+- **Canary provenance workflow:** use `python3 scripts/check_canary_provenance.py --manifest docs/regressions/canary_provenance.md` to enforce fixture/hash integrity for the contract canary matrix.
 - **Parse file-size policy:** keep parse modules near ~150 lines and below the hard ceiling of 250 lines. Enforce with `python3 scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`.
 
 ---

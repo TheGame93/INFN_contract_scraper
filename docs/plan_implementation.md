@@ -77,21 +77,28 @@ src/infn_jobs/
 │       │   ├── collector.py         # deterministic winner/rejected event collection
 │       │   ├── events.py            # ParseEvent model
 │       │   ├── render.py            # deterministic diagnostics text rendering
-│       │   └── review_mode.py       # build/render deterministic per-case parse review artifacts
+│       │   ├── review_mode.py       # build/render deterministic per-case parse review artifacts
+│       │   └── review_mode_helpers.py # internal helpers for review-mode event/evidence assembly
 │       ├── core/
 │       │   ├── models.py            # ParseRequest/ParseResult and preprocess/segment models
 │       │   ├── preprocess.py        # deterministic text normalization with line mapping
 │       │   ├── segmentation.py      # deterministic segment boundaries
 │       │   ├── classification.py    # weighted contract-family prediction
+│       │   ├── execution_shared.py  # shared runtime/review segment execution internals
 │       │   └── orchestrator.py      # run_parse_pipeline(request) -> ParseResult
 │       ├── rules/
 │       │   ├── models.py            # RuleDefinition/RuleContext/ExecutionResult
 │       │   ├── executor.py          # deterministic rule execution and rejection trace
 │       │   ├── contract_identity.py # rule-driven contract/subtype resolution
+│       │   ├── contract_identity_matching.py # internal profile matching helpers
+│       │   ├── contract_identity_rule_builders.py # internal contract-identity rule builders
 │       │   ├── duration.py          # rule-driven duration resolution
 │       │   ├── duration_helpers.py  # duration text-matching helpers
+│       │   ├── duration_rule_builders.py # internal duration rule builders
 │       │   ├── income.py            # rule-driven income resolution
 │       │   ├── income_helpers.py    # income text/amount helper extractors
+│       │   ├── income_rule_specs.py # declarative income-field rule specs
+│       │   ├── income_resolution_helpers.py # internal income-resolution helpers
 │       │   └── section.py           # rule-driven section resolution
 │       └── normalize/
 │           ├── __init__.py
@@ -366,6 +373,7 @@ Development utilities (not part of the installable package). Already present in 
 ```text
 scripts/
 ├── gen_info_functions.py       # walk src/infn_jobs/, extract docstrings, write docs/info_functions.md
+├── check_canary_provenance.py  # validate canary provenance manifest schema + fixture hashes
 ├── review_parse_case.py        # deterministic manual parse review for one local PDF/detail_id
 └── check_parse_file_sizes.py   # enforce parse-file size warn/fail thresholds
 ```

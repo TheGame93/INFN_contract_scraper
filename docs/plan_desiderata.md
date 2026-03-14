@@ -250,6 +250,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - Label name variants: `Compenso lordo` / `Importo lordo` / `Reddito lordo` all map to gross income.
 - OCR noise: garbled characters around numbers, extra whitespace, partial words.
 - Parse-review utility: deterministic output includes segment-level predictions, winner rule IDs, and evidence snippets for one local review case.
+- Runtime-vs-review parity gate: shared projections (call title, row count, row values, winner-rule IDs) stay aligned for representative digital/OCR/canary fixtures.
 
 #### PDF extraction tests (text fixtures — mutool output)
 
@@ -270,6 +271,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - `mutool` not installed or exits non-zero → `pdf_fetch_status = parse_error`, sync continues.
 - Detail page has no PDF link → `pdf_fetch_status = skipped`, no download attempted.
 - `--force-refetch` in remote discovery paths causes cached PDF to be re-downloaded.
+- Canary provenance manifest validation fails when fixture SHA256 hashes drift without explicit manifest updates.
 
 #### End-to-end smoke test
 
@@ -281,7 +283,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - At least one call has `pdf_fetch_status = ok`.
 - At least one call has `pdf_fetch_status = skipped` (old record without PDF).
 - `text_quality` values present in output; `ocr_degraded` rows have `parse_confidence = low`. `no_text` PDFs produce 0 `position_rows` (nothing to score).
-- Parse-module size policy check passes: files above `250` lines fail (`scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`), files above `150` are warning-only.
+- Parse-module size policy check passes: files above `250` lines fail (`scripts/check_parse_file_sizes.py --root src/infn_jobs/extract/parse --warn 150 --fail 250`), files above `150` are warning-only, and the tracked parse tree currently reports `warnings=0 failures=0`.
 
 ---
 
