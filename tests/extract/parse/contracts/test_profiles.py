@@ -18,13 +18,26 @@ def test_profiles_expose_type_patterns_for_each_contract_family() -> None:
         assert profile.contract_type_patterns
 
 
-def test_assegno_profile_has_tipo_ab_subtype_and_post_2010_gate() -> None:
-    """Assegno overlay should gate Tipo A/B subtype extraction by era."""
+def test_assegno_profile_has_semantic_subtypes_and_post_2010_gate() -> None:
+    """Assegno overlay should support Tipo A/B and junior/senior subtype labels."""
     profile = get_profile("Assegno di ricerca")
     assert profile is not None
-    assert profile.subtype_patterns == (r"\bTipo\s+[AB]\b",)
+    assert profile.subtype_patterns == (r"\bTipo\s+[AB]\b", r"\b(?:Junior|Senior)\b")
     assert profile.subtype_anno_min == 2010
     assert profile.subtype_anno_max is None
+
+
+def test_fascia_profiles_cover_roman_and_arabic_levels() -> None:
+    """Fascia-enabled profiles should expose I/II/III and 1/2/3 pattern coverage."""
+    expected = (r"\bFascia\s+(?:I{1,3}|[123])\b",)
+    for canonical_name in (
+        "Incarico di ricerca",
+        "Incarico Post-Doc",
+        "Contratto di ricerca",
+    ):
+        profile = get_profile(canonical_name)
+        assert profile is not None
+        assert profile.subtype_patterns == expected
 
 
 def test_non_assegno_profiles_keep_no_subtype_era_gate() -> None:

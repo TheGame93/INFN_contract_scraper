@@ -12,6 +12,6 @@ def build_profile() -> ContractProfile:
         canonical_name="Assegno di ricerca",
         aliases=("Assegno di ricerca",),
         contract_type_patterns=(r"\bASSEGNO\s+DI\s+RICERCA\b",),
-        subtype_patterns=(r"\bTipo\s+[AB]\b",),
+        subtype_patterns=(r"\bTipo\s+[AB]\b", r"\b(?:Junior|Senior)\b"),
         subtype_anno_min=2010,
     )

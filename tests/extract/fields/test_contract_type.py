@@ -29,7 +29,8 @@ def test_extract_contract_type_assegno_tipo_a_post2010():
     segs = segment(text)
     result = extract_contract_type(segs[0], 2015)
     assert result["contract_type"] == "Assegno di ricerca"
-    assert result["contract_subtype"] == "Tipo A"
+    assert result["contract_subtype"] == "Junior"
+    assert result["contract_subtype_raw"] == "Tipo A"
 
 
 def test_extract_contract_type_assegno_tipo_b_post2010():
@@ -37,7 +38,8 @@ def test_extract_contract_type_assegno_tipo_b_post2010():
     from infn_jobs.extract.parse.segmenter import segment
     segs = segment(text)
     result = extract_contract_type(segs[1], 2015)
-    assert result["contract_subtype"] == "Tipo B"
+    assert result["contract_subtype"] == "Senior"
+    assert result["contract_subtype_raw"] == "Tipo B"
 
 
 def test_extract_contract_type_assegno_pre2010_subtype_is_none():

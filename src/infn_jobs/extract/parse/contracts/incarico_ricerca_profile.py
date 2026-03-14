@@ -12,5 +12,5 @@ def build_profile() -> ContractProfile:
         canonical_name="Incarico di ricerca",
         aliases=("Incarico di ricerca",),
         contract_type_patterns=(r"\bINCARICO\s+DI\s+RICERCA\b",),
-        subtype_patterns=(r"\bFascia\s+II\b", r"\bFascia\s+2\b"),
+        subtype_patterns=(r"\bFascia\s+(?:I{1,3}|[123])\b",),
     )

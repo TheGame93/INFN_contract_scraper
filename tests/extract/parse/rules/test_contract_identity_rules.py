@@ -3,15 +3,15 @@
 from infn_jobs.extract.parse.rules.contract_identity import resolve_contract_identity
 
 
-def test_resolve_contract_identity_extracts_assegno_type_and_tipo_b() -> None:
-    """Contract identity rules should resolve Assegno type and Tipo B subtype."""
+def test_resolve_contract_identity_extracts_assegno_type_and_semantic_subtype() -> None:
+    """Contract identity rules should resolve Assegno type and canonical semantic subtype."""
     result = resolve_contract_identity(
         segment_text="ASSEGNO DI RICERCA - Tipo B\nSezione di Roma",
         anno=2015,
     )
     assert result.contract_type == "Assegno di ricerca"
     assert result.contract_type_raw == "ASSEGNO DI RICERCA"
-    assert result.contract_subtype == "Tipo B"
+    assert result.contract_subtype == "Senior"
     assert result.contract_subtype_raw == "Tipo B"
     assert result.contract_type_result.winner is not None
     assert result.contract_subtype_result.winner is not None
@@ -46,3 +46,15 @@ def test_resolve_contract_identity_gates_assegno_subtype_pre_2010() -> None:
         item.reason_code == "era_mismatch"
         for item in result.contract_subtype_result.rejected
     )
+
+
+def test_resolve_contract_identity_normalizes_fascia_1_subtype() -> None:
+    """Incarico profile should resolve Fascia 1 subtype with canonical normalization."""
+    result = resolve_contract_identity(
+        segment_text="INCARICO DI RICERCA\nrinnovabile, di Fascia 1, da fruire presso la Sezione.",
+        anno=2026,
+    )
+    assert result.contract_type == "Incarico di ricerca"
+    assert result.contract_subtype == "Fascia 1"
+    assert result.contract_subtype_raw == "Fascia 1"
+    assert result.contract_subtype_evidence is not None

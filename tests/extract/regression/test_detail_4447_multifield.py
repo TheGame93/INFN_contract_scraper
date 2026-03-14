@@ -20,7 +20,8 @@ def test_detail_4447_multifield_strict_snapshot() -> None:
     row = rows[0]
     assert row.contract_type == "Incarico Post-Doc"
     assert row.contract_type_raw == "INCARICO POST-DOC"
-    assert row.contract_subtype is None
+    assert row.contract_subtype == "Fascia 1"
+    assert row.contract_subtype_raw == "Fascia 1"
     assert row.duration_months == 24
     assert row.duration_raw == "24 mesi"
     assert row.section_structure_department == "Sezione di Firenze dell’INFN."
