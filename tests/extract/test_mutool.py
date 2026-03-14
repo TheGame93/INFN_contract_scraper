@@ -40,6 +40,14 @@ def test_extract_text_garbled_returns_ocr_degraded(tmp_path):
     assert quality == TextQuality.OCR_DEGRADED
 
 
+def test_extract_text_formfeed_signal_returns_ocr_clean(tmp_path):
+    pdf = tmp_path / "dummy.pdf"
+    stdout = "\x0cDurata: 12 mesi\nCompenso lordo annuo: euro 28000\nSezione di Milano"
+    with patch("subprocess.run", return_value=_completed(0, stdout)):
+        _, quality = extract_text(pdf)
+    assert quality == TextQuality.OCR_CLEAN
+
+
 def test_extract_text_subprocess_failure_raises(tmp_path):
     pdf = tmp_path / "dummy.pdf"
     with patch("subprocess.run", return_value=_completed(1, "")):

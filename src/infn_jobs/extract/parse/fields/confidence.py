@@ -16,8 +16,9 @@ _EUR_FIELDS = (
 )
 
 
-def score_confidence(row: PositionRow, text_quality: str) -> ParseConfidence:
-    """Compute parse_confidence for a PositionRow based on parsed fields and text quality."""
+def score_confidence(row: PositionRow) -> ParseConfidence:
+    """Compute parse_confidence from extracted row outcomes and text_quality."""
+    text_quality = row.text_quality
     # LOW: garbled or empty source text
     if text_quality in (TextQuality.OCR_DEGRADED.value, TextQuality.NO_TEXT.value):
         return ParseConfidence.LOW

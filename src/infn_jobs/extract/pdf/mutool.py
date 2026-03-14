@@ -7,35 +7,9 @@ import subprocess
 from pathlib import Path
 
 from infn_jobs.domain.enums import TextQuality
+from infn_jobs.extract.pdf.text_quality import classify_text_quality
 
 logger = logging.getLogger(__name__)
-
-# Italian words that indicate readable (possibly OCR'd) text
-_OCR_SIGNALS = ("durata", "sezione", "compenso", "bando", "ricerca", "borsa")
-
-
-def _classify(text: str) -> TextQuality:
-    """Classify text quality based on content heuristics."""
-    stripped = text.strip()
-    if not stripped:
-        return TextQuality.NO_TEXT
-
-    # Check garbled ratio before length gate — garbled short text is still OCR_DEGRADED
-    non_word = sum(1 for c in stripped if not c.isalnum() and not c.isspace())
-    total = len(stripped)
-    if non_word / total > 0.30:
-        return TextQuality.OCR_DEGRADED
-
-    if len(stripped) < 50:
-        return TextQuality.NO_TEXT
-
-    lower = stripped.lower()
-    has_formfeed = "\x0c" in text
-    has_italian = any(word in lower for word in _OCR_SIGNALS)
-    if has_formfeed and has_italian:
-        return TextQuality.OCR_CLEAN
-
-    return TextQuality.DIGITAL
 
 
 def extract_text(pdf_path: Path) -> tuple[str, TextQuality]:
@@ -56,6 +30,6 @@ def extract_text(pdf_path: Path) -> tuple[str, TextQuality]:
         )
 
     text = result.stdout
-    quality = _classify(text)
+    quality = classify_text_quality(text)
     logger.debug("mutool %s: %s, %d chars", pdf_path.name, quality.value, len(text))
     return text, quality

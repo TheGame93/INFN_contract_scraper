@@ -102,7 +102,7 @@ Fields per entry: `name | parent | inputs | output | description`
 - `render_events` | `infn_jobs.extract.parse.diagnostics.render` | `events: tuple[ParseEvent, ...]` | `str` | Return one deterministic text block for diagnostics events.
 
 ## `src/infn_jobs/extract/parse/fields/confidence.py`
-- `score_confidence` | `infn_jobs.extract.parse.fields.confidence` | `row: PositionRow`, `text_quality: str` | `ParseConfidence` | Compute parse_confidence for a PositionRow based on parsed fields and text quality.
+- `score_confidence` | `infn_jobs.extract.parse.fields.confidence` | `row: PositionRow` | `ParseConfidence` | Compute parse_confidence from extracted row outcomes and text_quality.
 
 ## `src/infn_jobs/extract/parse/fields/contract_type.py`
 - `extract_contract_type` | `infn_jobs.extract.parse.fields.contract_type` | `segment: str`, `anno: int | None` | `dict` | Extract contract type, type_raw, and subtype fields from a segment.
@@ -170,6 +170,9 @@ Fields per entry: `name | parent | inputs | output | description`
 
 ## `src/infn_jobs/extract/pdf/mutool.py`
 - `extract_text` | `infn_jobs.extract.pdf.mutool` | `pdf_path: Path` | `tuple[str, TextQuality]` | Run mutool draw -F txt on pdf_path. Returns (text, text_quality).
+
+## `src/infn_jobs/extract/pdf/text_quality.py`
+- `classify_text_quality` | `infn_jobs.extract.pdf.text_quality` | `text: str` | `TextQuality` | Classify mutool-extracted text into one deterministic quality bucket.
 
 ## `src/infn_jobs/fetch/client.py`
 - `get_session` | `infn_jobs.fetch.client` | — | `requests.Session` | Return a requests.Session with retry, backoff, and User-Agent configured.

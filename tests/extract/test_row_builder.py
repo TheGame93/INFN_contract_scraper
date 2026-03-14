@@ -6,6 +6,7 @@ from pathlib import Path
 from infn_jobs.domain.position import PositionRow
 from infn_jobs.extract.parse import row_builder as row_builder_module
 from infn_jobs.extract.parse.core.models import ParseResult
+from infn_jobs.extract.parse.fields.confidence import score_confidence
 from infn_jobs.extract.parse.row_builder import build_rows
 from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
 
@@ -51,6 +52,12 @@ def test_build_rows_position_row_index_sequential():
 def test_build_rows_text_quality_stored_as_string():
     rows, _ = build_rows(_read("single_contract.txt"), "test-1", "digital", 2022)
     assert rows[0].text_quality == "digital"
+
+
+def test_build_rows_assigns_parse_confidence_from_row_outcomes():
+    rows, _ = build_rows(_read("single_contract.txt"), "test-1", "digital", 2022)
+    for row in rows:
+        assert row.parse_confidence == score_confidence(row).value
 
 
 def test_build_rows_row_shape_matches_position_rows_spec_order():

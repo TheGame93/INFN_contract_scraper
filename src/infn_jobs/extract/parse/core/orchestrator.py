@@ -20,6 +20,11 @@ from infn_jobs.extract.parse.rules.models import ExecutionResult
 from infn_jobs.extract.parse.rules.section import resolve_section
 
 
+def _assign_parse_confidence(row: PositionRow) -> None:
+    """Assign parse_confidence using only assembled row outcomes."""
+    row.parse_confidence = score_confidence(row).value
+
+
 def _record_execution_events(
     *,
     diagnostics: EventCollector,
@@ -171,7 +176,7 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
             gross_income_evidence=income_resolved.values["gross_income_evidence"],
             net_income_evidence=income_resolved.values["net_income_evidence"],
         )
-        row.parse_confidence = score_confidence(row, request.text_quality).value
+        _assign_parse_confidence(row)
         rows.append(row)
 
     _ = diagnostics.snapshot()

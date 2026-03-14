@@ -14,12 +14,11 @@ def build_rows(
     anno: int | None,
 ) -> tuple[list[PositionRow], str | None]:
     """Segment text and build PositionRow list. Second element is pdf_call_title (call-level)."""
-    result = run_compat_pipeline(
-        ParseRequest(
-            text=text,
-            detail_id=detail_id,
-            text_quality=text_quality,
-            anno=anno,
-        )
+    request = ParseRequest(
+        text=text,
+        detail_id=detail_id,
+        text_quality=text_quality,
+        anno=anno,
     )
+    result = run_compat_pipeline(request)
     return result.rows, result.pdf_call_title
