@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ import pytest
 from infn_jobs.extract.parse.row_builder import build_rows
 
 _CANARY_DIR = Path("tests/fixtures/pdf_text/canary")
+_PROVENANCE_MANIFEST = Path("docs/regressions/canary_provenance.md")
+_PROVENANCE_ROW_RE = re.compile(r"^\|\s*`(?P<detail_id>\d+)`\s*\|\s*`(?P<fixture_path>[^`]+)`")
 
 _CASES = [
     ("4507", 2026, "Borsa di studio", 1),
@@ -21,6 +24,27 @@ _CASES = [
     ("4223", 2024, "Assegno di ricerca", 1),
     ("4302", 2024, "Assegno di ricerca", 1),
 ]
+
+
+def _manifest_rows() -> dict[str, str]:
+    """Return detail_id -> fixture path mapping parsed from provenance manifest table."""
+    rows: dict[str, str] = {}
+    for line in _PROVENANCE_MANIFEST.read_text(encoding="utf-8").splitlines():
+        match = _PROVENANCE_ROW_RE.match(line.strip())
+        if match is None:
+            continue
+        rows[match.group("detail_id")] = match.group("fixture_path")
+    return rows
+
+
+def test_contract_canary_matrix_matches_provenance_manifest() -> None:
+    """Canary cases should stay aligned with provenance manifest detail IDs and fixture paths."""
+    manifest_rows = _manifest_rows()
+    case_ids = {detail_id for detail_id, *_ in _CASES}
+
+    assert case_ids == set(manifest_rows)
+    for detail_id in case_ids:
+        assert manifest_rows[detail_id] == f"tests/fixtures/pdf_text/canary/detail_{detail_id}.txt"
 
 
 @pytest.mark.parametrize(("detail_id", "anno", "expected_contract_type", "expected_rows"), _CASES)
