@@ -3,6 +3,9 @@
 from dataclasses import asdict
 from pathlib import Path
 
+from infn_jobs.domain.position import PositionRow
+from infn_jobs.extract.parse import row_builder as row_builder_module
+from infn_jobs.extract.parse.core.models import ParseResult
 from infn_jobs.extract.parse.row_builder import build_rows
 from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
 
@@ -53,3 +56,17 @@ def test_build_rows_text_quality_stored_as_string():
 def test_build_rows_row_shape_matches_position_rows_spec_order():
     rows, _ = build_rows(_read("single_contract.txt"), "test-1", "digital", 2022)
     assert tuple(asdict(rows[0]).keys()) == POSITION_ROWS_COLUMN_NAMES
+
+
+def test_build_rows_delegates_to_compat_orchestrator(monkeypatch):
+    sentinel_row = PositionRow(detail_id="test-1", position_row_index=0, text_quality="digital")
+    expected = ParseResult(rows=[sentinel_row], pdf_call_title="sentinel")
+
+    def _fake_run(_request):
+        return expected
+
+    monkeypatch.setattr(row_builder_module, "run_compat_pipeline", _fake_run)
+    rows, title = build_rows("input", "test-1", "digital", 2022)
+
+    assert rows == [sentinel_row]
+    assert title == "sentinel"

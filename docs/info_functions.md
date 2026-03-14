@@ -37,6 +37,28 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/domain/position.py`
 - `PositionRow` | `infn_jobs.domain.position` | — | — | One contract line extracted from a PDF; every field is nullable.
 
+## `src/infn_jobs/extract/parse/contracts/profile.py`
+- `ContractProfile` | `infn_jobs.extract.parse.contracts.profile` | — | — | Describe one contract family and its identifying aliases.
+
+## `src/infn_jobs/extract/parse/contracts/registry.py`
+- `list_profiles` | `infn_jobs.extract.parse.contracts.registry` | — | `tuple[ContractProfile, ...]` | Return all known contract profiles in deterministic order.
+- `get_profile` | `infn_jobs.extract.parse.contracts.registry` | `canonical_name: str` | `ContractProfile | None` | Return profile for canonical_name, or None when unknown.
+
+## `src/infn_jobs/extract/parse/core/models.py`
+- `ParseRequest` | `infn_jobs.extract.parse.core.models` | — | — | Input payload for one parser execution.
+- `ParseResult` | `infn_jobs.extract.parse.core.models` | — | — | Output payload produced by one parser execution.
+
+## `src/infn_jobs/extract/parse/core/orchestrator.py`
+- `run_compat_pipeline` | `infn_jobs.extract.parse.core.orchestrator` | `request: ParseRequest` | `ParseResult` | Build PositionRow values using the current legacy extraction flow.
+
+## `src/infn_jobs/extract/parse/diagnostics/collector.py`
+- `EventCollector` | `infn_jobs.extract.parse.diagnostics.collector` | — | — | Collect parser events in insertion order.
+- `record` | `EventCollector` | `event: ParseEvent` | `None` | Store one parser event.
+- `snapshot` | `EventCollector` | — | `tuple[ParseEvent, ...]` | Return an immutable snapshot of recorded events.
+
+## `src/infn_jobs/extract/parse/diagnostics/events.py`
+- `ParseEvent` | `infn_jobs.extract.parse.diagnostics.events` | — | — | Represent one parser diagnostic event.
+
 ## `src/infn_jobs/extract/parse/fields/confidence.py`
 - `score_confidence` | `infn_jobs.extract.parse.fields.confidence` | `row: PositionRow`, `text_quality: str` | `ParseConfidence` | Compute parse_confidence for a PositionRow based on parsed fields and text quality.
 
@@ -64,6 +86,9 @@ Fields per entry: `name | parent | inputs | output | description`
 
 ## `src/infn_jobs/extract/parse/row_builder.py`
 - `build_rows` | `infn_jobs.extract.parse.row_builder` | `text: str`, `detail_id: str`, `text_quality: str`, `anno: int | None` | `tuple[list[PositionRow], str | None]` | Segment text and build PositionRow list. Second element is pdf_call_title (call-level).
+
+## `src/infn_jobs/extract/parse/rules/models.py`
+- `RuleCandidate` | `infn_jobs.extract.parse.rules.models` | — | — | One candidate value proposed by a parser rule.
 
 ## `src/infn_jobs/extract/parse/segmenter.py`
 - `segment` | `infn_jobs.extract.parse.segmenter` | `text: str` | `list[str]` | Split mutool text output into per-entry segments. Returns list with at least one element.
