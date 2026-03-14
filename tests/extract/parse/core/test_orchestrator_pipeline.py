@@ -6,6 +6,7 @@ from pathlib import Path
 
 from infn_jobs.extract.parse.core.models import ParseRequest
 from infn_jobs.extract.parse.core.orchestrator import run_parse_pipeline
+from infn_jobs.extract.parse.diagnostics.review_mode import build_review_report
 from infn_jobs.extract.parse.row_builder import build_rows
 
 _FIXTURES = Path("tests/fixtures/pdf_text")
@@ -43,3 +44,46 @@ def test_run_parse_pipeline_handles_no_text_short_circuit() -> None:
     result = run_parse_pipeline(request)
     assert result.rows == []
     assert result.pdf_call_title is None
+
+
+def test_run_parse_pipeline_matches_review_projection_for_canary_fixture() -> None:
+    """Runtime parse output should match review projection on shared canary fields."""
+    text = _read("canary/detail_4358.txt")
+    request = ParseRequest(
+        text=text,
+        detail_id="compat-canary-4358",
+        text_quality="ocr_clean",
+        anno=2025,
+    )
+
+    runtime = run_parse_pipeline(request)
+    review = build_review_report(
+        text=text,
+        detail_id="compat-canary-4358",
+        text_quality="ocr_clean",
+        anno=2025,
+    )
+
+    runtime_projection = [
+        (
+            row.contract_type,
+            row.contract_subtype,
+            row.duration_months,
+            row.section_structure_department,
+            row.gross_income_yearly_eur,
+        )
+        for row in runtime.rows
+    ]
+    review_projection = [
+        (
+            segment.contract_type,
+            segment.contract_subtype,
+            segment.duration_months,
+            segment.section_structure_department,
+            segment.gross_income_yearly_eur,
+        )
+        for segment in review.segments
+    ]
+
+    assert runtime.pdf_call_title == review.pdf_call_title
+    assert runtime_projection == review_projection
