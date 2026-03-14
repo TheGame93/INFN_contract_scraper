@@ -37,6 +37,24 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/domain/position.py`
 - `PositionRow` | `infn_jobs.domain.position` | — | — | One contract line extracted from a PDF; every field is nullable.
 
+## `src/infn_jobs/extract/parse/contracts/assegno_ricerca_profile.py`
+- `build_profile` | `infn_jobs.extract.parse.contracts.assegno_ricerca_profile` | — | `ContractProfile` | Return profile metadata for Assegno di ricerca extraction rules.
+
+## `src/infn_jobs/extract/parse/contracts/base_profile.py`
+- `build_base_profile` | `infn_jobs.extract.parse.contracts.base_profile` | `canonical_name: str`, `aliases: tuple[str, ...]`, `contract_type_patterns: tuple[str, ...]`, `subtype_patterns: tuple[str, ...]`, `subtype_anno_min: int | None`, `subtype_anno_max: int | None` | `ContractProfile` | Return one contract profile with common baseline defaults applied.
+
+## `src/infn_jobs/extract/parse/contracts/borsa_profile.py`
+- `build_profile` | `infn_jobs.extract.parse.contracts.borsa_profile` | — | `ContractProfile` | Return profile metadata for Borsa di studio extraction rules.
+
+## `src/infn_jobs/extract/parse/contracts/contratto_ricerca_profile.py`
+- `build_profile` | `infn_jobs.extract.parse.contracts.contratto_ricerca_profile` | — | `ContractProfile` | Return profile metadata for Contratto di ricerca extraction rules.
+
+## `src/infn_jobs/extract/parse/contracts/incarico_postdoc_profile.py`
+- `build_profile` | `infn_jobs.extract.parse.contracts.incarico_postdoc_profile` | — | `ContractProfile` | Return profile metadata for Incarico Post-Doc extraction rules.
+
+## `src/infn_jobs/extract/parse/contracts/incarico_ricerca_profile.py`
+- `build_profile` | `infn_jobs.extract.parse.contracts.incarico_ricerca_profile` | — | `ContractProfile` | Return profile metadata for Incarico di ricerca extraction rules.
+
 ## `src/infn_jobs/extract/parse/contracts/profile.py`
 - `ContractProfile` | `infn_jobs.extract.parse.contracts.profile` | — | — | Describe one contract family and its identifying aliases.
 
@@ -111,6 +129,10 @@ Fields per entry: `name | parent | inputs | output | description`
 - `contract_filter_matches` | `infn_jobs.extract.parse.rules.common` | `rule: RuleDefinition`, `context: RuleContext` | `bool` | Return True when contract filter allows this context.
 - `anno_filter_matches` | `infn_jobs.extract.parse.rules.common` | `rule: RuleDefinition`, `context: RuleContext` | `bool` | Return True when anno constraints allow this context.
 
+## `src/infn_jobs/extract/parse/rules/contract_identity.py`
+- `ContractIdentityResolution` | `infn_jobs.extract.parse.rules.contract_identity` | — | — | Resolved contract identity/subtype values plus underlying rule traces.
+- `resolve_contract_identity` | `infn_jobs.extract.parse.rules.contract_identity` | `segment_text: str`, `anno: int | None`, `predicted_contract_type: str | None`, `detail_id: str` | `ContractIdentityResolution` | Resolve contract type/subtype fields via deterministic profile-aware rules.
+
 ## `src/infn_jobs/extract/parse/rules/executor.py`
 - `execute_rules` | `infn_jobs.extract.parse.rules.executor` | `rules: tuple[RuleDefinition, ...]`, `context: RuleContext` | `ExecutionResult` | Execute rules and return winner/candidates/rejected trace.
 
@@ -120,6 +142,10 @@ Fields per entry: `name | parent | inputs | output | description`
 - `RuleCandidate` | `infn_jobs.extract.parse.rules.models` | — | — | One candidate value proposed by a parser rule.
 - `RejectedCandidate` | `infn_jobs.extract.parse.rules.models` | — | — | One rejected candidate decision emitted by the executor.
 - `ExecutionResult` | `infn_jobs.extract.parse.rules.models` | — | — | Deterministic executor output for one field resolution.
+
+## `src/infn_jobs/extract/parse/rules/section.py`
+- `SectionResolution` | `infn_jobs.extract.parse.rules.section` | — | — | Resolved section value/evidence plus underlying rule trace.
+- `resolve_section` | `infn_jobs.extract.parse.rules.section` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `SectionResolution` | Resolve section/structure/department field via deterministic rules.
 
 ## `src/infn_jobs/extract/parse/segmenter.py`
 - `segment` | `infn_jobs.extract.parse.segmenter` | `text: str` | `list[str]` | Split mutool text output into per-entry segments. Returns list with at least one element.

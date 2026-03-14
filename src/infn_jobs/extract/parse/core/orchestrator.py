@@ -9,37 +9,58 @@ from infn_jobs.extract.parse.core.preprocess import preprocess_text
 from infn_jobs.extract.parse.core.segmentation import segment_preprocessed
 from infn_jobs.extract.parse.diagnostics.collector import EventCollector
 from infn_jobs.extract.parse.fields.confidence import score_confidence
-from infn_jobs.extract.parse.fields.contract_type import extract_contract_type
 from infn_jobs.extract.parse.fields.duration import extract_duration
 from infn_jobs.extract.parse.fields.income import extract_income
-from infn_jobs.extract.parse.fields.metadata import (
-    extract_pdf_call_title,
-    extract_section_department,
+from infn_jobs.extract.parse.fields.metadata import extract_pdf_call_title
+from infn_jobs.extract.parse.rules.contract_identity import (
+    ContractIdentityResolution,
+    resolve_contract_identity,
 )
-from infn_jobs.extract.parse.rules.executor import execute_rules
-from infn_jobs.extract.parse.rules.models import RuleContext, RuleDefinition
+from infn_jobs.extract.parse.rules.models import ExecutionResult
+from infn_jobs.extract.parse.rules.section import resolve_section
 
 
-def _fallback_contract_transformer(context: RuleContext) -> object | None:
-    """Return predicted contract type from context metadata."""
-    return context.metadata.get("predicted_contract_type")
+def _record_execution_events(
+    *,
+    diagnostics: EventCollector,
+    detail_id: str,
+    result: ExecutionResult,
+    field_name: str,
+    source_line_start: int | None,
+    source_line_end: int | None,
+) -> None:
+    """Record winner and rejected rule events for one field resolution."""
+    for rejected in result.rejected:
+        diagnostics.record_rejected(
+            detail_id=detail_id,
+            rejected=rejected,
+            source_line_start=source_line_start,
+            source_line_end=source_line_end,
+        )
+    if result.winner is not None:
+        diagnostics.record_winner(
+            detail_id=detail_id,
+            field_name=field_name,
+            candidate=result.winner,
+            source_line_start=source_line_start,
+            source_line_end=source_line_end,
+        )
 
 
-def _fallback_contract_evidence(context: RuleContext, _value: object) -> str | None:
-    """Return first segment line as fallback contract evidence."""
-    lines = context.segment_text.splitlines()
-    return lines[0] if lines else None
-
-
-_CONTRACT_TYPE_FALLBACK_RULES: tuple[RuleDefinition, ...] = (
-    RuleDefinition(
-        rule_id="fallback.classification.contract_type",
-        field_name="contract_type",
-        priority_tier="fallback",
-        transformer=_fallback_contract_transformer,
-        evidence_selector=_fallback_contract_evidence,
-    ),
-)
+def _resolve_identity(
+    *,
+    segment_text: str,
+    anno: int | None,
+    predicted_contract_type: str | None,
+    detail_id: str,
+) -> ContractIdentityResolution:
+    """Resolve profile-aware contract identity fields for one segment."""
+    return resolve_contract_identity(
+        segment_text=segment_text,
+        anno=anno,
+        predicted_contract_type=predicted_contract_type,
+        detail_id=detail_id,
+    )
 
 
 def run_compat_pipeline(request: ParseRequest) -> ParseResult:
@@ -58,57 +79,60 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
 
     for i, span in enumerate(segment_spans):
         seg = span.text
-        ct = extract_contract_type(seg, request.anno)
-        fallback_result = execute_rules(
-            _CONTRACT_TYPE_FALLBACK_RULES,
-            RuleContext(
-                segment_text=seg,
-                detail_id=request.detail_id,
-                anno=request.anno,
-                contract_type=ct["contract_type"],
-                metadata={"predicted_contract_type": classifications[i].contract_type},
-            ),
+        identity = _resolve_identity(
+            segment_text=seg,
+            anno=request.anno,
+            predicted_contract_type=classifications[i].contract_type,
+            detail_id=request.detail_id,
         )
-        for rejected in fallback_result.rejected:
-            diagnostics.record_rejected(
-                detail_id=request.detail_id,
-                rejected=rejected,
-                source_line_start=span.source_line_start,
-                source_line_end=span.source_line_end,
-            )
-        if fallback_result.winner is not None:
-            diagnostics.record_winner(
-                detail_id=request.detail_id,
-                field_name="contract_type",
-                candidate=fallback_result.winner,
-                source_line_start=span.source_line_start,
-                source_line_end=span.source_line_end,
-            )
-        if ct["contract_type"] is None and fallback_result.winner is not None:
-            winner_value = str(fallback_result.winner.value)
-            ct["contract_type"] = winner_value
-            ct["contract_type_raw"] = winner_value
-            ct["contract_type_evidence"] = fallback_result.winner.evidence
-
+        _record_execution_events(
+            diagnostics=diagnostics,
+            detail_id=request.detail_id,
+            result=identity.contract_type_result,
+            field_name="contract_type",
+            source_line_start=span.source_line_start,
+            source_line_end=span.source_line_end,
+        )
+        _record_execution_events(
+            diagnostics=diagnostics,
+            detail_id=request.detail_id,
+            result=identity.contract_subtype_result,
+            field_name="contract_subtype",
+            source_line_start=span.source_line_start,
+            source_line_end=span.source_line_end,
+        )
         dur_months, dur_raw, dur_ev = extract_duration(seg)
         income = extract_income(seg)
-        section, section_ev = extract_section_department(seg)
+        section_resolved = resolve_section(
+            segment_text=seg,
+            detail_id=request.detail_id,
+            anno=request.anno,
+            contract_type=identity.contract_type,
+        )
+        _record_execution_events(
+            diagnostics=diagnostics,
+            detail_id=request.detail_id,
+            result=section_resolved.execution_result,
+            field_name="section_structure_department",
+            source_line_start=span.source_line_start,
+            source_line_end=span.source_line_end,
+        )
 
         row = PositionRow(
             detail_id=request.detail_id,
             position_row_index=i,
             text_quality=request.text_quality,
-            contract_type=ct["contract_type"],
-            contract_type_raw=ct["contract_type_raw"],
-            contract_type_evidence=ct["contract_type_evidence"],
-            contract_subtype=ct["contract_subtype"],
-            contract_subtype_raw=ct["contract_subtype_raw"],
-            contract_subtype_evidence=ct["contract_subtype_evidence"],
+            contract_type=identity.contract_type,
+            contract_type_raw=identity.contract_type_raw,
+            contract_type_evidence=identity.contract_type_evidence,
+            contract_subtype=identity.contract_subtype,
+            contract_subtype_raw=identity.contract_subtype_raw,
+            contract_subtype_evidence=identity.contract_subtype_evidence,
             duration_months=dur_months,
             duration_raw=dur_raw,
             duration_evidence=dur_ev,
-            section_structure_department=section,
-            section_evidence=section_ev,
+            section_structure_department=section_resolved.value,
+            section_evidence=section_resolved.evidence,
             institute_cost_total_eur=income["institute_cost_total_eur"],
             institute_cost_yearly_eur=income["institute_cost_yearly_eur"],
             gross_income_total_eur=income["gross_income_total_eur"],

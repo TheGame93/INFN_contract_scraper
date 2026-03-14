@@ -46,3 +46,11 @@ def test_extract_section_department_no_match():
     value, evidence = extract_section_department("Nessuna corrispondenza qui")
     assert value is None
     assert evidence is None
+
+
+def test_extract_section_department_prefers_first_match_line():
+    value, evidence = extract_section_department(
+        "Sede di Napoli\nSezione di Roma 1\nStruttura di Frascati"
+    )
+    assert value == "Sede di Napoli"
+    assert evidence == "Sede di Napoli"

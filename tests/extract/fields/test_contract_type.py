@@ -14,6 +14,7 @@ def _read(name: str) -> str:
 def test_extract_contract_type_contratto_ricerca():
     result = extract_contract_type(_read("single_contract.txt"), 2022)
     assert result["contract_type"] == "Contratto di ricerca"
+    assert result["contract_type_raw"] == "CONTRATTO DI RICERCA"
 
 
 def test_extract_contract_type_borsa():
@@ -62,3 +63,15 @@ def test_extract_contract_type_evidence_captured():
     result = extract_contract_type(_read("single_contract.txt"), 2022)
     assert result["contract_type_evidence"] is not None
     assert "CONTRATTO" in result["contract_type_evidence"].upper()
+
+
+def test_extract_contract_type_returns_stable_key_set():
+    result = extract_contract_type("ASSEGNO DI RICERCA - Tipo A", 2022)
+    assert set(result.keys()) == {
+        "contract_type",
+        "contract_type_raw",
+        "contract_type_evidence",
+        "contract_subtype",
+        "contract_subtype_raw",
+        "contract_subtype_evidence",
+    }

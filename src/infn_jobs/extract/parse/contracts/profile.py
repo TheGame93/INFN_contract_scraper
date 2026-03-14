@@ -11,4 +11,7 @@ class ContractProfile:
 
     canonical_name: str
     aliases: tuple[str, ...]
-
+    contract_type_patterns: tuple[str, ...] = ()
+    subtype_patterns: tuple[str, ...] = ()
+    subtype_anno_min: int | None = None
+    subtype_anno_max: int | None = None

@@ -2,29 +2,29 @@
 
 from __future__ import annotations
 
+from infn_jobs.extract.parse.contracts.assegno_ricerca_profile import (
+    build_profile as build_assegno_ricerca_profile,
+)
+from infn_jobs.extract.parse.contracts.borsa_profile import (
+    build_profile as build_borsa_profile,
+)
+from infn_jobs.extract.parse.contracts.contratto_ricerca_profile import (
+    build_profile as build_contratto_ricerca_profile,
+)
+from infn_jobs.extract.parse.contracts.incarico_postdoc_profile import (
+    build_profile as build_incarico_postdoc_profile,
+)
+from infn_jobs.extract.parse.contracts.incarico_ricerca_profile import (
+    build_profile as build_incarico_ricerca_profile,
+)
 from infn_jobs.extract.parse.contracts.profile import ContractProfile
 
 _PROFILES: tuple[ContractProfile, ...] = (
-    ContractProfile(
-        canonical_name="Borsa di studio",
-        aliases=("Borsa di studio", "Borsa"),
-    ),
-    ContractProfile(
-        canonical_name="Incarico di ricerca",
-        aliases=("Incarico di ricerca",),
-    ),
-    ContractProfile(
-        canonical_name="Incarico Post-Doc",
-        aliases=("Incarico Post-Doc", "Incarico postdoc"),
-    ),
-    ContractProfile(
-        canonical_name="Contratto di ricerca",
-        aliases=("Contratto di ricerca",),
-    ),
-    ContractProfile(
-        canonical_name="Assegno di ricerca",
-        aliases=("Assegno di ricerca",),
-    ),
+    build_borsa_profile(),
+    build_incarico_ricerca_profile(),
+    build_incarico_postdoc_profile(),
+    build_contratto_ricerca_profile(),
+    build_assegno_ricerca_profile(),
 )
 
 
