@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-from infn_jobs.extract.parse.diagnostics.review_mode import build_review_report, render_review_report
+from infn_jobs.extract.parse.diagnostics.review_mode import (
+    build_review_report,
+    render_review_report,
+)
 
 FIXTURES = Path("tests/fixtures/pdf_text")
 
@@ -26,6 +29,20 @@ def test_build_review_report_single_contract_contains_rule_ids() -> None:
     assert segment.contract_type == "Contratto di ricerca"
     assert segment.winner_rule_ids["contract_type"] == "contract_identity.00.first_match.type"
     assert segment.winner_rule_ids["duration"] is not None
+    assert set(segment.winner_rule_ids) == {
+        "contract_type",
+        "contract_subtype",
+        "duration",
+        "gross_income_yearly_eur",
+        "section_structure_department",
+    }
+    assert set(segment.evidence) == {
+        "contract_type",
+        "contract_subtype",
+        "duration",
+        "gross_income",
+        "section",
+    }
     assert "rule_executor" in report.diagnostics_rendered
 
 
