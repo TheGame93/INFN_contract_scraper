@@ -21,6 +21,11 @@ If something important change in the code, review the command /review-full-code
 
 ## Codex
 
+I want to define the refector right now, because I'll create a new agent that will take care of it.
+- step one: you write me your desiderata
+- step two: an agent will create the implementation plan
+- step three: an agent will implement the planning
+
 1. Plan with `docs/codex_planning.md`, creating `plan_codex_N.md`
 2. Implement it with `docs/codex_instructions.md`
 3. Review it with `docs/codex_reviewing.md`, creating `docs/plan_codex_N_codexreview.md`

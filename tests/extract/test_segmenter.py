@@ -44,3 +44,30 @@ def test_segment_page_break_splits_on_new_header():
     # multi_mixed_department has 2 entries separated by blank line
     result2 = segment(_read("multi_mixed_department.txt"))
     assert len(result2) == 2
+
+
+def test_segment_ignores_lowercase_inline_borsa_mentions():
+    text = (
+        "Nella domanda si sceglie una tipologia di borsa di studio.\n"
+        "Borsa di studio destinata a diplomati.\n"
+        "Dettaglio 1.\n"
+        "Borsa di studio destinata a laureati triennali e laureandi magistrali.\n"
+        "Dettaglio 2.\n"
+        "Il borsista svolge attivita dove verra fruita la\n"
+        "borsa di studio\n"
+        "Borsa di studio destinata a laureati magistrali.\n"
+        "Dettaglio 3.\n"
+    )
+    result = segment(text)
+    assert len(result) == 3
+
+
+def test_segment_falls_back_when_all_headers_are_lowercase():
+    text = (
+        "borsa di studio - n. 1\n"
+        "Dettaglio 1.\n"
+        "borsa di studio - n. 2\n"
+        "Dettaglio 2.\n"
+    )
+    result = segment(text)
+    assert len(result) == 2

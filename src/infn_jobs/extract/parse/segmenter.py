@@ -12,6 +12,22 @@ _HEADER_RE = re.compile(
 )
 
 
+def _line_for_match(text: str, match: re.Match[str]) -> str:
+    """Return full line containing match."""
+    start = match.start()
+    line_start = text.rfind("\n", 0, start) + 1
+    line_end = text.find("\n", start)
+    if line_end == -1:
+        line_end = len(text)
+    return text[line_start:line_end]
+
+
+def _is_probable_header_line(line: str) -> bool:
+    """Heuristic: segment headers usually start with an uppercase initial."""
+    stripped = line.lstrip()
+    return bool(stripped) and stripped[0].isupper()
+
+
 def segment(text: str) -> list[str]:
     """Split mutool text output into per-entry segments. Returns list with at least one element."""
     if not text:
@@ -27,10 +43,17 @@ def segment(text: str) -> list[str]:
         # Single entry or no header found — return whole text as one segment
         return [text.strip()]
 
+    # Guard against false splits on inline/lowercase mentions like "borsa di studio."
+    filtered_matches = [m for m in matches if _is_probable_header_line(_line_for_match(normalized, m))]
+    split_points = filtered_matches if len(filtered_matches) >= 2 else matches
+
+    if len(split_points) <= 1:
+        return [text.strip()]
+
     segments = []
-    for i, match in enumerate(matches):
+    for i, match in enumerate(split_points):
         start = match.start()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(normalized)
+        end = split_points[i + 1].start() if i + 1 < len(split_points) else len(normalized)
         seg = normalized[start:end].strip()
         if seg:
             segments.append(seg)
