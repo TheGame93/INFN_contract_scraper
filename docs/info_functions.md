@@ -69,9 +69,14 @@ Fields per entry: `name | parent | inputs | output | description`
 - `EventCollector` | `infn_jobs.extract.parse.diagnostics.collector` | — | — | Collect parser events in insertion order.
 - `record` | `EventCollector` | `event: ParseEvent` | `None` | Store one parser event.
 - `snapshot` | `EventCollector` | — | `tuple[ParseEvent, ...]` | Return an immutable snapshot of recorded events.
+- `record_winner` | `EventCollector` | `detail_id: str`, `field_name: str`, `candidate: RuleCandidate`, `source_line_start: int | None`, `source_line_end: int | None` | `None` | Record one winner event from rule execution.
+- `record_rejected` | `EventCollector` | `detail_id: str`, `rejected: RejectedCandidate`, `source_line_start: int | None`, `source_line_end: int | None` | `None` | Record one rejected-candidate event from rule execution.
 
 ## `src/infn_jobs/extract/parse/diagnostics/events.py`
 - `ParseEvent` | `infn_jobs.extract.parse.diagnostics.events` | — | — | Represent one parser diagnostic event.
+
+## `src/infn_jobs/extract/parse/diagnostics/render.py`
+- `render_events` | `infn_jobs.extract.parse.diagnostics.render` | `events: tuple[ParseEvent, ...]` | `str` | Return one deterministic text block for diagnostics events.
 
 ## `src/infn_jobs/extract/parse/fields/confidence.py`
 - `score_confidence` | `infn_jobs.extract.parse.fields.confidence` | `row: PositionRow`, `text_quality: str` | `ParseConfidence` | Compute parse_confidence for a PositionRow based on parsed fields and text quality.
@@ -101,8 +106,20 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/extract/parse/row_builder.py`
 - `build_rows` | `infn_jobs.extract.parse.row_builder` | `text: str`, `detail_id: str`, `text_quality: str`, `anno: int | None` | `tuple[list[PositionRow], str | None]` | Segment text and build PositionRow list. Second element is pdf_call_title (call-level).
 
+## `src/infn_jobs/extract/parse/rules/common.py`
+- `priority_rank` | `infn_jobs.extract.parse.rules.common` | `tier: PriorityTier` | `int` | Return sortable priority rank for tier.
+- `contract_filter_matches` | `infn_jobs.extract.parse.rules.common` | `rule: RuleDefinition`, `context: RuleContext` | `bool` | Return True when contract filter allows this context.
+- `anno_filter_matches` | `infn_jobs.extract.parse.rules.common` | `rule: RuleDefinition`, `context: RuleContext` | `bool` | Return True when anno constraints allow this context.
+
+## `src/infn_jobs/extract/parse/rules/executor.py`
+- `execute_rules` | `infn_jobs.extract.parse.rules.executor` | `rules: tuple[RuleDefinition, ...]`, `context: RuleContext` | `ExecutionResult` | Execute rules and return winner/candidates/rejected trace.
+
 ## `src/infn_jobs/extract/parse/rules/models.py`
+- `RuleContext` | `infn_jobs.extract.parse.rules.models` | — | — | Execution context passed to parser rules.
+- `RuleDefinition` | `infn_jobs.extract.parse.rules.models` | — | — | Define one extraction rule and its evaluation constraints.
 - `RuleCandidate` | `infn_jobs.extract.parse.rules.models` | — | — | One candidate value proposed by a parser rule.
+- `RejectedCandidate` | `infn_jobs.extract.parse.rules.models` | — | — | One rejected candidate decision emitted by the executor.
+- `ExecutionResult` | `infn_jobs.extract.parse.rules.models` | — | — | Deterministic executor output for one field resolution.
 
 ## `src/infn_jobs/extract/parse/segmenter.py`
 - `segment` | `infn_jobs.extract.parse.segmenter` | `text: str` | `list[str]` | Split mutool text output into per-entry segments. Returns list with at least one element.

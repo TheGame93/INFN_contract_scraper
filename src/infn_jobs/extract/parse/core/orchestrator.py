@@ -7,6 +7,7 @@ from infn_jobs.extract.parse.core.classification import classify_segments
 from infn_jobs.extract.parse.core.models import ParseRequest, ParseResult
 from infn_jobs.extract.parse.core.preprocess import preprocess_text
 from infn_jobs.extract.parse.core.segmentation import segment_preprocessed
+from infn_jobs.extract.parse.diagnostics.collector import EventCollector
 from infn_jobs.extract.parse.fields.confidence import score_confidence
 from infn_jobs.extract.parse.fields.contract_type import extract_contract_type
 from infn_jobs.extract.parse.fields.duration import extract_duration
@@ -14,6 +15,30 @@ from infn_jobs.extract.parse.fields.income import extract_income
 from infn_jobs.extract.parse.fields.metadata import (
     extract_pdf_call_title,
     extract_section_department,
+)
+from infn_jobs.extract.parse.rules.executor import execute_rules
+from infn_jobs.extract.parse.rules.models import RuleContext, RuleDefinition
+
+
+def _fallback_contract_transformer(context: RuleContext) -> object | None:
+    """Return predicted contract type from context metadata."""
+    return context.metadata.get("predicted_contract_type")
+
+
+def _fallback_contract_evidence(context: RuleContext, _value: object) -> str | None:
+    """Return first segment line as fallback contract evidence."""
+    lines = context.segment_text.splitlines()
+    return lines[0] if lines else None
+
+
+_CONTRACT_TYPE_FALLBACK_RULES: tuple[RuleDefinition, ...] = (
+    RuleDefinition(
+        rule_id="fallback.classification.contract_type",
+        field_name="contract_type",
+        priority_tier="fallback",
+        transformer=_fallback_contract_transformer,
+        evidence_selector=_fallback_contract_evidence,
+    ),
 )
 
 
@@ -29,15 +54,41 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
         return ParseResult(rows=[], pdf_call_title=pdf_call_title)
     classifications = classify_segments(segment_spans)
     rows: list[PositionRow] = []
+    diagnostics = EventCollector()
 
     for i, span in enumerate(segment_spans):
         seg = span.text
         ct = extract_contract_type(seg, request.anno)
-        predicted = classifications[i].contract_type
-        if ct["contract_type"] is None and predicted is not None:
-            ct["contract_type"] = predicted
-            ct["contract_type_raw"] = predicted
-            ct["contract_type_evidence"] = seg.splitlines()[0] if seg.splitlines() else None
+        fallback_result = execute_rules(
+            _CONTRACT_TYPE_FALLBACK_RULES,
+            RuleContext(
+                segment_text=seg,
+                detail_id=request.detail_id,
+                anno=request.anno,
+                contract_type=ct["contract_type"],
+                metadata={"predicted_contract_type": classifications[i].contract_type},
+            ),
+        )
+        for rejected in fallback_result.rejected:
+            diagnostics.record_rejected(
+                detail_id=request.detail_id,
+                rejected=rejected,
+                source_line_start=span.source_line_start,
+                source_line_end=span.source_line_end,
+            )
+        if fallback_result.winner is not None:
+            diagnostics.record_winner(
+                detail_id=request.detail_id,
+                field_name="contract_type",
+                candidate=fallback_result.winner,
+                source_line_start=span.source_line_start,
+                source_line_end=span.source_line_end,
+            )
+        if ct["contract_type"] is None and fallback_result.winner is not None:
+            winner_value = str(fallback_result.winner.value)
+            ct["contract_type"] = winner_value
+            ct["contract_type_raw"] = winner_value
+            ct["contract_type_evidence"] = fallback_result.winner.evidence
 
         dur_months, dur_raw, dur_ev = extract_duration(seg)
         income = extract_income(seg)
@@ -72,4 +123,5 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
         row.parse_confidence = score_confidence(row, request.text_quality).value
         rows.append(row)
 
+    _ = diagnostics.snapshot()
     return ParseResult(rows=rows, pdf_call_title=pdf_call_title)

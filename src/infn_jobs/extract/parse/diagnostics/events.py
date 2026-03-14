@@ -14,3 +14,9 @@ class ParseEvent:
     detail_id: str | None = None
     source_line_start: int | None = None
     source_line_end: int | None = None
+    event_type: str = "info"
+    field_name: str | None = None
+    rule_id: str | None = None
+    reason_code: str | None = None
+    candidate_value: object | None = None
+    priority_tier: str | None = None
