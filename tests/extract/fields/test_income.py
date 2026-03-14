@@ -86,3 +86,19 @@ def test_extract_income_parses_amount_after_euro_word():
     )
     result = extract_income(seg)
     assert result["gross_income_yearly_eur"] == pytest.approx(1500.0)
+
+
+def test_extract_income_returns_stable_key_set():
+    result = extract_income("Compenso lordo annuo: € 30.000,00")
+    assert set(result.keys()) == {
+        "institute_cost_total_eur",
+        "institute_cost_yearly_eur",
+        "gross_income_total_eur",
+        "gross_income_yearly_eur",
+        "net_income_total_eur",
+        "net_income_yearly_eur",
+        "net_income_monthly_eur",
+        "institute_cost_evidence",
+        "gross_income_evidence",
+        "net_income_evidence",
+    }

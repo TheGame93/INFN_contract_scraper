@@ -146,6 +146,11 @@ Fields per entry: `name | parent | inputs | output | description`
 ## `src/infn_jobs/extract/parse/rules/executor.py`
 - `execute_rules` | `infn_jobs.extract.parse.rules.executor` | `rules: tuple[RuleDefinition, ...]`, `context: RuleContext` | `ExecutionResult` | Execute rules and return winner/candidates/rejected trace.
 
+## `src/infn_jobs/extract/parse/rules/income.py`
+- `IncomeAmount` | `infn_jobs.extract.parse.rules.income` | — | — | One parsed EUR amount candidate plus its evidence line.
+- `IncomeResolution` | `infn_jobs.extract.parse.rules.income` | — | — | Resolved income fields and per-field execution traces.
+- `resolve_income` | `infn_jobs.extract.parse.rules.income` | `segment_text: str`, `detail_id: str`, `anno: int | None`, `contract_type: str | None` | `IncomeResolution` | Resolve all income fields through rule-driven per-field adapters.
+
 ## `src/infn_jobs/extract/parse/rules/models.py`
 - `RuleContext` | `infn_jobs.extract.parse.rules.models` | — | — | Execution context passed to parser rules.
 - `RuleDefinition` | `infn_jobs.extract.parse.rules.models` | — | — | Define one extraction rule and its evaluation constraints.

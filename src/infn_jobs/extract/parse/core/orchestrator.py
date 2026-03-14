@@ -9,13 +9,13 @@ from infn_jobs.extract.parse.core.preprocess import preprocess_text
 from infn_jobs.extract.parse.core.segmentation import segment_preprocessed
 from infn_jobs.extract.parse.diagnostics.collector import EventCollector
 from infn_jobs.extract.parse.fields.confidence import score_confidence
-from infn_jobs.extract.parse.fields.income import extract_income
 from infn_jobs.extract.parse.fields.metadata import extract_pdf_call_title
 from infn_jobs.extract.parse.rules.contract_identity import (
     ContractIdentityResolution,
     resolve_contract_identity,
 )
 from infn_jobs.extract.parse.rules.duration import resolve_duration
+from infn_jobs.extract.parse.rules.income import resolve_income
 from infn_jobs.extract.parse.rules.models import ExecutionResult
 from infn_jobs.extract.parse.rules.section import resolve_section
 
@@ -115,7 +115,21 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
             source_line_start=span.source_line_start,
             source_line_end=span.source_line_end,
         )
-        income = extract_income(seg)
+        income_resolved = resolve_income(
+            segment_text=seg,
+            detail_id=request.detail_id,
+            anno=request.anno,
+            contract_type=identity.contract_type,
+        )
+        for income_field, execution_result in income_resolved.execution_results.items():
+            _record_execution_events(
+                diagnostics=diagnostics,
+                detail_id=request.detail_id,
+                result=execution_result,
+                field_name=income_field,
+                source_line_start=span.source_line_start,
+                source_line_end=span.source_line_end,
+            )
         section_resolved = resolve_section(
             segment_text=seg,
             detail_id=request.detail_id,
@@ -146,16 +160,16 @@ def run_compat_pipeline(request: ParseRequest) -> ParseResult:
             duration_evidence=duration_resolved.evidence,
             section_structure_department=section_resolved.value,
             section_evidence=section_resolved.evidence,
-            institute_cost_total_eur=income["institute_cost_total_eur"],
-            institute_cost_yearly_eur=income["institute_cost_yearly_eur"],
-            gross_income_total_eur=income["gross_income_total_eur"],
-            gross_income_yearly_eur=income["gross_income_yearly_eur"],
-            net_income_total_eur=income["net_income_total_eur"],
-            net_income_yearly_eur=income["net_income_yearly_eur"],
-            net_income_monthly_eur=income["net_income_monthly_eur"],
-            institute_cost_evidence=income["institute_cost_evidence"],
-            gross_income_evidence=income["gross_income_evidence"],
-            net_income_evidence=income["net_income_evidence"],
+            institute_cost_total_eur=income_resolved.values["institute_cost_total_eur"],
+            institute_cost_yearly_eur=income_resolved.values["institute_cost_yearly_eur"],
+            gross_income_total_eur=income_resolved.values["gross_income_total_eur"],
+            gross_income_yearly_eur=income_resolved.values["gross_income_yearly_eur"],
+            net_income_total_eur=income_resolved.values["net_income_total_eur"],
+            net_income_yearly_eur=income_resolved.values["net_income_yearly_eur"],
+            net_income_monthly_eur=income_resolved.values["net_income_monthly_eur"],
+            institute_cost_evidence=income_resolved.values["institute_cost_evidence"],
+            gross_income_evidence=income_resolved.values["gross_income_evidence"],
+            net_income_evidence=income_resolved.values["net_income_evidence"],
         )
         row.parse_confidence = score_confidence(row, request.text_quality).value
         rows.append(row)
