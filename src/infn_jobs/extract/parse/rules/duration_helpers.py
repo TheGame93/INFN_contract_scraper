@@ -28,33 +28,26 @@ def iter_nonempty_lines(text: str) -> tuple[str, ...]:
 
 def extract_labeled_value_text(segment_text: str) -> tuple[str, str] | None:
     """Return `(value_text, evidence_line)` for the first labeled duration line."""
-    for line in iter_nonempty_lines(segment_text):
-        match = _LABEL_RE.search(line)
-        if match:
-            return match.group(1), line
+    for value_text, evidence in _iter_labeled_values(segment_text):
+        return value_text, evidence
     return None
 
 
 def extract_labeled_numeric(segment_text: str) -> tuple[int, str, str] | None:
     """Return `(months, raw, evidence)` for numeric labeled duration."""
-    labeled = extract_labeled_value_text(segment_text)
-    if labeled is None:
-        return None
-    value_text, evidence = labeled
-    match = _NUMERIC_RE.search(value_text)
-    if match is None:
-        return None
-    return int(match.group(1)), match.group(0).strip(), evidence
+    for value_text, evidence in _iter_labeled_values(segment_text):
+        match = _NUMERIC_RE.search(value_text)
+        if match is None:
+            continue
+        return int(match.group(1)), match.group(0).strip(), evidence
+    return None
 
 
 def extract_labeled_one_month(segment_text: str) -> tuple[int, str, str] | None:
     """Return `(months, raw, evidence)` for labeled one-month duration."""
-    labeled = extract_labeled_value_text(segment_text)
-    if labeled is None:
-        return None
-    value_text, evidence = labeled
-    if _ONE_MONTH_RE.search(value_text):
-        return 1, "un mese", evidence
+    for value_text, evidence in _iter_labeled_values(segment_text):
+        if _ONE_MONTH_RE.search(value_text):
+            return 1, "un mese", evidence
     return None
 
 
@@ -111,12 +104,9 @@ def _extract_labeled_word(
     months: int,
     raw: str,
 ) -> tuple[int, str, str] | None:
-    labeled = extract_labeled_value_text(segment_text)
-    if labeled is None:
-        return None
-    value_text, evidence = labeled
-    if pattern.search(value_text):
-        return months, raw, evidence
+    for value_text, evidence in _iter_labeled_values(segment_text):
+        if pattern.search(value_text):
+            return months, raw, evidence
     return None
 
 
@@ -133,3 +123,24 @@ def _extract_bare_word(
         if _FALLBACK_BARE_RE.match(line) or _FALLBACK_CONTEXT_RE.search(line):
             return months, raw, line
     return None
+
+
+def _iter_labeled_values(segment_text: str) -> tuple[tuple[str, str], ...]:
+    """Return deterministic `(value_text, evidence)` candidates from labeled windows."""
+    values: list[tuple[str, str]] = []
+    lines = iter_nonempty_lines(segment_text)
+
+    # Prefer single-line evidence when available, then use adjacent-line fallback.
+    for line in lines:
+        match = _LABEL_RE.search(line)
+        if match is None:
+            continue
+        values.append((match.group(1), line))
+
+    for index in range(len(lines) - 1):
+        window_text = f"{lines[index]} {lines[index + 1]}"
+        match = _LABEL_RE.search(window_text)
+        if match is None:
+            continue
+        values.append((match.group(1), window_text))
+    return tuple(values)

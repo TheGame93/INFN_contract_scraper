@@ -9,9 +9,9 @@ from infn_jobs.extract.parse.rules.executor import execute_rules
 from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext, RuleDefinition
 
 _SECTION_PATTERNS: tuple[str, ...] = (
-    r"\bSezi?one\s+di\s+\S+(?:\s+\S+){0,3}",
-    r"\bSede\s+di\s+\S+(?:\s+\S+){0,3}",
-    r"\bStruttura\s+di\s+\S+(?:\s+\S+){0,3}",
+    r"\bSezi?one\s+di\s+.+?(?=(?:\s+(?:sul|sulla|sui|finanziat\w*|nell['\u2019]ambito)\b|$))",
+    r"\bSede\s+di\s+.+?(?=(?:\s+(?:sul|sulla|sui|finanziat\w*|nell['\u2019]ambito)\b|$))",
+    r"\bStruttura\s+di\s+.+?(?=(?:\s+(?:sul|sulla|sui|finanziat\w*|nell['\u2019]ambito)\b|$))",
 )
 
 
@@ -37,8 +37,19 @@ def _first_match(
         for pattern in patterns:
             match = pattern.search(stripped)
             if match:
-                return match.group(0).strip(), stripped
+                return _clean_match(match.group(0)), stripped
     return None, None
+
+
+def _clean_match(value: str) -> str:
+    """Return normalized section value without trailing narrative connectors."""
+    cleaned = re.sub(
+        r"\s+(?:sul|sulla|sui|finanziat\w*|nell['\u2019]ambito)\b.*$",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
 
 
 def _build_section_rules() -> tuple[RuleDefinition, ...]:

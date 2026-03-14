@@ -69,10 +69,12 @@ def _build_contract_subtype_rules(
                 transformer=lambda context, profile=profile: _first_match(
                     context.segment_text,
                     profile.subtype_patterns,
+                    max_window_lines=2,
                 )[0],
                 evidence_selector=lambda context, _value, profile=profile: _first_match(
                     context.segment_text,
                     profile.subtype_patterns,
+                    max_window_lines=2,
                 )[1],
             )
         )

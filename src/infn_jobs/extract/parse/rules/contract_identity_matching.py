@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from infn_jobs.extract.parse.contracts.profile import ContractProfile
+from infn_jobs.extract.parse.rules.text_windows import iter_adjacent_line_windows
 
 _TYPE_PRECEDENCE: dict[str, int] = {
     "Incarico Post-Doc": 10,
@@ -30,17 +31,16 @@ def _profile_precedence(profile: ContractProfile) -> int:
 def _first_match(
     segment_text: str,
     pattern_texts: tuple[str, ...],
+    *,
+    max_window_lines: int = 1,
 ) -> tuple[str | None, str | None]:
     """Return first `(raw_match, evidence_line)` for patterns, else `(None, None)`."""
     patterns = tuple(re.compile(pattern, re.IGNORECASE) for pattern in pattern_texts)
-    for line in segment_text.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
+    for window in iter_adjacent_line_windows(segment_text, max_lines=max_window_lines):
         for pattern in patterns:
-            match = pattern.search(stripped)
+            match = pattern.search(window.text)
             if match:
-                return match.group(0).strip(), stripped
+                return match.group(0).strip(), window.evidence
     return None, None
 
 

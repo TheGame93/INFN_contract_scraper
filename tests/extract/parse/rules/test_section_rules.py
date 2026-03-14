@@ -26,3 +26,23 @@ def test_resolve_section_returns_none_when_missing() -> None:
     assert result.value is None
     assert result.evidence is None
     assert result.execution_result.winner is None
+
+
+def test_resolve_section_trims_trailing_sul_su_clause() -> None:
+    """Section values should stop before trailing 'sul seguente' narrative text."""
+    segment = (
+        "attività di ricerca tecnologica da usufruire presso la "
+        "Sezione di Ferrara dell'I.N.F.N. sul seguente tema di ricerca:"
+    )
+    result = resolve_section(segment_text=segment)
+    assert result.value == "Sezione di Ferrara dell'I.N.F.N."
+
+
+def test_resolve_section_trims_trailing_finanziato_clause() -> None:
+    """Section values should stop before trailing funding narrative text."""
+    segment = (
+        "attività di ricerca scientifica da usufruire presso la "
+        "Sezione di Bologna dell'I.N.F.N. finanziato dal PNRR nell’ambito del progetto"
+    )
+    result = resolve_section(segment_text=segment)
+    assert result.value == "Sezione di Bologna dell'I.N.F.N."

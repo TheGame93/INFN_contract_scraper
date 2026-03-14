@@ -32,3 +32,13 @@ def test_resolve_duration_blocks_false_positive_without_context() -> None:
     assert result.evidence is None
     assert result.execution_result.winner is None
     assert any(item.reason_code == "guard_blocked" for item in result.execution_result.rejected)
+
+
+def test_resolve_duration_supports_multiline_labeled_numeric_value() -> None:
+    """Labeled duration should resolve when value appears on the next line."""
+    segment = "Durata:\n24 mesi\n"
+    result = resolve_duration(segment_text=segment)
+    assert result.duration_months == 24
+    assert result.duration_raw == "24 mesi"
+    assert result.evidence == "Durata: 24 mesi"
+    assert result.execution_result.winner is not None

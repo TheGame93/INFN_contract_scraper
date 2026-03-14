@@ -58,3 +58,16 @@ def test_resolve_contract_identity_normalizes_fascia_1_subtype() -> None:
     assert result.contract_subtype == "Fascia 1"
     assert result.contract_subtype_raw == "Fascia 1"
     assert result.contract_subtype_evidence is not None
+
+
+def test_resolve_contract_identity_supports_multiline_subtype_tokens() -> None:
+    """Subtype rules should resolve Fascia values when roman token is on next line."""
+    result = resolve_contract_identity(
+        segment_text="INCARICO DI RICERCA\nFascia\nIII\nSezione di Roma",
+        anno=2026,
+    )
+    assert result.contract_type == "Incarico di ricerca"
+    assert result.contract_subtype == "Fascia 3"
+    assert result.contract_subtype_raw == "Fascia III"
+    assert result.contract_subtype_evidence is not None
+    assert "Fascia III" in result.contract_subtype_evidence
