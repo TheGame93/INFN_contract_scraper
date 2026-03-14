@@ -98,11 +98,63 @@ def test_sync_runs_without_error(tmp_path: Path) -> None:
     conn = _make_conn(tmp_path)
     with patch(
         "infn_jobs.pipeline.sync.fetch_all_calls",
-        side_effect=lambda session, tipo, *_args: [c for c in make_calls() if c.source_tipo == tipo],
+        side_effect=lambda session, tipo, *_args: [
+            c for c in make_calls() if c.source_tipo == tipo
+        ],
     ), patch("infn_jobs.pipeline.sync.download", return_value=tmp_path / "mock.pdf"), patch(
         "infn_jobs.pipeline.sync.extract_text", return_value=(MULTI_TEXT, TextQuality.DIGITAL)
     ):
         run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+    conn.close()
+
+
+def test_sync_uses_build_rows_tuple_contract_and_persists_title(tmp_path: Path) -> None:
+    """run_sync must honor `(rows, pdf_call_title)` from build_rows."""
+    conn = _make_conn(tmp_path)
+    mock_pdf_path = tmp_path / "mock-contract-shape.pdf"
+    mock_pdf_path.touch()
+    remote_call = CallRaw(
+        detail_id="contract-shape-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/contract-shape-1.pdf",
+        anno="2026",
+    )
+    built_rows = [
+        PositionRow(
+            detail_id="contract-shape-1",
+            position_row_index=0,
+            text_quality="digital",
+            contract_type="Borsa di studio",
+        )
+    ]
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("fixture text", TextQuality.DIGITAL),
+        ),
+        patch(
+            "infn_jobs.pipeline.sync.build_rows",
+            return_value=(built_rows, "Tuple contract title"),
+        ) as build_rows_mock,
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    build_rows_mock.assert_called_once_with("fixture text", "contract-shape-1", "digital", 2026)
+    stored_title = conn.execute(
+        "SELECT pdf_call_title FROM calls_raw WHERE detail_id = 'contract-shape-1'"
+    ).fetchone()[0]
+    stored_rows = conn.execute(
+        "SELECT COUNT(*) FROM position_rows WHERE detail_id = 'contract-shape-1'"
+    ).fetchone()[0]
+    assert stored_title == "Tuple contract title"
+    assert stored_rows == 1
     conn.close()
 
 
@@ -288,7 +340,10 @@ def test_sync_local_source_uses_db_calls_and_local_cache_only(tmp_path: Path) ->
         patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
         patch("infn_jobs.pipeline.sync.fetch_all_calls") as fetch_mock,
         patch("infn_jobs.pipeline.sync.download") as download_mock,
-        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)) as extract_mock,
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("", TextQuality.NO_TEXT),
+        ) as extract_mock,
     ):
         run_sync(conn, source="local", dry_run=True)
 
@@ -406,7 +461,10 @@ def test_sync_local_source_falls_back_to_canonical_cache_when_stored_path_is_sta
     with (
         patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
         patch("infn_jobs.pipeline.sync.download") as download_mock,
-        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)) as extract_mock,
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("", TextQuality.NO_TEXT),
+        ) as extract_mock,
     ):
         run_sync(conn, source="local", dry_run=True)
 
@@ -629,7 +687,10 @@ def test_sync_auto_source_zero_byte_cache_forces_redownload(tmp_path: Path) -> N
     with (
         patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", cache_dir),
         patch("infn_jobs.pipeline.sync.fetch_all_calls") as fetch_mock,
-        patch("infn_jobs.pipeline.sync.download", return_value=cache_dir / "zero-auto-1.pdf") as download_mock,
+        patch(
+            "infn_jobs.pipeline.sync.download",
+            return_value=cache_dir / "zero-auto-1.pdf",
+        ) as download_mock,
         patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
     ):
         run_sync(conn, source="auto", dry_run=True)

@@ -1,0 +1,387 @@
+CONCORSO PER IL CONFERIMENTO DI N. 2 ASSEGNI DI RICERCA NELL'AMBITO DELLA RICERCA SCIENTIFICA 
+
+FINANZIATA DAL PIANO NAZIONALE DI RIPRESA E RESILIENZA
+
+(Missione [4] Componente [C2] Investimento [1.1])
+
+
+ 
+
+ 
+
+Bando n. 27425/2024 per il conferimento di n. 2 assegni di ricerca nell'ambito della ricerca scientifica finanziato dal Piano 
+
+di Ripresa e Resilienza (PNRR) - (Missione [4] Componente [C2] Investimento [1.1])
+
+ 
+
+IL PRESIDENTE
+
+dell'Istituto Nazionale di Fisica Nucleare
+
+ 
+
+- visto il Piano Nazionale di Ripresa e Resilienza (PNRR), ufficialmente presentato alla Commissione Europea in data 30 
+
+aprile 2021 ai sensi dell’art. 18 del Regolamento (UE) n. 2021/241 e valutato positivamente con Decisione del Consiglio 
+
+ECOFIN del 13 luglio 2021 e notificata all’Italia dal Segretariato generale del Consiglio con nota LT161/21, del 14 luglio 
+
+2021;
+
+ 
+
+ 
+
+- visti i principi trasversali previsti dal PNRR, quali, tra gli altri, il principio di parità di genere, l’obbligo di protezione e 
+
+valorizzazione dei giovani ed il superamento del divario territoriale, al cui rispetto l’INFN si è assunto l’obbligo nei singoli 
+
+bandi;
+
+ 
+
+ 
+
+- visti i Decreti Direttoriali n. R.0000104 del 02-02-2022 e n. R0001409 del 14-09-2022, con cui il Ministero 
+
+dell’Università e della Ricerca ha emanato due avvisi pubblici per la presentazione di Proposte progettuali - Missione 4 
+
+“Istruzione e Ricerca” del Piano Nazionale di Ripresa e Resilienza ed in particolare la Componente C2 – Investimento 1.1, 
+
+Fondo per il Programma Nazionale di Ricerca e Progetti di Rilevante Interesse Nazionale (PRIN) - del Piano Nazionale di 
+
+Ripresa e Resilienza, dedicata ai Progetti di Ricerca di Rilevante Interesse Nazionale;
+
+ 
+
+ 
+
+- vista la "Domanda di proposta progettuale" n° 2022KJZSYB dal titolo "Imaging calorimetry in scintillating media for 
+
+high energy physics and tomography", CUP I53D23001230006, con cui l’INFN ha dichiarato di partecipare al predetto 
+
+avviso e all’ammissione alle agevolazioni finanziarie previste dall’avviso pubblico per la presentazione di proposte 
+
+progettuali per il “Fondo per il Programma Nazionale della Ricerca (PNR) e Progetti di ricerca di Rilevante Interesse 
+
+Nazionale (PRIN)” da finanziare nell’ambito del PNRR, Missione 4, Componente C2 – Investimento 1.1, per la tipologia e 
+
+le modalità di intervento ivi indicate;
+
+ 
+
+ 
+
+- preso atto che con Decreto Direttoriale n. 0000974 del 30-06-2023 il Ministero dell’Università e della Ricerca (MUR) ha 
+
+approvato la predetta domanda;
+
+ 
+
+ 
+
+- considerato che l’INFN, in coerenza con quanto stabilito con l’art. 7, comma 1, del 30 marzo 2001, n. 165, garantisce 
+
+parità e pari opportunità tra uomini e donne e l’assenza di ogni forma di discriminazione, diretta ed indiretta, relativa al 
+
+genere, all’età, all’orientamento sessuale, alla razza, all’origine etnica, alla disabilità alla religione, alla lingua, 
+
+nell’accesso al lavoro;
+
+
+ 
+
+ 
+
+- considerato che, per quanto concerne specificamente la parità di genere, l’INFN ha adottato uno specifico Piano per la 
+
+realizzazione di pari opportunità di lavoro e nel lavoro tra donne e uomini, denominato Gender Equality Plan, 
+
+consultabile 
+ai 
+link: 
+
+https://web.infn.it/CUG/index.php?option=com_content&view=article&id=126&catid=15&lang=it&Itemid=161 
+e 
+
+https://web.infn.it/CUG/images/alfresco/Ptap/20190726_del_cd_15215.pdf;
+
+ 
+
+ 
+
+- tenuto conto di quanto previsto dall’art. 47 del decreto legge 31 maggio 2021 n. 77, convertito con modificazioni dalla 
+
+legge 29 luglio 2021, n. 108, in relazione alle procedure afferenti agli investimenti pubblici finanziati, in tutto o in parte, 
+
+con le risorse previste dal Regolamento (UE) 2021/240 del Parlamento europeo e del Consiglio del 10 febbraio 2021 e 
+
+dal Regolamento (UE) 2021/241 del Parlamento europeo e del Consiglio del 12 febbraio 2021, l’INFN si impegna ad 
+
+inserire nei propri bandi e avvisi opportune clausole dirette a favorire il conseguimento degli specifici obiettivi ivi inclusi.
+
+ 
+
+DISPONE
+
+Art. 1 Oggetto
+
+E' indetto un concorso pubblico per titoli ed esame colloquio per n. 2 assegni Senior Fascia 2 per la collaborazione ad 
+
+attività di ricerca scientifica da usufruire presso la Sezione di Bologna dell'I.N.F.N. finanziato dal PNRR nell’ambito del 
+
+Progetto 2022KJZSYB, CUP I53D23001230006 (Missione [4] Componente [C2] Investimento [1.1]), per il seguente tema 
+
+di ricerca:  
+
+ 
+
+“Sviluppo di un innovativo sistema di imaging nel Vacuum Ultraviolet per applicazioni criogeniche” 
+
+ 
+
+“Development of a novel VUV-imaging system for cryogenic applications”
+
+ 
+
+Descrizione attività:
+
+ Il progetto PRIN 2022KJZSYB propone una nuova tecnica di rivelazione delle particelle che fa uso di un mezzo scintillante 
+
+(in particolare Argon Liquido) accoppiato a dispositivi di imaging compatti basati su Coded Aperture Masks e array di 
+
+fotomoltiplicatori al silicio (SiPM) per ottenere una mappa quadridimensionale dell'energia depositata nello scintillatore 
+
+con ottima risoluzione spaziale e temporale. Il lavoro riguarderà la simulazione della generazione e del trasporto di fotoni 
+
+ottici nel mezzo scintillante, nonché lo sviluppo e l'ottimizzazione di tecniche di ricostruzione delle immagini utilizzando 
+
+l'imaging ad apertura codificata. 
+
+Project PRIN 2022KJZSYB proposes a novel particle detection technique that makes use of a scintillating medium (with an 
+
+emphasis on Liquid Argon) coupled with compact imaging devices based on Coded Aperture Masks and Silicon 
+
+Photomultiplier (SiPM) arrays in order to obtain a four-dimensional map of the energy deposited in the scintillator with 
+
+fine spatial and temporal resolution. Work will involve the simulation of optical photons generation and transport in the 
+
+scintillating medium, as well as the development and optimization of image reconstruction techniques using coded 
+
+aperture imaging.  
+
+ 
+
+
+L'attività dell'assegnista è svolta sotto la guida e direzione del responsabile della ricerca per il quale l'assegno è stato 
+
+conferito.
+
+Art. 2 Durata
+
+La durata di ciascun assegno di ricerca è di 24 mesi, rinnovabile per ulteriori 12 mesi. 
+
+Art. 3 Importo
+
+L'importo annuo lordo di ciascun assegno è di € 25.183,00. [L'importo netto mensile dell' assegno calcolato con le norme 
+
+in vigore alla data 28-09-2023 è di circa € 1.850,04; questo numero potrebbe cambiare a causa di adeguamenti 
+
+normativi].
+
+Al fine di favorire la mobilità dei ricercatori, i vincitori e le vincitrici dell'assegno di ricerca scientifica che abbiano 
+
+conseguito il Dottorato di Ricerca in una Provincia o Città Metropolitana diversa da quella della sede di destinazione 
+
+dell'assegno di ricerca, beneficeranno di un incentivo economico aggiuntivo, purché non risultino residenti o non abbiano 
+
+avuto il domicilio o borse di studio o altri assegni di ricerca erogati dall'INFN o da altre istituzioni scientifiche nei tre anni 
+
+antecedenti alla sottoscrizione del contratto nella Provincia o Città Metropolitana della sede di destinazione.
+
+Il suddetto incentivo economico aggiuntivo potrà essere erogato per una durata massima di 3 anni.
+
+Tale incentivo non sarà erogato qualora facilitazioni similari siano già previste all'interno degli accordi di finanziamento 
+
+qualora la posizione sia attivata a seguito di procedure straordinarie, come quelle previste all'art.22 del vigente 
+
+Disciplinare.
+
+Art. 4 Requisiti
+
+I candidati e le candidate devono essere in possesso del dottorato di ricerca conseguito da non più di 6 anni in una delle 
+
+seguenti discipline: Fisica, Ingegneria, Scienze dei Materiali, Astronomia, Chimica, Informatica, Matematica o titolo 
+
+equivalente conseguito all'estero.
+
+Il termine massimo di 6 anni dal conseguimento del dottorato di ricerca può essere aumentato nei casi di seguito 
+
+elencati e le motivazioni dell'estensione dovranno essere debitamente documentate nella domanda: 
+
+a) in caso di maternità: di 18 mesi per ogni figlio; 
+
+b) in caso di congedo parentale: del periodo pari alla durata di congedo utilizzato per ogni figlio se maggiore di 30 giorni; 
+
+c) in caso di lunga degenza ospedaliera, di lunga malattia oltre i 90 giorni: di un periodo pari alla durata dei singoli eventi 
+
+considerati.
+
+Nel caso in cui il titolo di studio richiesto per l’ammissione al concorso sia stato conseguito all’estero, deve essere 
+
+presentata una documentazione dettagliata del percorso formativo per consentire alla Commissione Esaminatrice la 
+
+dichiarazione di equivalenza, ai soli e limitati fini della partecipazione al suddetto concorso.
+
+Art. 5 Clausole attuative della parità di genere – Valorizzazione dei giovani
+
+Trattandosi di concorso per un numero di assegni di ricerca inferiore a 3 e precisamente pari a 2 assegni, in conformità alle 
+
+Linee guida sulla parità di genere approvate con il Decreto Interministeriale del 7 dicembre 2021 non si fa luogo 
+
+all’inserimento di specifiche clausole di riserva in favore delle candidate, fermo restando che – a parità di punteggio 
+
+conseguito – sarà preferita la candidatura di genere femminile. Analogo criterio di preferenza sarà applicato nell’ipotesi in 
+
+cui il vincitore rinunci all’assegno e sia pertanto necessario individuare il nuovo vincitore in base alla graduatoria di merito. 
+
+In ogni caso e salvo quanto precede, l’INFN garantisce pari opportunità tra uomini e donne per l'accesso al lavoro come 
+
+
+previsto dalla legge 10 aprile 199 n. 125, dall'art. 57 del Decreto Legislativo 165/2001 e dagli articoli 42 e 48 del decreto 
+
+Legislativo 198/2006. 
+
+Fermo restando il prioritario criterio di preferenza di genere che precede, in caso di ulteriore parità sarà preferita la 
+
+candidatura espressa dal soggetto di età anagrafica più giovane.
+
+Art. 6 Presentazione delle candidature
+
+Le domande di partecipazione al concorso devono essere compilate e trasmesse all'INFN per via telematica tramite il sito 
+
+internet https://reclutamento.dsi.infn.it entro e non oltre il 18-01-2025 entro le ore 23:59:59.
+
+Alla domanda devono essere allegati, a pena di esclusione: 
+
+ 
+
+• un curriculum vitae, privo dei dati sensibili con autorizzazione alla eventuale pubblicazione nei termini di Legge; 
+
+• un elenco delle eventuali pubblicazioni; 
+
+• copia di un valido documento di identità (che il/la candidato/a dovrà esibire al momento del colloquio). 
+
+ 
+
+Possono essere indicati inoltre nome, cognome ed indirizzo e-mail di massimo n. 2 referenti, che potranno caricare una 
+
+lettera di referenza entro 18-01-2025 entro le ore 23:59:59. 
+
+Al fine della valutazione dei titoli, il/la candidato/a può allegare alla domanda i seguenti documenti:  
+
+ 
+
+• copie di contratti, incarichi e/o conferimenti ecc.. attestanti lo svolgimento di attività presso soggetti pubblici e/o 
+
+privati; 
+
+• diplomi di specializzazione e/o attestati di frequenza a corsi di perfezionamento post-laurea, sia in Italia che 
+
+all’estero. 
+
+ 
+
+Art. 7 Valutazione e attribuzione dei punteggi - Idoneità
+
+La commissione esaminatrice dispone complessivamente di n. 100 punti così ripartiti: 
+
+ 
+
+• 30 punti per i titoli;
+ 
+
+• 70 punti per l'esame-colloquio.
+
+Sono idonei all’ammissione in graduatoria unicamente le candidate e i candidati che soddisfino entrambi i seguenti 
+
+parametri:  
+
+ 
+
+• Votazione di almeno 49/70 all’esame/colloquio.
+ 
+
+• Votazione minima totale non inferiore a 70 punti.
+
+Art. 8 Informazioni e comunicazioni
+
+L'avviso di data, ora e luogo dell'eventuale colloquio sarà pubblicato, almeno quindici giorni prima della discussione, alla 
+
+pagina web del bando e vale come notifica ufficiale senza obbligo di ulteriore comunicazione dell'INFN. 
+
+Il candidato o la candidata, ai fini della partecipazione al bando di concorso, può chiedere di espletare l'esame colloquio in 
+
+videoconferenza. Se necessario, per problematiche tecniche, la videoconferenza potrà essere svolta presso una struttura 
+
+INFN per la quale verrà emessa esplicita autorizzazione.
+
+La graduatoria finale verrà pubblicata alla pagina web del bando e, in ogni caso, i candidati interessati e le candidate 
+
+
+interessate riceveranno tramite e-mail un'ulteriore comunicazione dell'esito del concorso.
+
+Art. 9 Finanziamento
+
+Il presente concorso pubblico è finanziato a valere sui fondi del PNRR, in particolare Progetti PRIN_2022KJZSYB CUP 
+
+I53D23001230006 (€  41.530,70), AWARD_FNAL_SB (€ 83.061,38). 
+
+Art. 10 Dati personali
+
+Titolare del Trattamento: Istituto Nazionale di Fisica Nucleare: email: presidenza@presid.infn.it 
+
+Responsabile della Protezione dei Dati: email: dpo@infn.it 
+
+ 
+
+In conformità a quanto disposto dall'art. 13 del Regolamento UE 2016/679, i dati personali richiesti saranno raccolti e 
+
+trattati, anche con l'uso di più strumenti informatici, esclusivamente per la gestione delle attività concorsuali e nel rispetto 
+
+della disciplina legislativa e regolamentare dettata per lo svolgimento di tali attività. 
+
+Il conferimento dei dati è necessario per valutare i requisiti di partecipazione ed il possesso dei titoli e la loro mancata 
+
+indicazione può precludere tale valutazione. I dati sono conservati per il periodo necessario all'espletamento della 
+
+procedura selettiva e successivamente trattenuti ai soli fini di archiviazione. 
+
+ 
+
+L'INFN garantisce ad ogni interessato l'accesso ai dati personali che lo riguardano, nonchè la rettifica, la cancellazione e la 
+
+limitazione degli stessi ed il diritto di opporsi al loro trattamento; garantisce altresì il diritto di proporre reclamo 
+
+all'Autorità Garante del Trattamento dei dati personali circa il trattamento effettuato. 
+
+Art. 11 Rinvio
+
+Per ogni altro aspetto non disciplinato dal presente bando, si fa rinvio al Disciplinare per il conferimento degli assegni di 
+
+ricerca dell'INFN del 27 giugno 2023 che costituisce parte integrante del presente bando ed è disponibile sul sito: 
+
+https://jobs.dsi.infn.it
+
+ 
+
+19-12-2024
+
+ 
+
+IL PRESIDENTE
+
+(Prof. Antonio Zoccoli)
+
+

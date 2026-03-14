@@ -44,7 +44,9 @@ def segment(text: str) -> list[str]:
         return [text.strip()]
 
     # Guard against false splits on inline/lowercase mentions like "borsa di studio."
-    filtered_matches = [m for m in matches if _is_probable_header_line(_line_for_match(normalized, m))]
+    filtered_matches = [
+        m for m in matches if _is_probable_header_line(_line_for_match(normalized, m))
+    ]
     split_points = filtered_matches if len(filtered_matches) >= 2 else matches
 
     if len(split_points) <= 1:
