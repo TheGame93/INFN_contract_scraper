@@ -39,3 +39,35 @@ def test_resolve_income_missing_fields_remain_null() -> None:
     assert result.values["net_income_total_eur"] is None
     assert result.values["net_income_yearly_eur"] is None
     assert result.values["net_income_monthly_eur"] is None
+
+
+def test_resolve_income_parses_institute_total_with_oneri_wording() -> None:
+    """Institute total should parse from annuo complessivo/oneri wording."""
+    segment = (
+        "L'importo annuo complessivo dell’incarico di ricerca è di € 27.819,00\n"
+        "comprensivo di oneri a carico dell’Istituto.\n"
+    )
+    result = resolve_income(segment_text=segment)
+    assert result.values["institute_cost_total_eur"] == pytest.approx(27819.0)
+    assert result.execution_results["institute_cost_total_eur"].winner is not None
+
+
+def test_resolve_income_parses_multiline_gross_yearly_amount() -> None:
+    """Gross yearly amount should parse when value is on next line."""
+    segment = (
+        "Al titolare sarà riconosciuto un compenso lordo annuo omnicomprensivo pari ad €\n"
+        "22.500,00 in 12 mensilità.\n"
+    )
+    result = resolve_income(segment_text=segment)
+    assert result.values["gross_income_yearly_eur"] == pytest.approx(22500.0)
+    assert result.execution_results["gross_income_yearly_eur"].winner is not None
+
+
+def test_resolve_income_does_not_infer_institute_total_from_oneri_only_label() -> None:
+    """On its own, oneri wording without total context should not resolve institute total."""
+    segment = (
+        "Incentivo economico aggiuntivo di € 3.235,20.\n"
+        "Comprensivo di oneri a carico dell’Istituto.\n"
+    )
+    result = resolve_income(segment_text=segment)
+    assert result.values["institute_cost_total_eur"] is None

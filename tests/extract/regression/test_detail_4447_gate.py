@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from infn_jobs.extract.parse.row_builder import build_rows
 
 _FIXTURE = Path("tests/fixtures/pdf_text/regression/detail_4447.txt")
@@ -25,11 +27,11 @@ def test_detail_4447_multifield_baseline() -> None:
     assert row.duration_months == 24
     assert row.duration_raw == "24 mesi"
     assert row.section_structure_department == "Sezione di Firenze dell’INFN."
-    assert row.institute_cost_total_eur is None
-    assert row.institute_cost_yearly_eur is None
+    assert row.institute_cost_total_eur == pytest.approx(40680.88)
+    assert row.institute_cost_yearly_eur == pytest.approx(40680.88)
     assert row.gross_income_total_eur is None
-    assert row.gross_income_yearly_eur is None
+    assert row.gross_income_yearly_eur == pytest.approx(28761.73)
     assert row.net_income_total_eur is None
     assert row.net_income_yearly_eur is None
     assert row.net_income_monthly_eur is None
-    assert row.parse_confidence == "medium"
+    assert row.parse_confidence == "high"
