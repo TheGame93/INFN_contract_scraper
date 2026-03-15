@@ -27,7 +27,7 @@
 ## Implementation Checklist
 - [x] Step 1 — Investigation gate and runtime output contract lock (`R01`, `R03`, `R04`, `R06`, `R07`, `R09`)
 - [x] Step 2 — CLI/file logging split and runtime artifact directory wiring (`R01`, `R02`, `R05`, `R10`)
-- [ ] Step 3 — Sync runtime heartbeat, phase timings, and final summary counters (`R03`, `R04`, `R06`, `R07`, `R08`)
+- [x] Step 3 — Sync runtime heartbeat, phase timings, and final summary counters (`R03`, `R04`, `R06`, `R07`, `R08`)
 - [ ] Step 4 — Regression tests and docs synchronization (`R08`, `R09`, `R10`, `R11`)
 
 ## Step 1 — Investigation gate and runtime output contract lock (`R01`, `R03`, `R04`, `R06`, `R07`, `R09`)
@@ -159,6 +159,12 @@
 - Resolution `S3-F02`: centralize heartbeat counter updates and always emit deterministic final summary even when totals are below heartbeat threshold.
 - Finding `S3-F03`: interruption path currently guarantees throttle reminder via `finally`; new summary lines may be skipped.
 - Resolution `S3-F03`: preserve throttle reminder guarantee and add interruption-safe summary contract where feasible without swallowing interruption.
+- Finding `S3-F04`: `run_sync()` does not currently receive logfile context, so start-line logfile disclosure can drift from CLI-managed file handler state.
+- Resolution `S3-F04`: resolve active logfile path directly from root `FileHandler` metadata at sync runtime start, with a deterministic `unknown` fallback for non-CLI test contexts.
+- Finding `S3-F05`: successful cache materialization branches leave `pdf_fetch_status` unset before parse, which makes early-exit (`download_only`) summary counters ambiguous.
+- Resolution `S3-F05`: set `pdf_fetch_status=\"ok\"` for successful cache-ready branches, allowing deterministic summary counters while preserving later parse override behavior.
+- Finding `S3-F06`: heartbeat emission tied to branch endpoints can be skipped by early `continue` paths inside cache materialization.
+- Resolution `S3-F06`: emit heartbeat progress from a per-item callback invoked in a loop `finally` block so every discovered work item is counted exactly once.
 
 ### 3.1 Introduce runtime progress events and phase timers in sync pipeline
 - Target files to edit/create:

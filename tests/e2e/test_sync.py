@@ -902,18 +902,92 @@ def test_sync_logs_throttle_reminder_on_success(caplog):
     assert "5-10s" in caplog.text
 
 
+def test_sync_runtime_logs_phase_timings_and_summary_for_dry_run(tmp_path: Path, caplog) -> None:
+    """run_sync dry-run must emit runtime phase timings and deterministic summary counters."""
+    conn = Mock()
+    runtime_call = CallRaw(
+        detail_id="runtime-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/runtime-1.pdf",
+        anno="2024",
+    )
+    runtime_pdf = tmp_path / "runtime-1.pdf"
+    runtime_pdf.write_bytes(b"%PDF-runtime")
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[runtime_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=runtime_pdf),
+        patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
+        patch("infn_jobs.pipeline.sync.build_rows", return_value=([], None)),
+        patch("infn_jobs.pipeline.sync._resolve_runtime_logfile_path", return_value="/tmp/sync.log"),
+        caplog.at_level("INFO", logger="infn_jobs.runtime.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=True, force_refetch=False)
+
+    assert "Sync start: source=remote logfile=/tmp/sync.log heartbeat_interval=250" in caplog.text
+    assert "Phase A complete: discovered_contracts=1 elapsed_s=" in caplog.text
+    assert "Phase B complete: materialized_contracts=1 elapsed_s=" in caplog.text
+    assert "Phase C complete: parsed_contracts=1 elapsed_s=" in caplog.text
+    assert "Phase D complete: skipped=True reason=dry_run elapsed_s=0.00" in caplog.text
+    assert (
+        "Sync summary: status=completed partial_run=false processed_contracts=1 "
+        "ok=1 skipped=0 download_error=0 parse_error=0 other=0"
+    ) in caplog.text
+
+
+def test_sync_runtime_logs_heartbeat_every_250_processed_contracts(caplog) -> None:
+    """run_sync must emit heartbeat every 250 processed contracts during Phase B."""
+    conn = Mock()
+    calls = [
+        CallRaw(
+            detail_id=f"heartbeat-{i}",
+            source_tipo="Borsa",
+            listing_status="active",
+            pdf_url=None,
+        )
+        for i in range(251)
+    ]
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=calls),
+        caplog.at_level("INFO", logger="infn_jobs.runtime.sync"),
+    ):
+        run_sync(conn, source="remote", download_only=True, dry_run=False, force_refetch=False)
+
+    heartbeat_lines = [
+        rec.getMessage()
+        for rec in caplog.records
+        if rec.name == "infn_jobs.runtime.sync" and rec.getMessage().startswith("Sync heartbeat:")
+    ]
+    assert heartbeat_lines == ["Sync heartbeat: processed_contracts=250/251"]
+    assert "Phase C complete: skipped=True reason=download_only elapsed_s=0.00" in caplog.text
+    assert "Phase D complete: skipped=True reason=download_only elapsed_s=0.00" in caplog.text
+    assert (
+        "Sync summary: status=completed partial_run=false processed_contracts=251 "
+        "ok=0 skipped=251 download_error=0 parse_error=0 other=0"
+    ) in caplog.text
+
+
 def test_sync_logs_throttle_reminder_on_keyboard_interrupt(caplog):
     """run_sync must log throttle reminder when interrupted."""
     conn = Mock()
+    caplog.set_level("INFO", logger="infn_jobs.pipeline.sync")
+    caplog.set_level("INFO", logger="infn_jobs.runtime.sync")
     with (
         patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
         patch("infn_jobs.pipeline.sync.init_data_dirs"),
         patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
         patch("infn_jobs.pipeline.sync.fetch_all_calls", side_effect=KeyboardInterrupt),
-        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
     ):
         with pytest.raises(KeyboardInterrupt):
             run_sync(conn, source="remote", dry_run=True, force_refetch=False)
 
     assert "Throttle reminder" in caplog.text
     assert "5-10s" in caplog.text
+    assert "Sync summary: status=interrupted partial_run=true processed_contracts=0" in caplog.text
