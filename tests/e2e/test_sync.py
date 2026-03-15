@@ -285,6 +285,125 @@ def test_sync_reconciliation_is_noop_when_numero_posti_html_is_missing(
     conn.close()
 
 
+@pytest.mark.parametrize(
+    ("detail_id", "winner_index"),
+    [
+        ("4441", 1),
+        ("4458", 2),
+    ],
+)
+def test_sync_reconciles_4441_4458_style_oversplitting(
+    tmp_path: Path,
+    caplog,
+    detail_id: str,
+    winner_index: int,
+) -> None:
+    """run_sync must trim oversplit rows to one strongest row for 4441/4458-style cases."""
+    conn = _make_conn(tmp_path)
+    mock_pdf_path = tmp_path / f"{detail_id}.pdf"
+    mock_pdf_path.touch()
+    remote_call = CallRaw(
+        detail_id=detail_id,
+        source_tipo="Contratto di ricerca",
+        listing_status="active",
+        pdf_url=f"https://jobs.dsi.infn.it/{detail_id}.pdf",
+        anno="2025",
+        numero_posti_html=1,
+    )
+    built_rows = [
+        PositionRow(detail_id=detail_id, position_row_index=0, text_quality="ocr_clean"),
+        PositionRow(detail_id=detail_id, position_row_index=1, text_quality="ocr_clean"),
+        PositionRow(detail_id=detail_id, position_row_index=2, text_quality="ocr_clean"),
+    ]
+    built_rows[winner_index] = PositionRow(
+        detail_id=detail_id,
+        position_row_index=winner_index,
+        text_quality="ocr_clean",
+        contract_type="Contratto di ricerca",
+        duration_months=24,
+        gross_income_yearly_eur=28761.73,
+        parse_confidence="high",
+    )
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Contratto di ricerca"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("fixture text", TextQuality.OCR_CLEAN),
+        ),
+        patch(
+            "infn_jobs.pipeline.sync.build_rows",
+            return_value=(built_rows, "Reconcile canary title"),
+        ),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    persisted = conn.execute(
+        "SELECT position_row_index FROM position_rows WHERE detail_id = ?",
+        (detail_id,),
+    ).fetchall()
+    assert persisted == [(winner_index,)]
+    assert (
+        "row_reconciliation reason=applied_numero_posti_singleton_guard "
+        "raw_rows=3 kept_rows=1"
+    ) in caplog.text
+    conn.close()
+
+
+def test_sync_accepts_posti_gt_one_with_single_parsed_row(tmp_path: Path, caplog) -> None:
+    """run_sync must keep single parsed row when numero_posti_html reports multiple posti."""
+    conn = _make_conn(tmp_path)
+    mock_pdf_path = tmp_path / "posti-gt-one.pdf"
+    mock_pdf_path.touch()
+    remote_call = CallRaw(
+        detail_id="posti-gt-one-1",
+        source_tipo="Contratto di ricerca",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/posti-gt-one-1.pdf",
+        anno="2025",
+        numero_posti_html=3,
+    )
+    built_rows = [
+        PositionRow(
+            detail_id="posti-gt-one-1",
+            position_row_index=0,
+            text_quality="digital",
+            contract_type="Contratto di ricerca",
+            parse_confidence="high",
+        )
+    ]
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Contratto di ricerca"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("fixture text", TextQuality.DIGITAL),
+        ),
+        patch(
+            "infn_jobs.pipeline.sync.build_rows",
+            return_value=(built_rows, "Counterexample title"),
+        ),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    persisted = conn.execute(
+        "SELECT position_row_index FROM position_rows WHERE detail_id = 'posti-gt-one-1'"
+    ).fetchall()
+    assert persisted == [(0,)]
+    assert "row_reconciliation reason=" not in caplog.text
+    conn.close()
+
+
 def test_sync_request_processing_is_serial(tmp_path: Path) -> None:
     """run_sync must process request-bearing operations strictly in serial order."""
     conn = Mock()

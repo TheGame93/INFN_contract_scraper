@@ -87,3 +87,25 @@ def test_run_parse_pipeline_matches_review_projection_for_canary_fixture() -> No
 
     assert runtime.pdf_call_title == review.pdf_call_title
     assert runtime_projection == review_projection
+
+
+def test_run_parse_pipeline_multi_entry_output_remains_unreconciled() -> None:
+    """Parse-core output must keep multi-entry rows independent from pipeline reconciliation."""
+    text = _read("multi_same_type.txt")
+    request = ParseRequest(
+        text=text,
+        detail_id="compat-multi-entries",
+        text_quality="digital",
+        anno=2022,
+    )
+
+    runtime = run_parse_pipeline(request)
+    review = build_review_report(
+        text=text,
+        detail_id="compat-multi-entries",
+        text_quality="digital",
+        anno=2022,
+    )
+
+    assert len(runtime.rows) > 1
+    assert len(runtime.rows) == len(review.segments)

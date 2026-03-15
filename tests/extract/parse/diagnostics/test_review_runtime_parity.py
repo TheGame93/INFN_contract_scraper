@@ -13,6 +13,7 @@ from infn_jobs.extract.parse.diagnostics.review_mode import build_review_report
 _FIXTURES = Path("tests/fixtures/pdf_text")
 _CASES = [
     ("single_contract.txt", "digital", 2022),
+    ("multi_same_type.txt", "digital", 2022),
     ("ocr_clean.txt", "ocr_clean", 2022),
     ("canary/detail_4358.txt", "ocr_clean", 2025),
 ]
