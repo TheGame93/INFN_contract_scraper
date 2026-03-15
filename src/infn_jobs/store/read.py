@@ -51,6 +51,14 @@ def _row_to_call_raw(row: tuple[object, ...]) -> CallRaw:
     )
 
 
+def load_call_by_detail_id(conn: sqlite3.Connection, detail_id: str) -> CallRaw | None:
+    """Return the CallRaw for a given detail_id, or None if not found."""
+    row = conn.execute(
+        f"{_CALLS_RAW_SELECT} WHERE detail_id = ?", (detail_id,)
+    ).fetchone()
+    return _row_to_call_raw(row) if row is not None else None
+
+
 def list_calls_for_pdf_processing(conn: sqlite3.Connection) -> list[CallRaw]:
     """Return calls with detail_id set, ordered deterministically for PDF processing."""
     rows = conn.execute(

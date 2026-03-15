@@ -10,7 +10,7 @@ from infn_jobs.domain.position import PositionRow
 from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
 from infn_jobs.store.spec.position_rows import POSITION_ROWS_COLUMN_NAMES
 from infn_jobs.store import upsert as upsert_module
-from infn_jobs.store.upsert import upsert_call, upsert_position_rows
+from infn_jobs.store.upsert import upsert_call, upsert_position_rows, prune_stale_entries
 
 
 def _make_call(detail_id: str = "1", **kwargs) -> CallRaw:
@@ -133,3 +133,45 @@ def test_upsert_generated_insert_columns_match_specs() -> None:
     """Generated upsert insert columns must match table specs exactly."""
     assert upsert_module._CALLS_INSERT_COLUMNS == CALLS_RAW_COLUMN_NAMES
     assert upsert_module._POSITION_ROWS_INSERT_COLUMNS == POSITION_ROWS_COLUMN_NAMES
+
+
+def test_prune_stale_entries_removes_unlisted_calls_and_rows(
+    tmp_db: sqlite3.Connection,
+) -> None:
+    """prune_stale_entries must delete calls and rows not in active set; return deleted count."""
+    for did in ("keep-1", "keep-2", "stale-3"):
+        upsert_call(tmp_db, _make_call(did))
+        upsert_position_rows(tmp_db, [_make_row(did, 0)])
+
+    deleted = prune_stale_entries(tmp_db, {"keep-1", "keep-2"})
+
+    assert deleted == 1
+    remaining = tmp_db.execute("SELECT detail_id FROM calls_raw ORDER BY detail_id").fetchall()
+    assert [r[0] for r in remaining] == ["keep-1", "keep-2"]
+    row_ids = tmp_db.execute("SELECT detail_id FROM position_rows ORDER BY detail_id").fetchall()
+    assert [r[0] for r in row_ids] == ["keep-1", "keep-2"]
+
+
+def test_prune_stale_entries_empty_set_is_noop(tmp_db: sqlite3.Connection) -> None:
+    """prune_stale_entries with empty active set must not touch the DB and return 0."""
+    for did in ("call-1", "call-2"):
+        upsert_call(tmp_db, _make_call(did))
+        upsert_position_rows(tmp_db, [_make_row(did, 0)])
+
+    deleted = prune_stale_entries(tmp_db, set())
+
+    assert deleted == 0
+    count = tmp_db.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
+    assert count == 2
+
+
+def test_prune_stale_entries_all_active_no_deletion(tmp_db: sqlite3.Connection) -> None:
+    """prune_stale_entries with all detail_ids active must delete nothing."""
+    for did in ("a", "b"):
+        upsert_call(tmp_db, _make_call(did))
+
+    deleted = prune_stale_entries(tmp_db, {"a", "b"})
+
+    assert deleted == 0
+    count = tmp_db.execute("SELECT COUNT(*) FROM calls_raw").fetchone()[0]
+    assert count == 2

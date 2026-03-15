@@ -5,7 +5,7 @@ import sqlite3
 from infn_jobs.domain.call import CallRaw
 from infn_jobs.store import read as read_module
 from infn_jobs.store.spec.calls_raw import CALLS_RAW_COLUMN_NAMES
-from infn_jobs.store.read import list_calls_for_pdf_processing
+from infn_jobs.store.read import list_calls_for_pdf_processing, load_call_by_detail_id
 from infn_jobs.store.upsert import upsert_call
 
 
@@ -112,3 +112,36 @@ def test_list_calls_for_pdf_processing_uses_spec_column_projection_order() -> No
         "numero_posti_html, data_bando, data_scadenza, detail_url, pdf_url, pdf_cache_path, "
         "pdf_fetch_status, first_seen_at, last_synced_at FROM calls_raw"
     )
+
+
+def test_load_call_by_detail_id_found(tmp_db: sqlite3.Connection) -> None:
+    """load_call_by_detail_id must return a fully hydrated CallRaw when detail_id exists."""
+    original = CallRaw(
+        detail_id="X-999",
+        source_tipo="Borsa",
+        anno="2025",
+        titolo="Test titolo",
+        numero_posti_html=3,
+        pdf_url="https://example.test/X-999.pdf",
+        pdf_cache_path="/tmp/X-999.pdf",
+        pdf_fetch_status="ok",
+    )
+    upsert_call(tmp_db, original)
+
+    result = load_call_by_detail_id(tmp_db, "X-999")
+    assert result is not None
+    assert result.detail_id == "X-999"
+    assert result.source_tipo == "Borsa"
+    assert result.anno == "2025"
+    assert result.titolo == "Test titolo"
+    assert result.numero_posti_html == 3
+    assert result.pdf_url == "https://example.test/X-999.pdf"
+    assert result.pdf_cache_path == "/tmp/X-999.pdf"
+    assert result.pdf_fetch_status == "ok"
+    assert result.first_seen_at is not None
+
+
+def test_load_call_by_detail_id_not_found(tmp_db: sqlite3.Connection) -> None:
+    """load_call_by_detail_id must return None for a detail_id that does not exist."""
+    result = load_call_by_detail_id(tmp_db, "nonexistent-id")
+    assert result is None

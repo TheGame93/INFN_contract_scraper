@@ -25,6 +25,24 @@ _CALLS_UPDATE_ASSIGNMENTS = (
 _POSITION_ROWS_INSERT_COLUMNS = POSITION_ROWS_COLUMN_NAMES
 
 
+def prune_stale_entries(conn: sqlite3.Connection, active_detail_ids: set[str]) -> int:
+    """Delete calls_raw and position_rows rows whose detail_id is not in active_detail_ids.
+
+    Returns the number of calls_raw rows deleted. If active_detail_ids is empty, does nothing
+    and returns 0 (safety guard against accidental full-table wipe).
+    """
+    if not active_detail_ids:
+        return 0
+
+    placeholders = f"({','.join('?' * len(active_detail_ids))})"
+    params = list(active_detail_ids)
+
+    conn.execute(f"DELETE FROM position_rows WHERE detail_id NOT IN {placeholders}", params)
+    cursor = conn.execute(f"DELETE FROM calls_raw WHERE detail_id NOT IN {placeholders}", params)
+    conn.commit()
+    return cursor.rowcount
+
+
 def upsert_call(conn: sqlite3.Connection, call: CallRaw) -> None:
     """Upsert a CallRaw into calls_raw. Preserves first_seen_at on update."""
     now = datetime.now(UTC).isoformat()
