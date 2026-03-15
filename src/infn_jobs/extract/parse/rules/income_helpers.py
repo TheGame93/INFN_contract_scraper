@@ -5,7 +5,12 @@ from __future__ import annotations
 import re
 
 from infn_jobs.extract.parse.normalize.currency import normalize_eur
-from infn_jobs.extract.parse.rules.text_windows import iter_adjacent_line_windows
+from infn_jobs.extract.parse.rules.text_windows import (
+    iter_adjacent_line_windows,
+)
+from infn_jobs.extract.parse.rules.text_windows import (
+    iter_nonempty_lines as iter_normalized_nonempty_lines,
+)
 
 CURRENCY_ANCHORED_RE = re.compile(r"(?:€|euro)\s*([\d][\d.,\s]*)", re.IGNORECASE)
 FORMATTED_AMOUNT_RE = re.compile(r"\d[\d.]*,\d{1,2}|\d+\.\d{2}")
@@ -33,7 +38,7 @@ MONTHLY_RE = re.compile(r"\bmensile\b", re.IGNORECASE)
 
 def iter_lines(segment_text: str) -> tuple[str, ...]:
     """Return non-empty stripped segment lines preserving source order."""
-    return tuple(line.strip() for line in segment_text.splitlines() if line.strip())
+    return iter_normalized_nonempty_lines(segment_text)
 
 
 def extract_amount(line: str, start_pos: int = 0) -> float | None:

@@ -26,7 +26,7 @@ def test_detail_4447_multifield_baseline() -> None:
     assert row.contract_subtype_raw == "Fascia 1"
     assert row.duration_months == 24
     assert row.duration_raw == "24 mesi"
-    assert row.section_structure_department == "Sezione di Firenze dell’INFN."
+    assert row.section_structure_department == "Sezione di Firenze dell’INFN"
     assert row.institute_cost_total_eur == pytest.approx(40680.88)
     assert row.institute_cost_yearly_eur == pytest.approx(40680.88)
     assert row.gross_income_total_eur is None
