@@ -68,9 +68,9 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser = subparsers.add_parser("sync", help="Fetch and store all INFN job listings.")
     sync_parser.add_argument(
         "--source",
-        choices=("local", "remote", "auto"),
+        choices=("local", "remote"),
         default="local",
-        help="Source mode for sync discovery and cache materialization.",
+        help="Source mode: 'local' (filesystem-driven, default) or 'remote' (fetch + download).",
     )
     sync_parser.add_argument(
         "--limit-per-tipo",
