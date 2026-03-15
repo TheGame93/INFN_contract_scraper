@@ -17,8 +17,8 @@ from infn_jobs.fetch.client import get_session
 from infn_jobs.fetch.orchestrator import fetch_all_calls
 from infn_jobs.pipeline.row_reconciliation import reconcile_rows
 from infn_jobs.store.export.curate import rebuild_curated
-from infn_jobs.store.read import list_calls_for_pdf_processing
-from infn_jobs.store.upsert import upsert_call, upsert_position_rows
+from infn_jobs.store.read import load_call_by_detail_id
+from infn_jobs.store.upsert import prune_stale_entries, upsert_call, upsert_position_rows
 
 logger = logging.getLogger(__name__)
 runtime_logger = logging.getLogger("infn_jobs.runtime.sync")
@@ -26,7 +26,7 @@ _THROTTLE_REMINDER = (
     "If you observed 429, 503, or timeout errors, temporarily increase request delay to 5-10s "
     "before the next scraping run."
 )
-_HEARTBEAT_INTERVAL = 250
+_HEARTBEAT_INTERVAL = 250 #default is 250
 
 
 @dataclass
@@ -59,16 +59,37 @@ def _status_counts(items: list[_SyncWorkItem]) -> dict[str, int]:
     return counts
 
 
-def _discover_remote_calls(session: object, limit_per_tipo: int | None) -> list[CallRaw]:
-    """Fetch calls from remote listing/detail pages for all TIPOS."""
+def _discover_local_calls(conn: sqlite3.Connection) -> list[CallRaw]:
+    """Discover calls by globbing pdf_cache/*.pdf; load existing metadata from DB."""
+    pdf_files = sorted(PDF_CACHE_DIR.glob("*.pdf"), key=lambda p: p.stem)
     calls: list[CallRaw] = []
-    for tipo in TIPOS:
-        logger.info("Fetching tipo %s (active + expired)", tipo)
-        if limit_per_tipo is None:
-            calls.extend(fetch_all_calls(session, tipo))
-        else:
-            calls.extend(fetch_all_calls(session, tipo, limit_per_tipo))
+    for pdf_file in pdf_files:
+        detail_id = pdf_file.stem
+        call = load_call_by_detail_id(conn, detail_id) or CallRaw(detail_id=detail_id)
+        call.pdf_cache_path = str(pdf_file)
+        calls.append(call)
+    runtime_logger.info("Phase A heartbeat: local cache scan found %d PDFs", len(calls))
     return calls
+
+
+def _discover_remote_calls(
+    conn: sqlite3.Connection, session: object, limit_per_tipo: int | None
+) -> list[CallRaw]:
+    """Start from local cache, then fetch new contracts from remote and merge."""
+    local_calls = _discover_local_calls(conn)
+    local_detail_ids = {c.detail_id for c in local_calls if c.detail_id}
+
+    remote_calls: list[CallRaw] = []
+    for i, tipo in enumerate(TIPOS, start=1):
+        logger.info("Fetching tipo %s (active + expired)", tipo)
+        runtime_logger.info("Phase A heartbeat: fetching tipo=%s (%d/%d)", tipo, i, len(TIPOS))
+        if limit_per_tipo is None:
+            remote_calls.extend(fetch_all_calls(session, tipo))
+        else:
+            remote_calls.extend(fetch_all_calls(session, tipo, limit_per_tipo))
+
+    new_remote = [c for c in remote_calls if c.detail_id not in local_detail_ids]
+    return local_calls + new_remote
 
 
 def _discover_calls(
@@ -77,27 +98,12 @@ def _discover_calls(
     source: str,
     limit_per_tipo: int | None,
 ) -> tuple[list[CallRaw], bool]:
-    """Discover sync calls and return whether discovery came from local DB."""
-    if source == "remote":
-        return _discover_remote_calls(session, limit_per_tipo), False
-
-    local_calls = list_calls_for_pdf_processing(conn)
-
+    """Discover sync calls and return True if discovery is filesystem-local (no remote fetch)."""
     if source == "local":
-        if not local_calls:
-            raise ValueError(
-                "Local source requested but calls_raw is empty. "
-                "Run sync with --source remote first."
-            )
-        return local_calls, True
-
-    if source == "auto":
-        if local_calls:
-            return local_calls, True
-        logger.info("source=auto: calls_raw empty, falling back to remote discovery")
-        return _discover_remote_calls(session, limit_per_tipo), False
-
-    raise ValueError(f"Unsupported source mode: {source}")
+        return _discover_local_calls(conn), True
+    if source == "remote":
+        return _discover_remote_calls(conn, session, limit_per_tipo), False
+    raise ValueError(f"Unsupported source mode: {source}. Use 'local' or 'remote'.")
 
 
 def _find_existing_cache_path(call: CallRaw) -> tuple[Path | None, bool]:
@@ -124,23 +130,9 @@ def _find_existing_cache_path(call: CallRaw) -> tuple[Path | None, bool]:
     return None, has_zero_byte
 
 
-def _warn_orphan_cache_files(expected_detail_ids: set[str]) -> None:
-    """Warn about cache files that do not map to known detail_ids for this sync run."""
-    if not PDF_CACHE_DIR.exists():
-        return
-
-    for cached_pdf in PDF_CACHE_DIR.glob("*.pdf"):
-        if cached_pdf.stem not in expected_detail_ids:
-            logger.warning(
-                "Orphan cache file %s: no matching calls_raw.detail_id, skipping",
-                cached_pdf.name,
-            )
-
-
 def _materialize_cache_paths(
     items: list[_SyncWorkItem],
     session: object,
-    source: str,
     discovered_from_local_db: bool,
     force_refetch: bool,
     progress_callback: Callable[[int, int], None] | None = None,
@@ -158,8 +150,16 @@ def _materialize_cache_paths(
             detail_id = call.detail_id
             canonical_path = PDF_CACHE_DIR / f"{detail_id}.pdf"
 
-            # Remote discovery path always materializes through downloader.
+            # Remote discovery path: skip download for items already cached in Phase A.
             if not discovered_from_local_db:
+                cached_path = call.pdf_cache_path
+                cached = Path(cached_path) if cached_path else None
+                if cached and cached.is_file() and cached.stat().st_size > 0:
+                    item.pdf_path = cached
+                    call.pdf_fetch_status = "ok"
+                    logger.info("PDF %s: using local cache", detail_id)
+                    continue
+
                 if call.pdf_url is None:
                     call.pdf_fetch_status = "skipped"
                     logger.info("PDF %s: skipped (no url)", detail_id)
@@ -207,35 +207,9 @@ def _materialize_cache_paths(
             if has_zero_byte_cache:
                 logger.warning("PDF %s: zero-byte local cache detected", detail_id)
 
-            if source == "local":
-                call.pdf_fetch_status = "skipped"
-                logger.warning(
-                    "PDF %s: missing valid local cache; skipping due source=local",
-                    detail_id,
-                )
-                continue
-
-            # source=auto with local discovery: download only when cache is missing/invalid
-            # and url exists.
-            if call.pdf_url is None:
-                call.pdf_fetch_status = "skipped"
-                logger.warning(
-                    "PDF %s: missing cache and no url; skipping in source=auto",
-                    detail_id,
-                )
-                continue
-
-            force_download = force_refetch or has_zero_byte_cache
-            pdf_path = download(call.pdf_url, canonical_path, session=session, force=force_download)
-            if pdf_path is None:
-                call.pdf_fetch_status = "download_error"
-                logger.info("PDF %s: download_error", detail_id)
-                continue
-
-            item.pdf_path = pdf_path
-            call.pdf_cache_path = str(pdf_path)
-            call.pdf_fetch_status = "ok"
-            logger.info("PDF %s: cache ready", detail_id)
+            # source=local: file set in Phase A but disappeared or is zero-byte — skip.
+            call.pdf_fetch_status = "skipped"
+            logger.warning("PDF %s: missing valid local cache; skipping", detail_id)
         finally:
             if progress_callback is not None:
                 progress_callback(processed_count, total_items)
@@ -312,6 +286,11 @@ def _persist_sync_results(
     logger.info("Rebuilding curated tables after sync")
     rebuild_curated(conn)
 
+    active_ids = {item.call.detail_id for item in items if item.call.detail_id}
+    pruned = prune_stale_entries(conn, active_ids)
+    if pruned:
+        runtime_logger.info("Prune: removed %d stale DB entries not in current cache", pruned)
+
 
 def run_sync(
     conn: sqlite3.Connection,
@@ -354,17 +333,6 @@ def run_sync(
         phase_started_at = time.monotonic()
         logger.info("Phase A: discover calls (source=%s)", source)
         calls, discovered_from_local_db = _discover_calls(conn, session, source, limit_per_tipo)
-        expected_detail_ids = {call.detail_id for call in calls if call.detail_id is not None}
-        # Include existing persisted ids for remote discovery so partial fetches do not
-        # mislabel valid historical cache files as orphan.
-        if not discovered_from_local_db and isinstance(conn, sqlite3.Connection):
-            expected_detail_ids.update(
-                call.detail_id
-                for call in list_calls_for_pdf_processing(conn)
-                if call.detail_id is not None
-            )
-        _warn_orphan_cache_files(expected_detail_ids)
-
         items = [_SyncWorkItem(call=call) for call in calls]
         runtime_logger.info(
             "Phase A complete: discovered_contracts=%d elapsed_s=%.2f",
@@ -377,7 +345,6 @@ def run_sync(
         _materialize_cache_paths(
             items,
             session,
-            source,
             discovered_from_local_db,
             force_refetch,
             progress_callback=_progress_heartbeat,
