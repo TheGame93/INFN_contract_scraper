@@ -142,6 +142,24 @@ src/infn_jobs/
 
 ---
 
+## Row Cardinality Reconciliation Contract
+
+- Reconciliation is a **pipeline behavior** applied in sync Phase C after `build_rows(...)` and before persistence.
+- Trigger gate is strict: apply only when parsed rows for a `detail_id` are greater than 1 and `calls_raw.numero_posti_html == 1`.
+- Missing/invalid `numero_posti_html` is non-authoritative; reconciliation must be a no-op.
+- Reconciliation chooses one retained row via deterministic row-strength criteria:
+  - `contract_type` presence,
+  - `contract_subtype` presence,
+  - `duration_months` presence,
+  - count of non-NULL income fields,
+  - section signal presence (`section_structure_department`/`section_evidence`),
+  - `parse_confidence` rank (`high > medium > low > NULL`),
+  - final tie-break on lowest original `position_row_index`.
+- Index policy: retained rows keep original parser-assigned `position_row_index`; no renumbering/compaction.
+- Scope guardrail: parser outputs and review-mode outputs stay unchanged; reconciliation must not modify parse-core behavior.
+
+---
+
 ## Runtime Observability Policy
 
 - Logging split:
@@ -275,7 +293,7 @@ Ordered columns are defined once in `store/spec/position_rows.py` and consumed b
 ```sql
 position_rows (
   detail_id                     TEXT,
-  position_row_index            INTEGER,
+  position_row_index            INTEGER, -- parser-assigned index retained even when reconciliation drops rows
   -- PDF source quality:
   text_quality                  TEXT,    -- "digital" | "ocr_clean" | "ocr_degraded" | "no_text"
   -- extracted fields (all nullable):

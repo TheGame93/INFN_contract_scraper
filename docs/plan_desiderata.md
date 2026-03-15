@@ -113,6 +113,19 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
   - Split by repeated patterns (`n.`, `contratto`, `incarico`, `fascia`, `assegno`, article blocks/tables).
   - Produce `position_rows` with stable `position_row_index`.
   - Allow mixed `contract_type`, `contract_subtype`, and `section_structure_department` across rows.
+- Apply a **pipeline-only row-cardinality reconciliation guard** after parsing and before persistence:
+  - Trigger only when `numero_posti_html == 1` and parsed rows for that `detail_id` are greater than 1.
+  - Missing/invalid/NULL `numero_posti_html` must be a no-op (keep all parsed rows).
+  - Keep exactly one retained row chosen by deterministic row-strength ranking.
+  - Preserve the retained row's original `position_row_index` from parser output (no renumbering/compaction).
+- Deterministic row-strength ranking for reconciliation (`numero_posti_html == 1` only):
+  - Prefer rows with `contract_type` present.
+  - Then prefer rows with `contract_subtype` present.
+  - Then prefer rows with `duration_months` present.
+  - Then prefer higher counts of non-NULL income fields (`institute_cost_*`, `gross_income_*`, `net_income_*`).
+  - Then prefer rows with `section_structure_department` or `section_evidence` present.
+  - Then prefer higher `parse_confidence` (`high > medium > low > NULL`).
+  - Final tie-break: lowest original `position_row_index`.
 - For each extracted position row, parse nullable fields:
   - `contract_type`,
   - `contract_type_raw` (original text as found in the PDF),
@@ -267,6 +280,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - Multi-contract same-type PDF → N rows, same `contract_type`.
 - Multi-contract mixed-type/mixed-subtype PDF → N rows, different `contract_type`/`contract_subtype`.
 - PDF with different `section_structure_department` per row.
+- `numero_posti_html == 1` and parsed rows > 1 → pipeline reconciliation keeps one deterministic strongest row.
 - Assegno di ricerca PDF with raw `Tipo A` / `Tipo B` entries mapped to canonical `Junior` / `Senior`.
 - Old-format Assegno PDF (pre-2010, no Tipo A/B) → `contract_subtype = NULL`.
 
@@ -307,6 +321,7 @@ Reflects parser behavior, not data availability. NULL financial fields due to er
 - PDFs are cached indefinitely in `data/pdf_cache/`. Re-download only with `--force-refetch` in remote discovery paths.
 - `first_seen_at` is set once and never overwritten. `last_synced_at` is updated on every sync.
 - `numero_posti_html` reflects the HTML detail page value. PDF row count is implicit in `position_row_index`. Both are stored; neither overwrites the other.
+- Reconciliation guard is conservative: only `numero_posti_html == 1` can trim parsed rows, and retained rows keep their original `position_row_index`.
 - `section_structure_department` is row-level: different rows in the same PDF may have different values.
 - `Assegno di ricerca` raw labels (`Tipo A` / `Tipo B`) apply only to records from 2010 onward and canonicalize to `Junior` / `Senior`. Earlier records have `contract_subtype = NULL` for this type.
 - `detail_id` must remain stable across all future versions. Winner correlation in v2 will use it as a foreign key.
