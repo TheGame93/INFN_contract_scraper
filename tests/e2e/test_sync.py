@@ -158,6 +158,133 @@ def test_sync_uses_build_rows_tuple_contract_and_persists_title(tmp_path: Path) 
     conn.close()
 
 
+def test_sync_reconciles_rows_when_numero_posti_html_is_one(tmp_path: Path, caplog) -> None:
+    """run_sync must reconcile multi-row parse output when numero_posti_html equals 1."""
+    conn = _make_conn(tmp_path)
+    mock_pdf_path = tmp_path / "mock-reconcile-1.pdf"
+    mock_pdf_path.touch()
+    remote_call = CallRaw(
+        detail_id="reconcile-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/reconcile-1.pdf",
+        anno="2026",
+        numero_posti_html=1,
+    )
+    built_rows = [
+        PositionRow(
+            detail_id="reconcile-1",
+            position_row_index=0,
+            text_quality="digital",
+            parse_confidence="low",
+        ),
+        PositionRow(
+            detail_id="reconcile-1",
+            position_row_index=1,
+            text_quality="digital",
+            contract_type="Borsa di studio",
+            duration_months=12,
+            gross_income_yearly_eur=1234.0,
+            parse_confidence="high",
+        ),
+    ]
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("fixture text", TextQuality.DIGITAL),
+        ),
+        patch(
+            "infn_jobs.pipeline.sync.build_rows",
+            return_value=(built_rows, "Reconcile title"),
+        ),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    stored_rows = conn.execute(
+        "SELECT position_row_index, contract_type FROM position_rows "
+        "WHERE detail_id = 'reconcile-1'"
+    ).fetchall()
+    assert stored_rows == [(1, "Borsa di studio")]
+    assert (
+        "row_reconciliation reason=applied_numero_posti_singleton_guard "
+        "raw_rows=2 kept_rows=1"
+    ) in (
+        caplog.text
+    )
+    conn.close()
+
+
+def test_sync_reconciliation_is_noop_when_numero_posti_html_is_missing(
+    tmp_path: Path, caplog
+) -> None:
+    """run_sync must keep all parsed rows when numero_posti_html is NULL/missing."""
+    conn = _make_conn(tmp_path)
+    mock_pdf_path = tmp_path / "mock-reconcile-missing.pdf"
+    mock_pdf_path.touch()
+    remote_call = CallRaw(
+        detail_id="reconcile-missing-1",
+        source_tipo="Borsa",
+        listing_status="active",
+        pdf_url="https://jobs.dsi.infn.it/reconcile-missing-1.pdf",
+        anno="2026",
+        numero_posti_html=None,
+    )
+    built_rows = [
+        PositionRow(
+            detail_id="reconcile-missing-1",
+            position_row_index=0,
+            text_quality="digital",
+            contract_type="Borsa di studio",
+            parse_confidence="high",
+        ),
+        PositionRow(
+            detail_id="reconcile-missing-1",
+            position_row_index=1,
+            text_quality="digital",
+            contract_type="Borsa di studio",
+            parse_confidence="high",
+        ),
+    ]
+
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=[remote_call]),
+        patch("infn_jobs.pipeline.sync.download", return_value=mock_pdf_path),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=("fixture text", TextQuality.DIGITAL),
+        ),
+        patch(
+            "infn_jobs.pipeline.sync.build_rows",
+            return_value=(built_rows, "Reconcile title"),
+        ),
+        caplog.at_level("INFO", logger="infn_jobs.pipeline.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    stored_rows = conn.execute(
+        "SELECT position_row_index FROM position_rows WHERE detail_id = 'reconcile-missing-1' "
+        "ORDER BY position_row_index"
+    ).fetchall()
+    assert stored_rows == [(0,), (1,)]
+    assert (
+        "row_reconciliation reason=not_applicable_numero_posti_missing "
+        "raw_rows=2 kept_rows=2"
+    ) in (
+        caplog.text
+    )
+    conn.close()
+
+
 def test_sync_request_processing_is_serial(tmp_path: Path) -> None:
     """run_sync must process request-bearing operations strictly in serial order."""
     conn = Mock()

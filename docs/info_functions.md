@@ -190,6 +190,7 @@ Fields per entry: `name | parent | inputs | output | description`
 
 ## `src/infn_jobs/extract/parse/rules/text_windows.py`
 - `TextWindow` | `infn_jobs.extract.parse.rules.text_windows` | — | — | One deterministic text window and its evidence snippet.
+- `iter_nonempty_lines` | `infn_jobs.extract.parse.rules.text_windows` | `segment_text: str` | `tuple[str, ...]` | Return normalized non-empty lines preserving source order.
 - `iter_adjacent_line_windows` | `infn_jobs.extract.parse.rules.text_windows` | `segment_text: str`, `max_lines: int` | `tuple[TextWindow, ...]` | Return deterministic adjacent-line windows from non-empty segment lines.
 
 ## `src/infn_jobs/extract/parse/segmenter.py`
@@ -221,6 +222,10 @@ Fields per entry: `name | parent | inputs | output | description`
 
 ## `src/infn_jobs/pipeline/export.py`
 - `run_export` | `infn_jobs.pipeline.export` | `conn: sqlite3.Connection`, `export_dir: Path` | `None` | Rebuild curated tables, then export all 4 CSVs to export_dir.
+
+## `src/infn_jobs/pipeline/row_reconciliation.py`
+- `ReconciliationDecision` | `infn_jobs.pipeline.row_reconciliation` | — | — | Deterministic row-reconciliation decision metadata for one detail_id.
+- `reconcile_rows` | `infn_jobs.pipeline.row_reconciliation` | `rows: list[PositionRow]`, `detail_id: str`, `numero_posti_html: int | None` | `tuple[list[PositionRow], ReconciliationDecision]` | Return reconciled rows plus deterministic decision metadata.
 
 ## `src/infn_jobs/pipeline/sync.py`
 - `run_sync` | `infn_jobs.pipeline.sync` | `conn: sqlite3.Connection`, `source: str`, `limit_per_tipo: int | None`, `download_only: bool`, `dry_run: bool`, `force_refetch: bool` | `None` | Full idempotent sync pipeline: fetch all calls → extract PDFs → store.

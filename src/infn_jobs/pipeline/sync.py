@@ -15,6 +15,7 @@ from infn_jobs.extract.pdf.downloader import download
 from infn_jobs.extract.pdf.mutool import extract_text
 from infn_jobs.fetch.client import get_session
 from infn_jobs.fetch.orchestrator import fetch_all_calls
+from infn_jobs.pipeline.row_reconciliation import reconcile_rows
 from infn_jobs.store.export.curate import rebuild_curated
 from infn_jobs.store.read import list_calls_for_pdf_processing
 from infn_jobs.store.upsert import upsert_call, upsert_position_rows
@@ -267,9 +268,24 @@ def _parse_materialized_pdfs(
                 continue
 
             text_quality = text_quality_enum.value
-            item.rows, pdf_call_title = build_rows(text, detail_id, text_quality, anno)
+            parsed_rows, pdf_call_title = build_rows(text, detail_id, text_quality, anno)
+            item.rows, reconciliation = reconcile_rows(
+                rows=parsed_rows,
+                detail_id=detail_id,
+                numero_posti_html=call.numero_posti_html,
+            )
             call.pdf_call_title = pdf_call_title
             call.pdf_fetch_status = "ok"
+            if reconciliation.raw_rows > 1:
+                logger.info(
+                    "detail_id=%s: row_reconciliation reason=%s raw_rows=%d kept_rows=%d "
+                    "numero_posti_html=%s",
+                    detail_id,
+                    reconciliation.reason_code,
+                    reconciliation.raw_rows,
+                    reconciliation.kept_rows,
+                    reconciliation.numero_posti_html,
+                )
             logger.info("detail_id=%s: %d position_rows built", detail_id, len(item.rows))
             logger.info("PDF %s: ok", detail_id)
         finally:
