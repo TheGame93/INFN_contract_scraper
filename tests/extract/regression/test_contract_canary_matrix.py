@@ -21,6 +21,8 @@ _CASES = [
     ("4484", 2026, "Incarico Post-Doc", 1),
     ("4456", 2025, "Contratto di ricerca", 1),
     ("4358", 2025, "Contratto di ricerca", 1),
+    ("4441", 2025, "Contratto di ricerca", 2),  # oversegmentation canary: 2 raw rows, 1 posti
+    ("4458", 2025, "Contratto di ricerca", 2),  # oversegmentation canary: 2 raw rows, 1 posti
     ("4223", 2024, "Assegno di ricerca", 1),
     ("4302", 2024, "Assegno di ricerca", 1),
 ]

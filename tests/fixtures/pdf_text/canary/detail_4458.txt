@@ -1,0 +1,570 @@
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CONCORSO PER IL CONFERIMENTO 
+DI N. 1 CONTRATTO DI RICERCA 
+PER ATTIVITA’ DI RICERCA SCIENTIFICA 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 2 a 9 
+ 
+
+ISTITUTO NAZIONALE DI FISICA NUCLEARE 
+
+  
+Bando n. 2 8 3 4 7 /2025 per il conferimento di n. 1 contratto di ricerca nell’ambito della ricerca scientifica 
+di Fascia 1 presso la Sezione di Torino dell’INFN  
+ 
+IL PRESIDENTE 
+
+dell'Istituto Nazionale di Fisica Nucleare 
+
+vista la Deliberazione della Giunta Esecutiva n. 14473 del 28 novembre 2025  
+ 
+DISPONE  
+ 
+Art. 1 Oggetto 
+ 
+È indetto un concorso per titoli ed esame colloquio per la stipula di n. 1 contratto di ricerca di cui all’art. 22 
+della legge 30 dicembre 2010, n. 240 e s.m.i., nell’ambito della ricerca scientifica, di durata biennale, di Fascia 
+1, da fruire presso la Sezione di Torino dell’INFN. 
+ 
+L’attività del vincitore/della vincitrice, di seguito “contrattista di ricerca”, dovrà essere svolta nei limiti del 
+programma di ricerca per il quale è stato/è stata selezionato/a, tenuto conto delle indicazioni ricevute dal 
+Referente scientifico assegnato e per lo specifico progetto di ricerca come di seguito riportato: 
+ 
+
+GSD
+Progetto/tema di ricerca
+ 
+02/PHYS-01 - Fisica sperimentale 
+delle interazioni fondamentali e 
+applicazioni. 
+ 
+ 
+02/PHYS-05 
+- 
+Astrofisica 
+e 
+cosmologia, fisica dello spazio, 
+della terra e del clima. 
+ 
+
+ 
+“Analisi di sorgenti di raggi X con la missione Imaging 
+X-ray Polarimetry Explorer” 
+ 
+Supporto all’analisi dei dati dell’osservatorio IXPE attraverso lo 
+sviluppo di algoritmi di ricostruzione di evento, anche con tecniche di 
+machine learning e di strumenti di simulazione, analisi e 
+interpretazione dei dati di volo e dei dati di calibrazione dei rivelatori.
+ 
+“Analysis of X-ray sources with the Imaging X-ray Polarimetry 
+Explorer” 
+ 
+The position will be supporting the analysis of the IXPE observatory 
+data by developing event reconstruction algorithms, including 
+machine learning techniques, and by developing simulation, analysis 
+and interpretation tools 
+for the flight data as well as detectors calibration data. 
+ 
+Art. 2 Trattamento economico, fiscale, previdenziale ed assicurativo 
+ 
+L'importo annuo complessivo del contratto di ricerca è di € 40.680,88 (quarantamilaseicentottanta/88) 
+comprensivo di oneri a carico dell’Istituto. 
+Al/alla contrattista di ricerca sarà riconosciuto un compenso lordo annuo omnicomprensivo pari ad € 
+28.761,73 (ventottomilasettecentosessantuno/73), da corrispondersi in n. 12 (dodici) mensilità. 
+Il rapporto di lavoro che si instaura tra l’Istituto e il contrattista di ricerca è regolato dalle disposizioni vigenti 
+in materia, anche per quanto attiene il trattamento fiscale, assistenziale, previdenziale ed assicurativo contro 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 3 a 9 
+ 
+
+gli infortuni sul lavoro e le malattie professionali. Si applicano, inoltre, le disposizioni previste dalla normativa 
+di settore in vigore in materia di astensione obbligatoria per maternità e congedo parentale. 
+Sono garantiti i diritti previsti dalla normativa vigente, dal Contratto relativo alla sequenza contrattuale sul 
+Contratto di ricerca ex art. 22 legge n. 240/2010 sottoscritto il 18 marzo 2025 e, in materia previdenziale, 
+l’adempimento degli obblighi richiamati nella Circolare INPS n. 125 dell’11.09.2025. 
+Al/alla contrattista di ricerca sono estesi i servizi, compreso il servizio mensa, secondo le norme e alle 
+condizioni vigenti nella Struttura INFN assegnata. 
+Il/la contrattista di ricerca, inviato/inviata in missione per motivi connessi all'attività prevista dal contratto di 
+ricerca, gode del trattamento di missione secondo le norme e con le modalità previste per il personale INFN. 
+ 
+Art. 3 Requisiti di ammissione 
+ 
+Per l’ammissione al concorso è richiesto il possesso dei seguenti requisiti: 
+ 
+a) cittadinanza italiana o possesso dei requisiti previsti dall'articolo 38, commi 1, 2 e 3-bis, del decreto 
+legislativo 30 marzo 2001, n. 165; 
+b) godimento dei diritti civili e politici (per i cittadini stranieri anche quelli relativi al proprio Paese di 
+cittadinanza); 
+c) essere in regola con le norme concernenti gli obblighi militari (per i soli candidati di cittadinanza italiana 
+soggetti a tale obbligo); 
+d) se cittadini italiani, il Comune nelle cui liste elettorali risultano iscritti o i motivi della mancata iscrizione o 
+della cancellazione dalle liste medesime; 
+e)  possesso alla data di scadenza del termine utile per la presentazione delle domande di ammissione alla 
+selezione del titolo di dottore di ricerca in Fisica o di titolo equivalente conseguito all’estero da non oltre 
+2 (due) anni 
+ 
+ovvero 
+ 
+f) iscrizione, alla data di scadenza del termine utile per la presentazione delle domande di ammissione alla 
+selezione, all’ultimo anno del corso di dottorato di ricerca in Fisica o di corso equivalente all’estero 
+purché il conseguimento del titolo sia previsto entro i sei mesi successivi alla data di pubblicazione del 
+bando stesso. 
+ 
+Il dottorato deve essere comunque conseguito, a pena di decadenza/risoluzione dal contratto, entro 6 mesi 
+successivi alla data di pubblicazione del bando di selezione e i candidati verranno ammessi con riserva alla 
+procedura selettiva. 
+ 
+Ai soli e limitati fini della partecipazione alla selezione, la dichiarazione di equivalenza del titolo di studio 
+conseguito all’estero verrà effettuata dalla Commissione esaminatrice. 
+ 
+Nel caso in cui il dottorato di ricerca sia stato conseguito all’estero o il candidato sia iscritto all’ultimo anno 
+di corso di dottorato all’estero, deve essere presentata, entro il termine di scadenza della domanda una 
+documentazione dettagliata del percorso formativo per consentire alla Commissione Esaminatrice la 
+dichiarazione di equivalenza, ai soli e limitati fini della partecipazione al suddetto concorso; la mancanza di 
+tale documentazione comporterà l’esclusione dalla procedura concorsuale da parte della Commissione 
+stessa. 
+ 
+Tutti i requisiti, salvo per quanto previsto in ordine al conseguimento del titolo di dottorato nel caso previsto 
+dalla lettera f) del presente articolo, devono essere posseduti alla data di scadenza del termine stabilito per 
+l'inoltro delle domande e devono permanere alla data della presa servizio. 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 4 a 9 
+ 
+
+I documenti ufficiali dovranno essere prodotti in una qualsiasi delle lingue ufficiali dell’Unione Europea. È 
+consigliabile che i documenti in altre lingue siano presentati con una traduzione in inglese certificata. 
+ 
+Art. 4 Esclusioni dalla procedura di selezione 
+
+Non possono partecipare alla selezione: 
+
+- 
+personale di ruolo, assunto a tempo indeterminato, delle istituzioni di cui al comma 1 dell’articolo 22, 
+della legge 240/2010 nonché coloro che hanno fruito di contratti, di cui all'articolo 24 legge 240/2010, 
+nel testo attualmente vigente, alla data di emissione del bando per Contratto di Ricerca; 
+
+- 
+coloro che, alla data di emissione del bando per Contratto di Ricerca, hanno fruito di contratti a tempo 
+determinato, come Ricercatore ai sensi dell’art. 36, decreto legislativo 30 marzo 2001 n. 165; 
+
+- 
+coloro che siano esclusi dall’elettorato politico attivo e coloro che hanno riportato condanne penali, 
+passate in giudicato, per reati che comportano l’interdizione dai pubblici uffici; che sono stati destituiti 
+o dispensati dall’impiego presso una Pubblica Amministrazione per persistente ed insufficiente 
+rendimento e che sono stati dichiarati decaduti da altro impiego statale per aver conseguito l’impiego 
+mediante la produzione di documenti falsi o viziati da invalidità non sanabile, nonché sono stati 
+interdetti dai pubblici uffici in base a sentenza passata in giudicato, sono stati licenziati per motivi 
+disciplinari a norma dei Contratti Collettivi Nazionali di Lavoro stipulati per i comparti della Pubblica 
+Amministrazione. 
+ 
+
+L’esclusione dalla procedura di selezione nei casi previsti dal presente articolo è disposta, in qualsiasi 
+momento, con motivato provvedimento del Presidente o suo delegato indicato nella disposizione di nomina 
+della Commissione Esaminatrice e notificata all’interessato. 
+
+ 
+Art. 5 Titoli di preferenza 
+ 
+In caso di parità di punteggio complessivo, la preferenza è riconosciuta al candidato/alla candidata più 
+giovane o al candidato/alla candidata appartenente al genere meno rappresentato tra i candidati 
+partecipanti alla selezione. 
+ 
+Art. 6 Presentazione delle candidature  
+ 
+Le domande di partecipazione alla selezione devono essere compilate e trasmesse all’INFN per via telematica 
+utilizzando 
+un’apposita 
+applicazione 
+telematica 
+raggiungibile 
+tramite 
+il 
+seguente 
+link: 
+https://reclutamento.dsi.infn.it/ . 
+All’applicazione telematica si accede tramite le credenziali (username/password) inviate all’indirizzo e-mail 
+(non PEC) specificato in fase di registrazione. I candidati che hanno rapporti a diverso titolo con l’INFN 
+possono utilizzare le proprie credenziali di accesso AAI, purché la scadenza prevista di dette credenziali non 
+avvenga prima del termine di scadenza per la presentazione della domanda. 
+Al fine dell’invio della domanda di ammissione è necessario compilare tutte le sezioni obbligatorie previste 
+dalla procedura telematica. 
+È prevista la possibilità di salvare in formato bozza le informazioni inserite e completare la procedura in un 
+momento diverso. Le domande che alla fine della compilazione non vengono confermate definitivamente e 
+che rimangono nello stato di bozza sono nulle. 
+Il candidato che abbia già inviato una domanda di partecipazione può presentare una nuova versione solo 
+previo annullamento della domanda precedente e comunque necessariamente entro il termine di 
+presentazione della domanda stessa. 
+ 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 5 a 9 
+ 
+
+Si raccomanda, al termine della compilazione della domanda di cliccare su “finalizza la candidatura” e poi 
+“conferma invio candidatura”. 
+Per conferma della trasmissione scaricare la ricevuta della candidatura che sarà inoltrata dalla procedura 
+telematica all’indirizzo e-mail indicato. 
+ 
+La domanda dovrà contenere i seguenti documenti, dichiarati conformi all’originale, in forma di atto di 
+notorietà, ai sensi dell’art. 47 del D.P.R. 445/2000: 
+ 
+1) 
+il curriculum vitae, privo di dati sensibili e degli eventuali dati comuni; 
+
+2) 
+copia di un valido documento di identità in corso di validità (che il/la candidato/a dovrà esibire al 
+momento del colloquio); 
+
+3) 
+fino ad un massimo di n. 5 pubblicazioni lavori a stampa, progetti ed elaborati tecnici tra quelli più 
+rilevanti (da allegare, in formato pdf, nella domanda telematica nella sezione Prodotti); 
+ 
+4) 
+un elenco di tutti i Prodotti eventualmente allegati di cui al precedente numero 3); 
+ 
+5) 
+la domanda di partecipazione, scaricabile dall’applicazione per l’inoltro in via telematica delle 
+domande, compilata e sottoscritta, della quale si fornisce copia allegata al presente bando 
+(Allegato n. 1); 
+ 
+Le candidate e i candidati dovranno dichiarare sotto la propria responsabilità ai sensi degli artt. 46 e 47 del 
+D.P.R. 445/2000 e pena l’esclusione dal concorso: 
+a. il proprio nome e cognome; 
+b.  la data e il luogo di nascita; 
+c. la nazionalità di appartenenza; 
+d. se cittadini italiani, il Comune nelle cui liste elettorali risultano iscritti o i motivi della mancata 
+iscrizione o della cancellazione dalle liste medesime; 
+e.  se cittadini italiani, di essere in regola con le norme concernenti gli obblighi militari; 
+f. per i candidati di cittadinanza diversa da quella italiana, il godimento dei diritti civili e politici 
+relativi al proprio Stato di appartenenza o provenienza, ovvero i motivi del mancato 
+godimento dei diritti stessi; 
+g. Il possesso del titolo di studio di cui all’art. 3, lett. e) o titolo equivalente conseguito all’estero 
+ 
+ovvero 
+ 
+h. l’iscrizione, alla data di scadenza del termine utile per la presentazione delle domande di 
+ammissione alla selezione all’ultimo anno del corso di dottorato di ricerca di cui all’art. 3, 
+lett. f) o corso equivalente all’estero, e di conseguire il PhD entro 6 mesi dalla pubblicazione 
+del bando di concorso; 
+i. 
+di non essere stati destituiti o dispensati dall’impiego presso una pubblica amministrazione 
+o dichiarati decaduti da un impiego statale, né di essere stati licenziati da pubbliche 
+amministrazioni in applicazione delle normative sanzionatorie di cui ai relativi Contratti 
+Collettivi Nazionali di Lavoro, né di essere stati interdetti dai pubblici uffici in base a sentenza 
+passata in giudicato; in caso contrario vanno specificati i motivi del provvedimento di 
+destituzione, dispensa, decadenza o licenziamento (la dichiarazione va resa anche in assenza 
+di rapporti di pubblico impiego); 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 6 a 9 
+ 
+
+j. 
+di non aver riportato condanne penali con sentenza passata in giudicato e di non avere in 
+corso procedimenti penali, né procedimenti amministrativi per l’applicazione di misure di 
+sicurezza o di prevenzione, nonché precedenti penali a proprio carico iscrivibili nel casellario 
+giudiziale, ai sensi dell’articolo 3 del D.P.R. 14 novembre 2002, n. 313. In caso contrario, 
+devono essere indicate le condanne, i procedimenti a carico e ogni eventuale precedente 
+penale, precisando gli estremi delle relative sentenze, anche se sia stata concessa amnistia, 
+condono, indulto o perdono giudiziale, la data del provvedimento e l’autorità giudiziaria che 
+lo ha emanato ovvero quella presso la quale penda un eventuale procedimento penale; 
+k. di non essere/di essere titolare dello status di rifugiato o dello status di protezione sussidiaria 
+o di essere cittadino di Paesi terzi in possesso del permesso di soggiorno UE per soggiornanti 
+di lungo periodo e dei requisiti di cui all’art. 2, comma 2, D.P.R. 487/1994. 
+ 
+I candidati dovranno dichiarare, inoltre, sotto la propria responsabilità, ai sensi degli artt. 46 e 47 del D.P.R. 
+445/2000: 
+- se sono o non sono dipendenti dell’INFN indicando il periodo, la sede di lavoro, la tipologia 
+di rapporto di lavoro, il profilo professionale e il livello di inquadramento; 
+- se sono/non sono appartenenti al personale di ruolo, assunto a tempo indeterminato, delle     
+istituzioni di cui al comma 1 dell’articolo 22, della legge 240/2010; 
+- di avere/di non aver fruito di contratti, di cui all'articolo 24 legge 240/2010, nel testo 
+attualmente vigente, alla data di emissione del presente bando per Contratto di Ricerca; 
+- di avere/non avere fruito di contratti da Ricercatore a tempo determinato ai sensi dell’art. 
+36 decreto legislativo 30 marzo 2001 n. 165, alla data di emissione del presente bando per 
+Contratto di Ricerca. 
+ 
+La dichiarazione attestante il possesso dei titoli valutabili si intenderà presentata attraverso l’apposita spunta 
+presente nell’applicazione telematica predisposta per l’invio della domanda di partecipazione. 
+Al termine della compilazione, ogni partecipante riceverà un messaggio automatico di conferma dell’esito 
+positivo della sottomissione della domanda.  
+ 
+Il termine ultimo di presentazione delle domande sarà il giorno 29 dicembre 2025 entro e non oltre le ore 
+23:59:59. 
+ 
+Scaduto il termine stabilito per la presentazione delle domande, l’applicazione telematica non consentirà 
+di inoltrare le candidature. 
+ 
+Le domande incomplete dei dati e degli allegati (files) non verranno prese in considerazione. 
+ 
+Tutti i requisiti e le informazioni devono permanere fino alla data del conferimento del contratto di ricerca, 
+qualsiasi variazione di quanto dichiarato nella domanda di partecipazione dovrà essere tempestivamente 
+comunicata tramite e-mail all’indirizzo di posta elettronica ac.dru.assegni.borse @lists.infn.it. 
+ 
+Al fine della valutazione dei titoli, il/la candidato/a può allegare alla domanda i seguenti documenti dichiarati 
+conformi all’originale, in forma di atto di notorietà, ai sensi dell’art. 47 del D.P.R. 445/2000 (da allegare, in 
+formato pdf, nella domanda telematica nella sezione Allegati): 
+- 
+copie di contratti, incarichi e/o conferimenti ecc. attestanti lo svolgimento di attività presso soggetti 
+pubblici e/o privati; 
+- 
+diplomi di specializzazione e/o attestati di frequenza a corsi di perfezionamento post-laurea, sia in 
+Italia che all’estero.  
+ 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 7 a 9 
+ 
+
+L’INFN si riserva la facoltà di procedere a idonei controlli sulla veridicità di tutte le dichiarazioni sostitutive 
+rese dai candidati. Qualora in esito a detti controlli sia accertata la non veridicità del contenuto delle 
+dichiarazioni, il dichiarante decade dagli eventuali benefici conseguenti i provvedimenti adottati sulla base 
+delle dichiarazioni non veritiere, ferme restando le sanzioni penali previste dall’art. 76 del D.P.R. 445/2000. 
+ 
+Art. 7 Valutazione dei candidati, svolgimento dell’esame colloquio e attribuzione dei punteggi  
+ 
+La Commissione esaminatrice dispone complessivamente di n. 100 punti così ripartiti: 
+• 30 punti per i titoli; 
+• 70 punti per l'esame-colloquio. 
+ 
+Sono idonei all’ammissione in graduatoria unicamente le candidate e i candidati che soddisfino entrambi i 
+seguenti parametri: 
+• Votazione di almeno 49/70 all’esame/colloquio. 
+• Votazione minima totale non inferiore a 70/100 punti 
+ 
+L’esame colloquio si svolgerà nelle modalità che verranno rese note con la pubblicazione dell’elenco degli 
+ammessi. 
+L’elenco degli ammessi sarà pubblicato, almeno quindici giorni prima della discussione, alla pagina web del 
+bando e vale come notifica ufficiale senza obbligo di ulteriore comunicazione dell'INFN. 
+Il candidato o la candidata, ai fini della partecipazione al bando di concorso, può chiedere di espletare l'esame 
+colloquio in videoconferenza. 
+Art. 8 Graduatoria  
+ 
+Al termine del processo di selezione, gli atti del concorso e la relativa graduatoria di merito sono approvati 
+con deliberazione della Giunta Esecutiva dell’INFN, accertata la regolarità della procedura concorsuale. 
+ 
+La graduatoria finale verrà resa pubblica mediante pubblicazione alla pagina web dell’Istituto “Opportunità 
+di lavoro” (https://jobs.dsi.infn.it/) in corrispondenza del bando e, in ogni caso, i candidati/candidate 
+vincitori/vincitrici riceveranno tramite e-mail un'ulteriore comunicazione dell'esito del concorso. 
+ 
+Tale graduatoria, che potrà essere utilizzata per l’eventuale conferimento di Contratti di Ricerca, non è 
+impegnativa per l’Istituto. 
+Art.9 Stipula del contratto 
+ 
+La stipula del contratto di ricerca è deliberata dal Consiglio Direttivo dell’Istituto. 
+Il contratto viene sottoscritto dal Contrattista e dal Presidente dell’INFN. 
+L’attribuzione del Contratto di ricerca oggetto del presente bando sarà effettuata con l’osservanza dei vincoli 
+di spesa individuati dalle disposizioni legislative vigenti in materia. 
+ 
+Art. 10 Referente scientifico del progetto 
+ 
+Il Referente scientifico del progetto è il Dott. Luca Latronico, Dirigente di ricerca della Sezione di Torino 
+dell’INFN. 
+Art. 11 Finanziamento 
+ 
+Il presente concorso pubblico è finanziato con fondi del Progetto ASI_IXPE_E (CDR_ASI_IXPE_E) Accordo 
+Attuativo n. 2024-48-HH.0 dell’Accordo Quadro ASI/INFN “Partecipazione italiana alla missione IXPE della 
+NASA – monitoring delle Detector Unit in orbita e supporto per la Fase E” - CUP F13C24000650005, risorse 
+allocate nel capitolo di spesa U.1.01.01.01.009 (Assegni di Ricerca Fondi Esterni) del Bilancio d'Istituto. 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 8 a 9 
+ 
+
+Art. 12 Parità di Genere 
+ 
+L’INFN garantisce pari opportunità tra uomini e donne per l’accesso al lavoro come previsto dalla legge 10 
+aprile 1991 n. 125, dall’art. 57 del Decreto Legislativo 165/2001 e dagli articoli 42 e 48 del decreto Legislativo 
+198/2006. 
+
+Art. 13 Responsabile del Procedimento 
+ 
+Il responsabile del procedimento di cui al presente avviso, ai sensi e per gli effetti di cui alla Legge 7 agosto 
+1990, n. 241, è il dott. Renato Carletti, Direttore della Direzione Risorse Umane dell’Istituto Nazionale di Fisica 
+Nucleare. 
+ 
+Art 14 Trattamento dei dati personali 
+ 
+Titolare del Trattamento: Istituto Nazionale di Fisica Nucleare: e-mail: presidenza@presid.infn.it 
+Responsabile della Protezione dei Dati: e-mail: dpo@infn.it 
+ 
+In conformità a quanto disposto dall’art. 13 del Regolamento UE 2016/679, i dati personali richiesti saranno 
+raccolti e trattati, anche con l’uso di strumenti informatici, esclusivamente per la gestione delle attività 
+concorsuali e nel rispetto della disciplina legislativa e regolamentare dettata per lo svolgimento di tali attività. 
+ 
+Il conferimento dei dati è necessario per valutare i requisiti di partecipazione ed il possesso dei titoli e la loro 
+mancata indicazione può precludere tale valutazione.  
+ 
+I dati sono conservati per il periodo necessario all’espletamento della procedura selettiva e successivamente 
+trattenuti ai soli fini di archiviazione.  
+ 
+L’INFN garantisce ad ogni interessato l’accesso ai dati personali che lo riguardano, nonché la rettifica la 
+cancellazione e la limitazione degli stessi ed il diritto di opporsi al loro trattamento; garantisce altresì il diritto 
+di proporre reclamo all’Autorità Garante del Trattamento dei dati personali circa il trattamento effettuato. 
+ 
+Art 15 Rinvio 
+ 
+Per ogni altro aspetto non disciplinato dal presente bando, si fa riferimento al Disciplinare per il conferimento 
+dei contratti di ricerca dell’INFN approvato con Deliberazione della Giunta Esecutiva n. 14309 del 15 maggio 
+2025, ratificata con Deliberazione del Consiglio Direttivo n. 17405 del 26 maggio 2025 ed in vigore dal 15 
+maggio 2025, che costituisce parte integrante del presente bando ed è disponibile sul sito INFN nella pagina 
+Amministrazione Trasparente. 
+ 
+Per informazioni si prega di inviare una e-mail al seguente indirizzo di posta elettronica: 
+ac.dru.assegni.borse @lists.infn.it. 
+ 
+Roma, 19 dicembre 2025 
+
+ 
+ISTITUTO NAZIONALE DI FISICA NUCLEARE 
+ 
+Il PRESIDENTE 
+ 
+(Prof. Antonio Zoccoli)1 
+
+RC/ADV 
+
+ 
+1 Documento informatico firmato digitalmente ai sensi della legge 241/90 art. 15 c 2, del testo unico D.P.R. 28 dicembre 2000, n. 445, del D.Lgs. 7 
+marzo 2005, n. 82, e norme collegate, il quale sostituisce il testo cartaceo e la firma autografa 
+
+
+
+ 
+ 
+  
+Direzione Risorse Umane
+Pag. 9 a 9 
+ 
+
+ 
+ 
+ 
+
+allegato n. 1 al bando n. 2 8 3 4 7 /2025 
+ 
+Concorso per titoli ed esame colloquio per n.  1 contratto di ricerca nell’ambito della ricerca scientifica, di 
+durata biennale, Fascia 1 da fruire presso la Sezione di Torino dell’INFN. 
+ 
+ 
+Domanda di partecipazione 
+(da presentare in formato PDF per via telematica mediante l’apposita applicazione disponibile nell’area 
+concorsi dell’Istituto https://reclutamento.dsi.infn.it) 
+ 
+ 
+Al Prof. Antonio ZOCCOLI 
+Presidente dell’INFN 
+Al Dott. Renato CARLETTI 
+Direttore della Direzione Risorse Umane dell’INFN 
+ 
+…. sottoscritt.. …………………………………………………………………………...………, chiede di essere ammess.. a 
+partecipare al concorso pubblico per titoli ed esame colloquio di cui al bando n. 28347/2025 attraverso 
+l’applicazione disponibile nell’area concorsi dell’Istituto (https://reclutamento.dsi.infn.it). 
+ 
+Dichiara di avere allo scopo completato la sottomissione dei documenti previsti dal bando nell’applicazione 
+online nell’area concorsi dell’Istituto, tra cui in particolare: 
+- copia di un documento di riconoscimento in corso di validità; 
+- curriculum dell’attività svolta e dei titoli conseguiti. 
+ 
+…. sottoscritt… consapevole che, ai sensi dell'art. 76 del DPR 445/2000, le dichiarazioni mendaci, la falsità 
+negli atti e l'uso di atti falsi sono puniti ai sensi del codice penale e delle leggi speciali vigenti in materia, 
+dichiara sotto la propria responsabilità: 
+ 
+- che le copie dei documenti allegati in via telematica alla domanda sono conformi agli originali; 
+- che le informazioni contenute nel curriculum presentato rispondono al vero. 
+ 
+ 
+(Luogo e data), ……………………………………. 
+ 
+ 
+In Fede………………………………… 
+ 
+
+
