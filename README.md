@@ -37,6 +37,7 @@ Goal: build an analytics-ready dataset of INFN opportunities (borse, assegni di 
 - [Quick Start](#quick-start)
 - [Commands](#commands)
 - [Sync Option Matrix](#sync-option-matrix)
+- [Runtime Observability](#runtime-observability)
 - [Output Artifacts](#output-artifacts)
 - [Roadmap](#roadmap)
 - [Disclaimer](#disclaimer)
@@ -180,6 +181,19 @@ python3 -m infn_jobs sync --limit-per-tipo 0
 ```
 
 </details>
+
+## Runtime Observability
+
+- Terminal output is intentionally concise during `sync`:
+  - runtime status lines (start, phase completion timings, heartbeat, final summary),
+  - warnings/errors (for example orphan cache files, missing cache, download anomalies).
+- Detailed INFO logs are written per run to `data/logs/sync_<timestamp>.log`.
+- Runtime status contract:
+  - start line includes `source=<mode>` and logfile path,
+  - phase completion lines report elapsed seconds for phases A/B/C/D,
+  - heartbeat is emitted every 250 processed contracts,
+  - final summary reports `processed_contracts` and counters (`ok`, `skipped`, `download_error`, `parse_error`, `other`) plus total elapsed seconds.
+- Throttle guidance remains logged at run end to support safe follow-up runs after pressure signals (`429`, `503`, timeout).
 
 ## Output Artifacts
 

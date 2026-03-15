@@ -142,6 +142,21 @@ src/infn_jobs/
 
 ---
 
+## Runtime Observability Policy
+
+- Logging split:
+  - `data/logs/sync_<timestamp>.log` receives full INFO diagnostics for each run,
+  - terminal shows warning/error records plus runtime-status records (`infn_jobs.runtime.sync`).
+- Runtime status lines emitted by `pipeline/sync.py`:
+  - start line with `source`, logfile path, and heartbeat interval,
+  - phase completion timings for A/B/C/D (or explicit skip lines for early exits),
+  - heartbeat every 250 processed contracts,
+  - final summary with `processed_contracts` and status counters (`ok`, `skipped`, `download_error`, `parse_error`, `other`) plus total elapsed seconds.
+- Counter semantics: `processed_contracts = len(items)` where `items` are discovered sync work items for the current run.
+- Interruption behavior: throttle guidance remains emitted; summary line marks `status=interrupted` with `partial_run=true`.
+
+---
+
 ## Test File Tree (~20 files)
 
 ```

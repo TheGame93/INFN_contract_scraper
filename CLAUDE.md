@@ -114,10 +114,9 @@ src/infn_jobs/
 
 Every module uses `logging.getLogger(__name__)`. No `print()` in library code.
 
-The CLI configures the root handler once:
-```python
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
-```
+The CLI configures root logging once with:
+- one file handler (full INFO stream) writing per-run logs under `data/logs/sync_<timestamp>.log`,
+- one terminal handler filtered to warnings/errors plus runtime-status logger records (`infn_jobs.runtime.*`).
 
 Log every significant I/O event at INFO:
 - Starting a new tipo (`"Fetching tipo Borsa (active)"`)
@@ -125,6 +124,12 @@ Log every significant I/O event at INFO:
 - PDF download outcome (`"PDF 1234: downloaded"` / `"PDF 1234: skipped (no url)"`)
 - pdf_fetch_status result (`"PDF 1234: parse_error"`)
 - Rows built (`"detail_id=1234: 3 position_rows built"`)
+
+Runtime sync progress is emitted on `infn_jobs.runtime.sync`:
+- start line (`source`, logfile path, heartbeat interval),
+- phase completion lines with elapsed seconds for A/B/C/D,
+- heartbeat every 250 processed contracts,
+- final summary counters with total elapsed seconds.
 
 Use DEBUG for internal parsing steps. Use WARNING for recoverable anomalies (unexpected HTML structure, unexpected field value).
 

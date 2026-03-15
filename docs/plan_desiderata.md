@@ -160,6 +160,10 @@ Update `config/settings.py` `TIPOS` dict with verified values before implementin
 - `python3 -m infn_jobs sync --source auto` — local-first; falls back to remote discovery when `calls_raw` is empty.
 - `python3 -m infn_jobs export-csv` — write 4 CSVs to `data/exports/`.
 - Guardrails: if local source is empty, run bootstrap first (`Run sync with --source remote first.`). `--download-only` and `--force-refetch` are invalid with `--source local`.
+- Runtime observability contract:
+  - terminal stays concise (runtime status + warning/error lines only),
+  - each run writes full INFO logs to `data/logs/sync_<timestamp>.log`,
+  - `sync` runtime lines include start/logfile disclosure, phase A/B/C/D elapsed timings, heartbeat every 250 processed contracts, and final summary counters (`ok`, `skipped`, `download_error`, `parse_error`, `other`).
 
 ---
 

@@ -28,7 +28,7 @@
 - [x] Step 1 — Investigation gate and runtime output contract lock (`R01`, `R03`, `R04`, `R06`, `R07`, `R09`)
 - [x] Step 2 — CLI/file logging split and runtime artifact directory wiring (`R01`, `R02`, `R05`, `R10`)
 - [x] Step 3 — Sync runtime heartbeat, phase timings, and final summary counters (`R03`, `R04`, `R06`, `R07`, `R08`)
-- [ ] Step 4 — Regression tests and docs synchronization (`R08`, `R09`, `R10`, `R11`)
+- [x] Step 4 — Regression tests and docs synchronization (`R08`, `R09`, `R10`, `R11`)
 
 ## Step 1 — Investigation gate and runtime output contract lock (`R01`, `R03`, `R04`, `R06`, `R07`, `R09`)
 ### 1.0 Pre-check findings and mitigations
@@ -206,6 +206,10 @@
 - Resolution `S4-F01`: update command docs and runtime artifacts section with explicit expectations.
 - Finding `S4-F02`: conventions doc currently states CLI config via `basicConfig(INFO)`; this will drift after handler refactor.
 - Resolution `S4-F02`: update `CLAUDE.md` logging standard to match final architecture.
+- Finding `S4-F03`: README currently documents sync source modes but not runtime heartbeat/phase-summary terminal lines, leaving operators without observability expectations.
+- Resolution `S4-F03`: add a dedicated runtime observability section in README with terminal-vs-logfile behavior and heartbeat cadence.
+- Finding `S4-F04`: implementation/design plans list sync semantics but omit the new runtime-output contract, risking future drift between docs and regression tests.
+- Resolution `S4-F04`: align `plan_desiderata.md` and `plan_implementation.md` with concise runtime-output expectations (start/logfile disclosure, phase timing lines, summary counters).
 
 ### 4.1 Update docs for new runtime-observability behavior
 - Target files to edit/create:
