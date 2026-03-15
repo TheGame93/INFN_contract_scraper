@@ -113,7 +113,7 @@ python3 -m infn_jobs export-csv
 | Command | Purpose |
 | --- | --- |
 | `python3 -m infn_jobs sync` | Parse local DB/cache entries (default `source=local`) |
-| `python3 -m infn_jobs sync --source remote` | Re-discover from network and materialize cache |
+| `python3 -m infn_jobs sync --source remote` | Use local files + download new ones |
 | `python3 -m infn_jobs sync --source auto` | Use local first; fallback to remote if DB is empty |
 | `python3 -m infn_jobs export-csv` | Rebuild curated tables and export the 4 CSV files |
 
