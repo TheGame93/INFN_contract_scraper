@@ -923,7 +923,10 @@ def test_sync_runtime_logs_phase_timings_and_summary_for_dry_run(tmp_path: Path,
         patch("infn_jobs.pipeline.sync.download", return_value=runtime_pdf),
         patch("infn_jobs.pipeline.sync.extract_text", return_value=("", TextQuality.NO_TEXT)),
         patch("infn_jobs.pipeline.sync.build_rows", return_value=([], None)),
-        patch("infn_jobs.pipeline.sync._resolve_runtime_logfile_path", return_value="/tmp/sync.log"),
+        patch(
+            "infn_jobs.pipeline.sync._resolve_runtime_logfile_path",
+            return_value="/tmp/sync.log",
+        ),
         caplog.at_level("INFO", logger="infn_jobs.runtime.sync"),
     ):
         run_sync(conn, source="remote", dry_run=True, force_refetch=False)
@@ -972,6 +975,36 @@ def test_sync_runtime_logs_heartbeat_every_250_processed_contracts(caplog) -> No
         "Sync summary: status=completed partial_run=false processed_contracts=251 "
         "ok=0 skipped=251 download_error=0 parse_error=0 other=0"
     ) in caplog.text
+
+
+def test_sync_runtime_logs_heartbeat_for_phase_c_and_d(tmp_path: Path, caplog) -> None:
+    """run_sync must emit heartbeat lines for Phase C and Phase D on discovered items."""
+    conn = _make_conn(tmp_path)
+    calls = [
+        CallRaw(
+            detail_id=f"phase-cd-{i}",
+            source_tipo="Borsa",
+            listing_status="active",
+            pdf_url=None,
+        )
+        for i in range(251)
+    ]
+    with (
+        patch("infn_jobs.pipeline.sync.get_session", return_value=Mock()),
+        patch("infn_jobs.pipeline.sync.init_data_dirs"),
+        patch("infn_jobs.pipeline.sync.TIPOS", ["Borsa"]),
+        patch("infn_jobs.pipeline.sync.fetch_all_calls", return_value=calls),
+        caplog.at_level("INFO", logger="infn_jobs.runtime.sync"),
+    ):
+        run_sync(conn, source="remote", dry_run=False, force_refetch=False)
+
+    runtime_messages = [
+        rec.getMessage() for rec in caplog.records if rec.name == "infn_jobs.runtime.sync"
+    ]
+    assert "Sync heartbeat: processed_contracts=250/251" in runtime_messages
+    assert "Phase C heartbeat: processed_contracts=250/251" in runtime_messages
+    assert "Phase D heartbeat: processed_contracts=250/251" in runtime_messages
+    conn.close()
 
 
 def test_sync_logs_throttle_reminder_on_keyboard_interrupt(caplog):

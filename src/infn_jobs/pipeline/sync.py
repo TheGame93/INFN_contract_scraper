@@ -240,41 +240,58 @@ def _materialize_cache_paths(
                 progress_callback(processed_count, total_items)
 
 
-def _parse_materialized_pdfs(items: list[_SyncWorkItem]) -> None:
+def _parse_materialized_pdfs(
+    items: list[_SyncWorkItem],
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> None:
     """Phase C: parse materialized PDFs into position rows."""
-    for item in items:
-        if item.pdf_path is None:
-            continue
-
-        call = item.call
-        if call.detail_id is None:
-            continue
-
-        detail_id = call.detail_id
-        logger.info("Processing detail_id=%s", detail_id)
-        anno = int(call.anno) if call.anno and call.anno.isdigit() else None
-
+    total_items = len(items)
+    for processed_count, item in enumerate(items, start=1):
         try:
-            text, text_quality_enum = extract_text(item.pdf_path)
-        except RuntimeError:
-            call.pdf_fetch_status = "parse_error"
-            logger.info("PDF %s: parse_error", detail_id)
-            continue
+            if item.pdf_path is None:
+                continue
 
-        text_quality = text_quality_enum.value
-        item.rows, pdf_call_title = build_rows(text, detail_id, text_quality, anno)
-        call.pdf_call_title = pdf_call_title
-        call.pdf_fetch_status = "ok"
-        logger.info("detail_id=%s: %d position_rows built", detail_id, len(item.rows))
-        logger.info("PDF %s: ok", detail_id)
+            call = item.call
+            if call.detail_id is None:
+                continue
+
+            detail_id = call.detail_id
+            logger.info("Processing detail_id=%s", detail_id)
+            anno = int(call.anno) if call.anno and call.anno.isdigit() else None
+
+            try:
+                text, text_quality_enum = extract_text(item.pdf_path)
+            except RuntimeError:
+                call.pdf_fetch_status = "parse_error"
+                logger.info("PDF %s: parse_error", detail_id)
+                continue
+
+            text_quality = text_quality_enum.value
+            item.rows, pdf_call_title = build_rows(text, detail_id, text_quality, anno)
+            call.pdf_call_title = pdf_call_title
+            call.pdf_fetch_status = "ok"
+            logger.info("detail_id=%s: %d position_rows built", detail_id, len(item.rows))
+            logger.info("PDF %s: ok", detail_id)
+        finally:
+            if progress_callback is not None:
+                progress_callback(processed_count, total_items)
 
 
-def _persist_sync_results(conn: sqlite3.Connection, items: list[_SyncWorkItem]) -> None:
+def _persist_sync_results(
+    conn: sqlite3.Connection,
+    items: list[_SyncWorkItem],
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> None:
     """Phase D: persist discovered calls and parsed rows, then rebuild curated tables."""
-    for item in items:
-        upsert_call(conn, item.call)
-        if item.rows:
-            upsert_position_rows(conn, item.rows)
+    total_items = len(items)
+    for processed_count, item in enumerate(items, start=1):
+        try:
+            upsert_call(conn, item.call)
+            if item.rows:
+                upsert_position_rows(conn, item.rows)
+        finally:
+            if progress_callback is not None:
+                progress_callback(processed_count, total_items)
 
     logger.info("Rebuilding curated tables after sync")
     rebuild_curated(conn)
@@ -306,6 +323,16 @@ def run_sync(
         """Emit deterministic runtime heartbeat every fixed interval."""
         if processed % _HEARTBEAT_INTERVAL == 0:
             runtime_logger.info("Sync heartbeat: processed_contracts=%d/%d", processed, total)
+
+    def _phase_c_heartbeat(processed: int, total: int) -> None:
+        """Emit deterministic Phase C heartbeat every fixed interval."""
+        if processed % _HEARTBEAT_INTERVAL == 0:
+            runtime_logger.info("Phase C heartbeat: processed_contracts=%d/%d", processed, total)
+
+    def _phase_d_heartbeat(processed: int, total: int) -> None:
+        """Emit deterministic Phase D heartbeat every fixed interval."""
+        if processed % _HEARTBEAT_INTERVAL == 0:
+            runtime_logger.info("Phase D heartbeat: processed_contracts=%d/%d", processed, total)
 
     try:
         phase_started_at = time.monotonic()
@@ -357,7 +384,7 @@ def run_sync(
 
         phase_started_at = time.monotonic()
         logger.info("Phase C: parse materialized PDFs")
-        _parse_materialized_pdfs(items)
+        _parse_materialized_pdfs(items, progress_callback=_phase_c_heartbeat)
         runtime_logger.info(
             "Phase C complete: parsed_contracts=%d elapsed_s=%.2f",
             len(items),
@@ -371,7 +398,7 @@ def run_sync(
 
         phase_started_at = time.monotonic()
         logger.info("Phase D: persist calls and rows")
-        _persist_sync_results(conn, items)
+        _persist_sync_results(conn, items, progress_callback=_phase_d_heartbeat)
         runtime_logger.info(
             "Phase D complete: persisted_contracts=%d elapsed_s=%.2f",
             len(items),
