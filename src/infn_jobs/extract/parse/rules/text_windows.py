@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -13,12 +14,23 @@ class TextWindow:
     evidence: str
 
 
+def iter_nonempty_lines(segment_text: str) -> tuple[str, ...]:
+    """Return normalized non-empty lines preserving source order."""
+    lines: list[str] = []
+    for raw_line in segment_text.splitlines():
+        # Collapse internal spacing so wrapped tokens are matched consistently.
+        normalized = re.sub(r"\s+", " ", raw_line.strip())
+        if normalized:
+            lines.append(normalized)
+    return tuple(lines)
+
+
 def iter_adjacent_line_windows(segment_text: str, max_lines: int = 2) -> tuple[TextWindow, ...]:
     """Return deterministic adjacent-line windows from non-empty segment lines."""
     if max_lines < 1:
         raise ValueError("max_lines must be >= 1")
 
-    lines = tuple(line.strip() for line in segment_text.splitlines() if line.strip())
+    lines = iter_nonempty_lines(segment_text)
     windows: list[TextWindow] = []
     for start in range(len(lines)):
         for size in range(1, max_lines + 1):

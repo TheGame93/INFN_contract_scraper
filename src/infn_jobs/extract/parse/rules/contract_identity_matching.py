@@ -48,14 +48,11 @@ def _select_primary_contract_match(
     segment_text: str,
     profiles: tuple[ContractProfile, ...],
 ) -> tuple[str, str, str] | None:
-    """Return first line contract match as `(canonical, raw, evidence)`."""
-    for line in segment_text.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
+    """Return first contract match as `(canonical, raw, evidence)` across short windows."""
+    for window in iter_adjacent_line_windows(segment_text, max_lines=2):
         line_candidates: list[tuple[int, str, str]] = []
         for profile in profiles:
-            raw_match, _ = _first_match(stripped, profile.contract_type_patterns)
+            raw_match, _ = _first_match(window.text, profile.contract_type_patterns)
             if raw_match is None:
                 continue
             line_candidates.append(
@@ -63,5 +60,5 @@ def _select_primary_contract_match(
             )
         if line_candidates:
             _, canonical, raw = min(line_candidates, key=lambda item: (item[0], item[1]))
-            return canonical, raw, stripped
+            return canonical, raw, window.evidence
     return None

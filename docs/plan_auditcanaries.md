@@ -10,7 +10,7 @@ Update each canary table so it compares:
 Legend rule: `⚪` only when CODEX value is `NOT_REVIEWED`.
 
 Canary scope (fixed list for this audit run):
-- `4507`, `4476`, `4490`, `4493`, `4484`, `4456`, `4358`, `4223`, `4302`
+- `4507`, `4476`, `4490`, `4493`, `4484`, `4456`, `4358`, `4223`, `4302`, `4441`, `4458`
 - Audit ONLY these detail_ids, in this order.
 
 Hard constraints:
@@ -83,7 +83,7 @@ Comparison rules:
 
 Execution:
 1) Read existing markdown.
-2) Confirm only the fixed canary list is audited: `4507, 4476, 4490, 4493, 4484, 4456, 4358, 4223, 4302`.
+2) Confirm only the fixed canary list is audited: `4507, 4476, 4490, 4493, 4484, 4456, 4358, 4223, 4302, 4441, 4458`.
 3) Validate provenance by reading these source files before declaring provenance updated:
    - `src/infn_jobs/store/spec/position_rows.py`
    - `src/infn_jobs/domain/position.py`

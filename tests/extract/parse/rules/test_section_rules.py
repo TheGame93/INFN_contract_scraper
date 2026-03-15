@@ -46,3 +46,10 @@ def test_resolve_section_trims_trailing_finanziato_clause() -> None:
     )
     result = resolve_section(segment_text=segment)
     assert result.value == "Sezione di Bologna dell'I.N.F.N."
+
+
+def test_resolve_section_supports_split_tokens_across_lines() -> None:
+    """Section rules should resolve values when 'Sezione di' wraps to next line."""
+    segment = "attività da usufruire presso la Sezione di\nPisa dell’INFN.\n"
+    result = resolve_section(segment_text=segment)
+    assert result.value == "Sezione di Pisa dell’INFN."

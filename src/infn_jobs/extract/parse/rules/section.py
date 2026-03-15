@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from infn_jobs.extract.parse.rules.executor import execute_rules
 from infn_jobs.extract.parse.rules.models import ExecutionResult, RuleContext, RuleDefinition
+from infn_jobs.extract.parse.rules.text_windows import iter_adjacent_line_windows
 
 _SECTION_PATTERNS: tuple[str, ...] = (
     r"\bSezi?one\s+di\s+.+?(?=(?:\s+(?:sul|sulla|sui|finanziat\w*|nell['\u2019]ambito)\b|$))",
@@ -30,14 +31,11 @@ def _first_match(
 ) -> tuple[str | None, str | None]:
     """Return first `(value, evidence_line)` for section patterns, else `(None, None)`."""
     patterns = tuple(re.compile(pattern, re.IGNORECASE) for pattern in pattern_texts)
-    for line in segment_text.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
+    for window in iter_adjacent_line_windows(segment_text, max_lines=2):
         for pattern in patterns:
-            match = pattern.search(stripped)
+            match = pattern.search(window.text)
             if match:
-                return _clean_match(match.group(0)), stripped
+                return _clean_match(match.group(0)), window.evidence
     return None, None
 
 

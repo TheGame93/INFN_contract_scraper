@@ -71,3 +71,15 @@ def test_resolve_contract_identity_supports_multiline_subtype_tokens() -> None:
     assert result.contract_subtype_raw == "Fascia III"
     assert result.contract_subtype_evidence is not None
     assert "Fascia III" in result.contract_subtype_evidence
+
+
+def test_resolve_contract_identity_supports_split_contract_type_tokens() -> None:
+    """Type rules should resolve when contract-type tokens are split across lines."""
+    result = resolve_contract_identity(
+        segment_text="CONTRATTO DI\nRICERCA\nFascia\n1\nSezione di Pisa",
+        anno=2026,
+    )
+    assert result.contract_type == "Contratto di ricerca"
+    assert result.contract_type_raw == "CONTRATTO DI RICERCA"
+    assert result.contract_subtype == "Fascia 1"
+    assert result.contract_subtype_raw == "Fascia 1"

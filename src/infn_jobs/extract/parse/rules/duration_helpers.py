@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import re
 
+from infn_jobs.extract.parse.rules.text_windows import (
+    iter_nonempty_lines as iter_normalized_nonempty_lines,
+)
+
 _LABEL_RE = re.compile(
     r"(?:Durata|Periodo|per\s+la\s+durata\s+di|della\s+durata\s+di)\s*:?\s*(.+)",
     re.IGNORECASE,
@@ -23,7 +27,7 @@ _GUARD_CONTEXT_RE = re.compile(r"\b(?:durata|periodo|rinnovabile|usufruire)\b", 
 
 def iter_nonempty_lines(text: str) -> tuple[str, ...]:
     """Return non-empty stripped lines preserving source order."""
-    return tuple(line.strip() for line in text.splitlines() if line.strip())
+    return iter_normalized_nonempty_lines(text)
 
 
 def extract_labeled_value_text(segment_text: str) -> tuple[str, str] | None:
