@@ -22,10 +22,12 @@ docs/old_docs/
 data/infn_jobs.db
 data/pdf_cache/*.pdf
 data/exports/*.csv
+data/logs/*.log
 
 # Keep directory skeleton tracked
 !data/pdf_cache/.gitkeep
 !data/exports/.gitkeep
+!data/logs/.gitkeep
 
 # Testing
 .pytest_cache/

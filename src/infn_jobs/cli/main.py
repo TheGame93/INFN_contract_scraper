@@ -1,14 +1,60 @@
 """CLI entry point: argument parser and main dispatcher."""
 
 import argparse
+import datetime
 import logging
 import sys
+from pathlib import Path
 
 from infn_jobs.cli import cmd_export, cmd_sync
 from infn_jobs.cli.update_check import maybe_handle_startup_update_check
-from infn_jobs.config.settings import init_data_dirs
+from infn_jobs.config.settings import LOG_DIR, init_data_dirs
 
 logger = logging.getLogger(__name__)
+_LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
+_RUNTIME_LOGGER_PREFIX = "infn_jobs.runtime"
+
+
+class _TerminalLogFilter(logging.Filter):
+    """Allow only warnings/errors and runtime-status records on terminal."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Return True for terminal-visible records."""
+        if record.levelno >= logging.WARNING:
+            return True
+        return record.name.startswith(_RUNTIME_LOGGER_PREFIX)
+
+
+def _build_sync_logfile_path() -> Path:
+    """Return one deterministic per-run logfile path under data/logs."""
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    return LOG_DIR / f"sync_{timestamp}.log"
+
+
+def _configure_logging() -> Path:
+    """Configure root logging with a file sink and filtered terminal sink."""
+    logfile_path = _build_sync_logfile_path()
+    formatter = logging.Formatter(_LOG_FORMAT)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    for handler in tuple(root_logger.handlers):
+        root_logger.removeHandler(handler)
+        handler.close()
+
+    file_handler = logging.FileHandler(logfile_path, encoding="utf-8")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+
+    terminal_handler = logging.StreamHandler()
+    terminal_handler.setLevel(logging.INFO)
+    terminal_handler.setFormatter(formatter)
+    terminal_handler.addFilter(_TerminalLogFilter())
+
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(terminal_handler)
+    return logfile_path
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,10 +108,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run() -> None:
     """Configure logging, parse arguments, and dispatch to the selected subcommand."""
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
     if not maybe_handle_startup_update_check():
         return
     init_data_dirs()
+    logfile_path = _configure_logging()
+    logger.info("Detailed sync logs will be written to %s", logfile_path)
     parser = build_parser()
     args = parser.parse_args()
     try:

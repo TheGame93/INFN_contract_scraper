@@ -15,6 +15,7 @@ DATA_DIR: Path = PROJECT_ROOT / "data"
 DB_PATH: Path = DATA_DIR / "infn_jobs.db"
 EXPORT_DIR: Path = DATA_DIR / "exports"
 PDF_CACHE_DIR: Path = DATA_DIR / "pdf_cache"
+LOG_DIR: Path = DATA_DIR / "logs"
 
 RATE_LIMIT_JITTER_MIN: float = 2.0
 RATE_LIMIT_JITTER_MAX: float = 3.0
@@ -27,3 +28,4 @@ def init_data_dirs() -> None:
     """Create data subdirectories if they do not exist. Idempotent."""
     PDF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)

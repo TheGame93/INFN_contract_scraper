@@ -26,7 +26,7 @@
 
 ## Implementation Checklist
 - [x] Step 1 — Investigation gate and runtime output contract lock (`R01`, `R03`, `R04`, `R06`, `R07`, `R09`)
-- [ ] Step 2 — CLI/file logging split and runtime artifact directory wiring (`R01`, `R02`, `R05`, `R10`)
+- [x] Step 2 — CLI/file logging split and runtime artifact directory wiring (`R01`, `R02`, `R05`, `R10`)
 - [ ] Step 3 — Sync runtime heartbeat, phase timings, and final summary counters (`R03`, `R04`, `R06`, `R07`, `R08`)
 - [ ] Step 4 — Regression tests and docs synchronization (`R08`, `R09`, `R10`, `R11`)
 
@@ -112,6 +112,12 @@
 - Resolution `S2-F01`: keep warning/error flow on terminal via explicit stream handler thresholds/filters; verify with focused tests.
 - Finding `S2-F02`: logging setup is currently centralized in `cli/main.py`; adding complex setup can bloat `run()`.
 - Resolution `S2-F02`: keep orchestration in CLI layer and extract dedicated helper(s) with clear docstrings.
+- Finding `S2-F03`: repeated `run()` calls in the same interpreter (unit tests) can accumulate root handlers and duplicate log emission.
+- Resolution `S2-F03`: clear and close existing root handlers before attaching the new terminal/file handlers.
+- Finding `S2-F04`: second-level timestamp naming can collide when multiple sync runs start within the same second.
+- Resolution `S2-F04`: use higher-resolution timestamp suffix for logfile naming (microseconds) to keep per-run paths deterministic and unique.
+- Finding `S2-F05`: configuring file logging before runtime directories exist risks `FileHandler` failures.
+- Resolution `S2-F05`: ensure `init_data_dirs()` is executed before logging handler setup in CLI run flow.
 
 ### 2.1 Add log artifact directory + deterministic logfile naming inputs
 - Target files to edit/create:

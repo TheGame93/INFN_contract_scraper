@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import argparse
+import logging
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 from infn_jobs.cli import cmd_export, cmd_sync
-from infn_jobs.cli.main import build_parser, run
+from infn_jobs.cli.main import (
+    _build_sync_logfile_path,
+    _configure_logging,
+    _TerminalLogFilter,
+    build_parser,
+    run,
+)
 from infn_jobs.config.settings import DB_PATH, EXPORT_DIR
 
 
@@ -62,9 +70,9 @@ def test_run_dispatches_to_selected_command():
     parser.parse_args.return_value = args
 
     with (
-        patch("infn_jobs.cli.main.logging.basicConfig"),
         patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=True),
         patch("infn_jobs.cli.main.init_data_dirs"),
+        patch("infn_jobs.cli.main._configure_logging"),
         patch("infn_jobs.cli.main.build_parser", return_value=parser),
     ):
         run()
@@ -80,9 +88,9 @@ def test_run_fatal_error_exits_with_code_1(capsys):
     parser.parse_args.return_value = argparse.Namespace(func=_boom)
 
     with (
-        patch("infn_jobs.cli.main.logging.basicConfig"),
         patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=True),
         patch("infn_jobs.cli.main.init_data_dirs"),
+        patch("infn_jobs.cli.main._configure_logging"),
         patch("infn_jobs.cli.main.build_parser", return_value=parser),
         pytest.raises(SystemExit) as exc_info,
     ):
@@ -97,15 +105,74 @@ def test_run_stops_when_update_check_returns_false():
     parser = Mock()
 
     with (
-        patch("infn_jobs.cli.main.logging.basicConfig"),
         patch("infn_jobs.cli.main.maybe_handle_startup_update_check", return_value=False),
         patch("infn_jobs.cli.main.init_data_dirs") as init_data_dirs_mock,
+        patch("infn_jobs.cli.main._configure_logging") as configure_logging_mock,
         patch("infn_jobs.cli.main.build_parser", return_value=parser),
     ):
         run()
 
     init_data_dirs_mock.assert_not_called()
+    configure_logging_mock.assert_not_called()
     parser.parse_args.assert_not_called()
+
+
+def test_terminal_log_filter_allows_only_runtime_info_or_warnings() -> None:
+    log_filter = _TerminalLogFilter()
+
+    generic_info = logging.makeLogRecord(
+        {"name": "infn_jobs.pipeline.sync", "levelno": logging.INFO, "msg": "generic"}
+    )
+    runtime_info = logging.makeLogRecord(
+        {"name": "infn_jobs.runtime.sync", "levelno": logging.INFO, "msg": "runtime"}
+    )
+    warning = logging.makeLogRecord(
+        {"name": "infn_jobs.pipeline.sync", "levelno": logging.WARNING, "msg": "warn"}
+    )
+
+    assert log_filter.filter(generic_info) is False
+    assert log_filter.filter(runtime_info) is True
+    assert log_filter.filter(warning) is True
+
+
+def test_build_sync_logfile_path_uses_logs_dir(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("infn_jobs.cli.main.LOG_DIR", tmp_path)
+
+    logfile_path = _build_sync_logfile_path()
+
+    assert logfile_path.parent == tmp_path
+    assert logfile_path.name.startswith("sync_")
+    assert logfile_path.suffix == ".log"
+
+
+def test_configure_logging_adds_file_and_terminal_handlers(
+    tmp_path: Path, monkeypatch
+) -> None:
+    logfile = tmp_path / "sync_test.log"
+    monkeypatch.setattr("infn_jobs.cli.main._build_sync_logfile_path", lambda: logfile)
+
+    root_logger = logging.getLogger()
+    previous_handlers = tuple(root_logger.handlers)
+    previous_level = root_logger.level
+    try:
+        configured_path = _configure_logging()
+        assert configured_path == logfile
+        assert logfile.exists()
+        assert root_logger.level == logging.INFO
+        assert any(isinstance(handler, logging.FileHandler) for handler in root_logger.handlers)
+        assert any(
+            isinstance(handler, logging.StreamHandler)
+            and not isinstance(handler, logging.FileHandler)
+            for handler in root_logger.handlers
+        )
+        assert len(root_logger.handlers) == 2
+    finally:
+        for handler in tuple(root_logger.handlers):
+            root_logger.removeHandler(handler)
+            handler.close()
+        for handler in previous_handlers:
+            root_logger.addHandler(handler)
+        root_logger.setLevel(previous_level)
 
 
 @pytest.mark.parametrize(
