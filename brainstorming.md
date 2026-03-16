@@ -21,12 +21,7 @@ If something important change in the code, review the command /review-full-code
 
 ## Codex
 
-0. Your next reader is not the implementer. Your next reader is a planning agent.
-Write a planner-ready specification in natural language only. No code, no bullet points, no numbered lists, no markdown headings.
-Explain exactly what should be built or refactored, why it is needed, what the end state should look like, which areas of the repository are expected to be touched, how logic and responsibilities should be organized, what inputs/outputs/side effects matter, what constraints must be respected, and which risks or edge cases the planner must account for.
-Do not describe how to implement it step by step. Describe what is wanted, the intended architecture, and the expected behavior with enough precision for the planner to produce a detailed implementation plan.
-Include any repository conventions, architectural constraints, or internal rules that the planning agent must respect.
-
+0. Your next reader is not the implementer. Your next reader is a planning agent. Write a planner-ready specification in natural language only. No code, no bullet points, no numbered lists, no markdown headings. Explain exactly what should be built or refactored, why it is needed, what the end state should look like, which areas of the repository are expected to be touched, how logic and responsibilities should be organized, what inputs/outputs/side effects matter, what constraints must be respected, and which risks or edge cases the planner must account for. Do not describe how to implement it step by step. Describe what is wanted, the intended architecture, and the expected behavior with enough precision for the planner to produce a detailed implementation plan. Include any repository conventions, architectural constraints, or internal rules that the planning agent must respect.
 1. Plan with `docs/codex_planning.md`, creating `plan_codex_N.md`
 2. Implement it with `docs/codex_instructions.md`
 3. Review it with `docs/codex_reviewing.md`, creating `docs/plan_codex_N_codexreview.md`

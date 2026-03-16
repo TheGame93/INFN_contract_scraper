@@ -21,6 +21,7 @@ docs/old_docs/
 # Data — runtime artifacts (never commit)
 data/infn_jobs.db
 data/pdf_cache/*.pdf
+data/*backup
 data/exports/*.csv
 data/logs/*.log
 
