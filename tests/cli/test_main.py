@@ -52,10 +52,11 @@ def test_build_parser_sync_flags():
     assert args.force_refetch is True
 
 
-def test_build_parser_sync_auto_source():
+def test_build_parser_sync_rejects_auto_source():
+    """--source auto must be rejected by argparse since it was removed."""
     parser = build_parser()
-    args = parser.parse_args(["sync", "--source", "auto"])
-    assert args.source == "auto"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["sync", "--source", "auto"])
 
 
 def test_build_parser_export_csv_subcommand():
@@ -264,13 +265,6 @@ def test_cmd_sync_execute_db_lifecycle_success():
             dry_run=True,
             force_refetch=True,
         ),
-        argparse.Namespace(
-            source="auto",
-            limit_per_tipo=2,
-            download_only=True,
-            dry_run=True,
-            force_refetch=False,
-        ),
     ],
 )
 def test_cmd_sync_execute_accepts_valid_source_combinations(args: argparse.Namespace):
@@ -320,7 +314,7 @@ def test_cmd_sync_execute_closes_db_on_error():
 def test_cmd_sync_execute_closes_db_on_keyboard_interrupt():
     conn = Mock()
     args = argparse.Namespace(
-        source="auto",
+        source="remote",
         limit_per_tipo=2,
         download_only=True,
         dry_run=False,

@@ -15,7 +15,9 @@ _FIXTURE = Path("tests/fixtures/pdf_text/canary/detail_4358.txt")
 
 def test_4358_listing_tipo_mismatch_keeps_pdf_semantics(tmp_db, tmp_path: Path) -> None:
     """PDF parsing must classify 4358 as Contratto di ricerca despite listing tipo mismatch."""
-    local_pdf = tmp_path / "4358.pdf"
+    pdf_cache = tmp_path / "pdf_cache"
+    pdf_cache.mkdir()
+    local_pdf = pdf_cache / "4358.pdf"
     local_pdf.write_bytes(b"%PDF-1.4 test")
     upsert_call(
         tmp_db,
@@ -30,9 +32,12 @@ def test_4358_listing_tipo_mismatch_keeps_pdf_semantics(tmp_db, tmp_path: Path) 
     )
 
     parsed_text = _FIXTURE.read_text(encoding="utf-8")
-    with patch(
-        "infn_jobs.pipeline.sync.extract_text",
-        return_value=(parsed_text, TextQuality.OCR_CLEAN),
+    with (
+        patch("infn_jobs.pipeline.sync.PDF_CACHE_DIR", pdf_cache),
+        patch(
+            "infn_jobs.pipeline.sync.extract_text",
+            return_value=(parsed_text, TextQuality.OCR_CLEAN),
+        ),
     ):
         run_sync(tmp_db, source="local", dry_run=False, force_refetch=False)
 
