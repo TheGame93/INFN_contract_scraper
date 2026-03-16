@@ -104,7 +104,7 @@ python3 -m infn_jobs export-csv
 ### 5. Routine updates
 
 ```bash
-python3 -m infn_jobs sync --source auto
+python3 -m infn_jobs sync
 python3 -m infn_jobs export-csv
 ```
 
@@ -112,9 +112,8 @@ python3 -m infn_jobs export-csv
 
 | Command | Purpose |
 | --- | --- |
-| `python3 -m infn_jobs sync` | Parse local DB/cache entries (default `source=local`) |
-| `python3 -m infn_jobs sync --source remote` | Use local files + download new ones |
-| `python3 -m infn_jobs sync --source auto` | Use local first; fallback to remote if DB is empty |
+| `python3 -m infn_jobs sync` | Filesystem-driven discovery from `pdf_cache/` (default `source=local`) |
+| `python3 -m infn_jobs sync --source remote` | Local cache + fetch new contracts from website |
 | `python3 -m infn_jobs export-csv` | Rebuild curated tables and export the 4 CSV files |
 
 Set `INFN_JOBS_SKIP_UPDATE_CHECK=1` to disable the startup update prompt.
@@ -123,24 +122,27 @@ Set `INFN_JOBS_SKIP_UPDATE_CHECK=1` to disable the startup update prompt.
 
 | Flag | Default | Notes |
 | --- | --- | --- |
-| `--source {local,remote,auto}` | `local` | Discovery + cache strategy |
+| `--source {local,remote}` | `local` | Discovery + cache strategy |
 | `--dry-run` | `False` | Parse only; skip DB writes |
-| `--force-refetch` | `False` | Re-download PDFs (remote/auto flows) |
+| `--force-refetch` | `False` | Re-download PDFs (remote flows only) |
 | `--download-only` | `False` | Build cache only; skip parse and DB writes (`--dry-run` has no extra effect) |
 | `--limit-per-tipo N` | `None` | Positive integer, used in remote discovery flows |
 
 <details>
 <summary><strong>Source behavior details</strong></summary>
 
-### `source=local`
+### `source=local` (default)
 
 ```bash
 python3 -m infn_jobs sync
 python3 -m infn_jobs sync --dry-run
 ```
 
-- Uses DB/cache only.
-- If DB is empty, run one remote bootstrap first.
+- Globs `data/pdf_cache/*.pdf` to discover contracts — no network access.
+- Loads existing metadata from DB when available; creates a minimal entry for new PDFs.
+- After writing, prunes stale `calls_raw` entries whose PDF is no longer in the cache.
+- Empty-cache safety: if `pdf_cache/` contains no PDFs the prune is skipped (DB left intact).
+- First run on an empty cache: use `--source remote` first to populate the cache.
 
 ### `source=remote`
 
@@ -152,20 +154,10 @@ python3 -m infn_jobs sync --source remote --limit-per-tipo 20
 python3 -m infn_jobs sync --source remote --download-only
 ```
 
-- Always re-discovers calls from network.
-- Materializes PDF cache through downloader.
-
-### `source=auto`
-
-```bash
-python3 -m infn_jobs sync --source auto
-python3 -m infn_jobs sync --source auto --force-refetch
-python3 -m infn_jobs sync --source auto --limit-per-tipo 20
-```
-
-- Uses local DB first.
-- Falls back to remote discovery only when local DB is empty.
-- Downloads missing/invalid cache files when URLs are available.
+- Starts with the local cache scan (same as `source=local`), then fetches new contracts from the website.
+- Deduplicates: already-cached PDFs are not re-downloaded.
+- Downloads only new contracts; merges with local cache set.
+- Prunes stale DB entries after writing.
 
 </details>
 
@@ -186,7 +178,7 @@ python3 -m infn_jobs sync --limit-per-tipo 0
 
 - Terminal output is intentionally concise during `sync`:
   - runtime status lines (start, phase completion timings, heartbeat, final summary),
-  - warnings/errors (for example orphan cache files, missing cache, download anomalies).
+  - warnings/errors (for example zero-byte cache files, missing cache, download anomalies).
 - Detailed INFO logs are written per run to `data/logs/sync_<timestamp>.log`.
 - Runtime status contract:
   - start line includes `source=<mode>` and logfile path,

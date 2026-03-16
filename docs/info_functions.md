@@ -237,6 +237,7 @@ Fields per entry: `name | parent | inputs | output | description`
 - `rebuild_curated` | `infn_jobs.store.export.curate` | `conn: sqlite3.Connection` | `None` | Rebuild calls_curated from the employment-like filter.
 
 ## `src/infn_jobs/store/read.py`
+- `load_call_by_detail_id` | `infn_jobs.store.read` | `conn: sqlite3.Connection`, `detail_id: str` | `CallRaw | None` | Return the CallRaw for a given detail_id, or None if not found.
 - `list_calls_for_pdf_processing` | `infn_jobs.store.read` | `conn: sqlite3.Connection` | `list[CallRaw]` | Return calls with detail_id set, ordered deterministically for PDF processing.
 
 ## `src/infn_jobs/store/schema.py`
@@ -259,5 +260,6 @@ Fields per entry: `name | parent | inputs | output | description`
 - `column_names` | `ViewSpec` | — | `tuple[str, ...]` | Return ordered output column names for this view.
 
 ## `src/infn_jobs/store/upsert.py`
+- `prune_stale_entries` | `infn_jobs.store.upsert` | `conn: sqlite3.Connection`, `active_detail_ids: set[str]` | `int` | Delete calls_raw and position_rows rows whose detail_id is not in active_detail_ids.
 - `upsert_call` | `infn_jobs.store.upsert` | `conn: sqlite3.Connection`, `call: CallRaw` | `None` | Upsert a CallRaw into calls_raw. Preserves first_seen_at on update.
 - `upsert_position_rows` | `infn_jobs.store.upsert` | `conn: sqlite3.Connection`, `rows: list[PositionRow]` | `None` | Replace all position_rows for one detail_id batch; reject heterogeneous batches.

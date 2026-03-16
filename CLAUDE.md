@@ -96,7 +96,10 @@ src/infn_jobs/
 - **`build_rows` return type:** `extract/parse/row_builder.py` returns `tuple[list[PositionRow], str | None]`. The second element is `pdf_call_title` (call-level, from the PDF body). The pipeline (`run_sync`) unpacks it, sets `call.pdf_call_title`, then calls `upsert_call`. Never store `pdf_call_title` inside `PositionRow`.
 - **Runtime/review parser parity contract:** `extract/parse/row_builder.py` and `extract/parse/diagnostics/review_mode.py` must both consume shared segment execution internals from `extract/parse/core/execution_shared.py` to avoid drift.
 - **Multiline extraction policy:** rule extractors must support adjacent-line label/value splits deterministically (shared helper: `extract/parse/rules/text_windows.py`) and keep stable winner precedence.
-- **Sync source modes:** `sync` defaults to `source=local` (reuse `calls_raw` + local cache). First-run bootstrap on empty DB/cache must use `--source remote` ("Run sync with --source remote first.").
+- **Sync source modes:** Two modes; `--source auto` has been removed.
+  - `--source local` (default): filesystem-driven. Globs `data/pdf_cache/*.pdf`, sorted by stem. Loads call metadata from DB when present; creates minimal `CallRaw(detail_id=stem)` for unknown PDFs. No network access. After Phase D upserts, prunes `calls_raw` and `position_rows` of entries whose PDF is no longer in the cache. Empty-cache safety guard: if no PDFs are found the prune step is skipped (DB left intact).
+  - `--source remote`: starts with the same local cache scan (`_discover_local_calls`), then fetches new contracts from the website for each tipo, deduplicates against already-cached detail_ids, and downloads only the new ones. Merges local + new remote, then prunes stale DB entries. First-run (empty `pdf_cache/`) must use `--source remote`.
+  - **DB invariant:** after any non-dry-run sync, `calls_raw` contains exactly the contracts whose PDFs exist in `pdf_cache/`.
 - **`--dry-run` semantics:** runs discovery/cache/parse for the selected source mode, then skips all `upsert_*` and `rebuild_curated` calls.
 - **Sync guardrails:** `--download-only` and `--force-refetch` are invalid with `--source local`; `--limit-per-tipo` applies to remote discovery flows.
 - **`detail_url` construction:** `{BASE_URL}/dettagli_job.php?id={detail_id}`. Built in `fetch/detail/parser.py` and stored on `CallRaw`.
@@ -240,13 +243,12 @@ ruff check --fix src/
 ## CLI
 
 ```bash
-python3 -m infn_jobs sync                                  # default source=local: parse/store from existing calls_raw + cache
-python3 -m infn_jobs sync --source remote                  # bootstrap/full remote sync: fetch + download + parse + DB writes
+python3 -m infn_jobs sync                                  # default source=local: filesystem-driven discovery from pdf_cache/
+python3 -m infn_jobs sync --source remote                  # local cache + new remote contracts: fetch + download + parse + DB writes
 python3 -m infn_jobs sync --source remote --dry-run        # fetch + parse only, no DB writes
 python3 -m infn_jobs sync --source remote --force-refetch  # remote sync and re-download PDFs even if cached
 python3 -m infn_jobs sync --source remote --download-only  # fetch calls + download/cache PDFs only
 python3 -m infn_jobs sync --source remote --limit-per-tipo 20
-python3 -m infn_jobs sync --source auto                    # local-first; remote fallback when calls_raw is empty
 python3 -m infn_jobs export-csv             # write 4 CSVs to data/exports/
 ```
 
